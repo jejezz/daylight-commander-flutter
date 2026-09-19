@@ -56,7 +56,7 @@ UI 디자인은 이후 별도로 결정한다. 본 문서는 기능 범위 확�
 - `P1` 텍스트 뷰어 (인코딩 자동 감지) — ✅ 완료 (UTF-8 → Latin-1 폴백, 자동 감지는 아님)
 - `P1` 이미지 뷰어 (jpg/png/gif/webp 등, 슬라이드쇼) — ✅ 완료 (슬라이드쇼는 미착수)
 - `P2` Hex 뷰어 (바이너리 파일 확인) — ✅ 완료 (256KB 미리보기 상한)
-- `P2` 압축파일 내부 미리보기 (풀지 않고 열람) — 미착수
+- `P2` 압축파일 내부 미리보기 (풀지 않고 열람) — ✅ 완료 (아래 8번 참고)
 - `P2` 미디어(오디오/비디오) 간단 미리보기 — ✅ 완료 (`media_kit`)
 - `P2` PDF 뷰어 — ✅ 완료 (`pdfrx`)
 
@@ -122,7 +122,9 @@ UI 디자인은 이후 별도로 결정한다. 본 문서는 기능 범위 확�
    - 검증: `test/folder_comparison_test.dart`(순수 비교 함수), `test/file_attributes_service_test.dart`(rwx 비트 설정) 추가, macOS 릴리스 빌드를 창 단위로 캡처해 새 아이콘 렌더링 확인
    - 양방향 동기화: "폴더 비교" 바에 세 번째 버튼 "양방향 동기화" 추가. 한쪽에만 있는 항목은 자동으로 반대쪽에 복사(충돌 없음), 양쪽 다 있지만 내용이 다른 파일은 `diffPairs()`로 짝지어 파일마다 좌/우 크기·수정일을 보여주는 다이얼로그로 하나하나 물어봄(사용자 요청: 자동 "최신 파일 우선" 병합은 하지 않음 — 항상 사용자가 선택). 취소 시 그 시점까지 처리분은 유지하고 나머지는 중단
    - 검증: `test/folder_comparison_test.dart`에 `diffPairs` 테스트 추가(총 81개 테스트 통과), macOS 디버그 빌드에서 `compareModeProvider` 기본값을 일시적으로 true로 바꿔 새 버튼 렌더링을 창 단위 캡처로 확인 후 원복
-   - **아직 남은 P2 항목**: Hex 뷰어 대용량 스트리밍, 압축파일 내부 미리보기
+   - 압축파일 내부 미리보기: zip을 풀지 않고 F3/컨텍스트 메뉴 "보기"로 열면 내부 파일/폴더 구조를 훑어볼 수 있는 전용 뷰어(`ArchiveViewerScreen`)가 뜬다. `archive` 패키지의 `InputFileStream` + `ZipDecoder`로 중앙 디렉터리만 읽어 목록을 만들고(전체를 메모리에 올리지 않음), 이름의 슬래시로 가상 폴더 구조를 구성해 ".." 항목으로 상위 이동. 파일을 탭하면 그 파일 하나만 임시 폴더로 꺼내 기존 `ViewerScreen`(텍스트/이미지/PDF/오디오/비디오/Hex 뷰어)으로 그대로 연다 — zip 전체는 절대 풀지 않음
+   - 검증: `test/archive_service_test.dart`에 `listZipEntries`/`extractZipEntry` 단위테스트, `test/archive_viewer_screen_test.dart`에 폴더 드릴다운·파일 열기 위젯테스트 추가(총 85개 테스트 통과). 위젯테스트에서 알게 된 점: `flutter test`의 FakeAsync 존 안에서 탭 콜백으로 시작되는 실제 dart:io 비동기 작업(파일 읽기/쓰기, 화면 전환)은 `pump()`만으로 끝나지 않으므로, 탭 자체를 `tester.runAsync()` 콜백 안에서 실행해야 함. macOS 디버그 빌드로 앱이 새 코드로 정상 구동되는지 창 단위 캡처로 확인
+   - **아직 남은 P2 항목**: Hex 뷰어 대용량 스트리밍
 10. PDF/미디어(오디오·비디오) 뷰어 — **완료**:
     - PDF: `pdfrx` 채택 (Windows/macOS/Linux 모두 지원, PDFium 기반). 처음 검토한 `pdfx`는 Linux 미지원이라 제외
     - 오디오/비디오: `media_kit` + `media_kit_video` + `media_kit_libs_video` 채택 (libmpv 기반, 3개 데스크톱 플랫폼 모두 지원). `main.dart`에서 앱 시작 시 `MediaKit.ensureInitialized()` 1회 호출 필요

@@ -23,6 +23,7 @@ import '../../domain/entities/ftp_profile.dart';
 import '../../domain/entities/sftp_profile.dart';
 import '../../domain/entities/webdav_profile.dart';
 import '../../l10n/app_localizations.dart';
+import '../viewer/archive_viewer_screen.dart';
 import '../viewer/viewer_screen.dart';
 import '../widgets/dialogs.dart';
 import '../widgets/properties_dialog.dart';
@@ -409,6 +410,15 @@ Future<void> viewSelected(BuildContext context, WidgetRef ref, PaneSide side) as
 
   final path = await _resolveLocalPath(context, ref, entry);
   if (path == null || !context.mounted) return;
+
+  if (entry.name.toLowerCase().endsWith('.zip')) {
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => ArchiveViewerScreen(zipPath: path, archiveName: entry.name),
+      ),
+    );
+    return;
+  }
 
   await Navigator.of(context).push(
     MaterialPageRoute(

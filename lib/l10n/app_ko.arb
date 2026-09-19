@@ -208,6 +208,15 @@
   "useLeftVersion": "왼쪽 파일 사용",
   "useRightVersion": "오른쪽 파일 사용",
 
+  "archiveEmptyFolder": "빈 폴더입니다.",
+  "archiveParentDirTooltip": "상위 폴더로",
+  "archiveEntryOpenFailed": "파일을 여는 데 실패했습니다: {error}",
+  "@archiveEntryOpenFailed": {
+    "placeholders": {
+      "error": { "type": "String" }
+    }
+  },
+
   "compressFailed": "압축 실패: {error}",
   "@compressFailed": {
     "placeholders": {
