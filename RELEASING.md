@@ -124,9 +124,10 @@ tar -czf dist/DaylightCommander-linux.tar.gz \
 ```
 
 리눅스 빌드에는 `clang cmake ninja-build pkg-config libgtk-3-dev
-libsecret-1-dev`가 필요하다 (Ubuntu/Debian 기준 `sudo apt-get install`).
-`libsecret-1-dev`는 `flutter_secure_storage` 플러그인이 요구하는데
-빠뜨리기 쉽다 — CMake가 "package not found" 에러로 바로 알려준다.
+libsecret-1-dev libmpv-dev`가 필요하다 (Ubuntu/Debian 기준 `sudo apt-get
+install`). `libsecret-1-dev`는 `flutter_secure_storage`, `libmpv-dev`는
+`media_kit`(오디오/비디오 뷰어) 플러그인이 요구하는데 둘 다 빠뜨리기
+쉽다 — CMake가 "package not found"/링크 에러로 바로 알려준다.
 
 tar.gz 대신 배포판을 가리지 않는 [AppImage](https://appimage.org/)나
 Debian 패키지(`.deb`)로 만들 수도 있다 — 둘 다 이 프로젝트에는 아직 설정
