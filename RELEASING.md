@@ -67,20 +67,33 @@ Windows/Linux 머신을 따로 갖고 있어서 거기서 직접 빌드할 때 �
 
 ```bash
 flutter build macos --release
+APP_PATH="build/macos/Build/Products/Release/Daylight Commander.app"
+codesign --force --deep --sign - "$APP_PATH"
 mkdir -p dist
 hdiutil create -volname "Daylight Commander" \
-  -srcfolder build/macos/Build/Products/Release/daylight_commander.app \
+  -srcfolder "$APP_PATH" \
   -ov -format UDZO dist/DaylightCommander-macos.dmg
 ```
 
-`hdiutil`은 macOS에 기본 내장되어 있어 별도 설치가 필요 없다. 결과물은
-`dist/DaylightCommander-macos.dmg`.
+`hdiutil`/`codesign` 둘 다 macOS에 기본 내장되어 있어 별도 설치가 필요
+없다. 결과물은 `dist/DaylightCommander-macos.dmg`.
 
-> **참고**: Apple Developer 서명이 없는 빌드라서 다른 사람 macOS에서 처음
-> 열 때 "확인되지 않은 개발자" 경고가 뜬다. 받은 사람이 앱을 우클릭 →
-> "열기"로 한 번 열어주거나, `System Settings → Privacy & Security`에서
-> 허용해야 한다. 정식 배포를 하려면 Apple Developer Program 가입 후
-> 코드사이닝/공증(notarization)이 필요하다 — 지금은 범위 밖으로 둔다.
+> **다운받은 사람이 앱을 못 여는 문제(중요)**: Apple Developer 인증서가
+> 없어서 정식 서명/공증(notarization)을 못 한다. `codesign --sign -`로
+> 애드혹 서명은 해두지만, 그래도 macOS는 인터넷에서 받은(quarantine
+> 속성이 붙은) 앱을 처음 열 때 막는다 — DMG를 열고 앱을 Applications
+> 등으로 **꺼내는(extract) 순간 Finder가 이 속성을 그대로 따라 붙인다.**
+> 흔히 "손상되었습니다(damaged)" 또는 "확인되지 않은 개발자"라는 메시지가
+> 뜨는데, 우클릭 → 열기로 안 풀릴 때가 많다. 가장 확실한 해결책은
+> 터미널에서 quarantine 속성을 직접 지우는 것:
+>
+> ```bash
+> xattr -cr "/Applications/Daylight Commander.app"
+> ```
+>
+> (경로는 실제로 옮긴 위치에 맞게). 이후 더블클릭하면 정상적으로 열린다.
+> 정식 배포를 하려면 Apple Developer Program 가입 후 코드사이닝/공증이
+> 필요하다 — 지금은 범위 밖으로 둔다.
 
 ### Windows (Windows 머신 필요)
 
@@ -92,7 +105,8 @@ Compress-Archive -Path build\windows\x64\runner\Release\* `
 ```
 
 `build\windows\` 아래 정확한 경로는 Flutter 버전에 따라
-`build\windows\runner\Release`일 수도 있다 — 못 찾으면
+`build\windows\runner\Release`일 수도 있다(이 프로젝트는 Flutter 3.47.1
+기준 `x64\runner\Release`로 확인됨) — 못 찾으면
 `Get-ChildItem -Recurse -Directory -Filter Release build\windows`로 확인.
 
 간단한 zip 배포 대신 진짜 설치 마법사(.exe)를 만들고 싶다면 [Inno
@@ -109,8 +123,10 @@ tar -czf dist/DaylightCommander-linux.tar.gz \
   -C build/linux/x64/release/bundle .
 ```
 
-리눅스 빌드에는 `clang cmake ninja-build pkg-config libgtk-3-dev`가 필요
-하다 (Ubuntu/Debian 기준 `sudo apt-get install`).
+리눅스 빌드에는 `clang cmake ninja-build pkg-config libgtk-3-dev
+libsecret-1-dev`가 필요하다 (Ubuntu/Debian 기준 `sudo apt-get install`).
+`libsecret-1-dev`는 `flutter_secure_storage` 플러그인이 요구하는데
+빠뜨리기 쉽다 — CMake가 "package not found" 에러로 바로 알려준다.
 
 tar.gz 대신 배포판을 가리지 않는 [AppImage](https://appimage.org/)나
 Debian 패키지(`.deb`)로 만들 수도 있다 — 둘 다 이 프로젝트에는 아직 설정
@@ -130,21 +146,11 @@ gh release create v1.0.0 \
   --title "v1.0.0" \
   --generate-notes
 ```
-```bash
-gh release create v1.0.0 \
-  dist/DaylightCommander-windows.zip \
-  --title "v1.0.0" \
-  --generate-notes
-```
-```bash
-gh release create v1.0.0 \
-  dist/DaylightCommander-linux.tar.gz \
-  --title "v1.0.0" \
-  --generate-notes
-```
 
-이미 만들어둔 태그가 없다면 `gh release create`가 태그도 함께 만들어
-push해준다.
+파일 중 일부만 있어도(예: macOS만 로컬에서 만들었을 때) 그 파일만 넘기면
+된다. 이미 만들어둔 태그가 없다면 `gh release create`가 태그도 함께
+만들어 push해준다. 같은 태그로 이미 릴리스가 있다면 `gh release upload
+v1.0.0 dist/...`로 파일만 추가할 수 있다.
 
 ## 향후 개선 여지
 
