@@ -390,6 +390,17 @@ class AppLocalizationsKo extends AppLocalizations {
   String get useRightVersion => '오른쪽 파일 사용';
 
   @override
+  String get archiveEmptyFolder => '빈 폴더입니다.';
+
+  @override
+  String get archiveParentDirTooltip => '상위 폴더로';
+
+  @override
+  String archiveEntryOpenFailed(String error) {
+    return '파일을 여는 데 실패했습니다: $error';
+  }
+
+  @override
   String compressFailed(String error) {
     return '압축 실패: $error';
   }

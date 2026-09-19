@@ -208,6 +208,15 @@
   "useLeftVersion": "Use Left File",
   "useRightVersion": "Use Right File",
 
+  "archiveEmptyFolder": "This folder is empty.",
+  "archiveParentDirTooltip": "Up one folder",
+  "archiveEntryOpenFailed": "Couldn't open the file: {error}",
+  "@archiveEntryOpenFailed": {
+    "placeholders": {
+      "error": { "type": "String" }
+    }
+  },
+
   "compressFailed": "Compression failed: {error}",
   "@compressFailed": {
     "placeholders": {

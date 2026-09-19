@@ -397,6 +397,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String get useRightVersion => 'Use Right File';
 
   @override
+  String get archiveEmptyFolder => 'This folder is empty.';
+
+  @override
+  String get archiveParentDirTooltip => 'Up one folder';
+
+  @override
+  String archiveEntryOpenFailed(String error) {
+    return 'Couldn\'t open the file: $error';
+  }
+
+  @override
   String compressFailed(String error) {
     return 'Compression failed: $error';
   }

@@ -800,6 +800,24 @@ abstract class AppLocalizations {
   /// **'오른쪽 파일 사용'**
   String get useRightVersion;
 
+  /// No description provided for @archiveEmptyFolder.
+  ///
+  /// In ko, this message translates to:
+  /// **'빈 폴더입니다.'**
+  String get archiveEmptyFolder;
+
+  /// No description provided for @archiveParentDirTooltip.
+  ///
+  /// In ko, this message translates to:
+  /// **'상위 폴더로'**
+  String get archiveParentDirTooltip;
+
+  /// No description provided for @archiveEntryOpenFailed.
+  ///
+  /// In ko, this message translates to:
+  /// **'파일을 여는 데 실패했습니다: {error}'**
+  String archiveEntryOpenFailed(String error);
+
   /// No description provided for @compressFailed.
   ///
   /// In ko, this message translates to:
