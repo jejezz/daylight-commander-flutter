@@ -177,7 +177,15 @@ class PaneView extends ConsumerWidget {
                                       final isDoubleClick = controller
                                           .consumeDoubleClick(entry.location);
                                       if (isDoubleClick && !hasModifier) {
-                                        controller.openEntry(entry);
+                                        if (entry.isDirectory) {
+                                          controller.openEntry(entry);
+                                        } else {
+                                          openEntryWithDefaultApp(
+                                            context,
+                                            ref,
+                                            entry,
+                                          );
+                                        }
                                         return;
                                       }
                                       if (keys.isShiftPressed) {

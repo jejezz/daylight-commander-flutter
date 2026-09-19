@@ -12,6 +12,7 @@ import '../../application/transfer_router.dart';
 import '../../application/usecases/connect_network_drive.dart';
 import '../../application/usecases/local_file_entry.dart';
 import '../../application/usecases/open_terminal.dart';
+import '../../application/usecases/open_with_default_app.dart';
 import '../../domain/entities/file_conflict.dart';
 import '../../domain/entities/file_entry.dart';
 import '../../domain/entities/ftp_profile.dart';
@@ -29,6 +30,7 @@ const _fileOps = FileOperationService();
 const _archiveService = ArchiveService();
 const _connectNetworkDrive = ConnectNetworkDrive();
 const _openTerminal = OpenTerminal();
+const _openWithDefaultApp = OpenWithDefaultApp();
 
 Future<void> openTerminalHere(WidgetRef ref, PaneSide side) async {
   final path = ref.read(paneControllerProvider(side)).currentPath;
@@ -235,6 +237,35 @@ Future<void> toggleBookmark(WidgetRef ref, PaneSide side) async {
   await ref.read(bookmarksProvider.notifier).toggle(path);
 }
 
+/// [entry]를 열 때 쓸 로컬 경로를 얻는다. FTP 항목은 임시 폴더로 내려받고,
+/// 로컬 항목은 그 경로를 그대로 돌려준다. 내장 뷰어(F3)와 OS 기본 앱 열기
+/// 둘 다 이 경로 하나만 있으면 되므로 공용으로 뺐다.
+Future<String?> _resolveLocalPath(
+  BuildContext context,
+  WidgetRef ref,
+  FileEntry entry,
+) async {
+  if (entry.location.scheme != 'ftp') {
+    return entry.location.toFilePath();
+  }
+  final client = ref.read(ftpSessionManagerProvider.notifier).clientForUri(entry.location);
+  if (client == null) return null;
+  final tempDir = await Directory.systemTemp.createTemp('daylight_commander_view_');
+  final tempFile = File(p.join(tempDir.path, entry.name));
+  final remoteDir = p.posix.dirname(entry.location.path);
+  await client.changeDirectory(remoteDir.isEmpty ? '/' : remoteDir);
+  final ok = await client.downloadFile(entry.name, tempFile);
+  if (!ok) {
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('파일을 다운로드하지 못했습니다.')),
+      );
+    }
+    return null;
+  }
+  return tempFile.path;
+}
+
 /// F3 보기. FTP 파일은 임시 폴더로 내려받은 뒤 같은 뷰어로 연다.
 Future<void> viewSelected(BuildContext context, WidgetRef ref, PaneSide side) async {
   final entries = ref.read(paneControllerProvider(side)).selectedEntries;
@@ -242,34 +273,26 @@ Future<void> viewSelected(BuildContext context, WidgetRef ref, PaneSide side) as
   if (viewable.length != 1) return;
   final entry = viewable.first;
 
-  String path;
-  if (entry.location.scheme == 'ftp') {
-    final client = ref.read(ftpSessionManagerProvider.notifier).clientForUri(entry.location);
-    if (client == null) return;
-    final tempDir = await Directory.systemTemp.createTemp('daylight_commander_view_');
-    final tempFile = File(p.join(tempDir.path, entry.name));
-    final remoteDir = p.posix.dirname(entry.location.path);
-    await client.changeDirectory(remoteDir.isEmpty ? '/' : remoteDir);
-    final ok = await client.downloadFile(entry.name, tempFile);
-    if (!ok) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('파일을 다운로드하지 못했습니다.')),
-        );
-      }
-      return;
-    }
-    path = tempFile.path;
-  } else {
-    path = entry.location.toFilePath();
-  }
+  final path = await _resolveLocalPath(context, ref, entry);
+  if (path == null || !context.mounted) return;
 
-  if (!context.mounted) return;
   await Navigator.of(context).push(
     MaterialPageRoute(
       builder: (_) => ViewerScreen(path: path, name: entry.name),
     ),
   );
+}
+
+/// Finder/탐색기처럼 OS가 확장자에 연결해 둔 기본 앱으로 [entry]를 연다.
+/// 더블클릭과 컨텍스트 메뉴 둘 다 여기로 온다.
+Future<void> openEntryWithDefaultApp(
+  BuildContext context,
+  WidgetRef ref,
+  FileEntry entry,
+) async {
+  final path = await _resolveLocalPath(context, ref, entry);
+  if (path == null) return;
+  await _openWithDefaultApp(path);
 }
 
 Future<void> compressSelection(BuildContext context, WidgetRef ref, PaneSide side) async {
@@ -450,6 +473,8 @@ Future<void> showRowContextMenu(
     position: position,
     items: [
       if (canOpen) const PopupMenuItem(value: 'open', child: Text('열기')),
+      if (canView)
+        const PopupMenuItem(value: 'open_with_default', child: Text('연결된 프로그램으로 열기')),
       if (canView) const PopupMenuItem(value: 'view', child: Text('보기 (F3)')),
       if (singleTarget != null)
         const PopupMenuItem(value: 'rename', child: Text('이름변경 (F2)')),
@@ -468,6 +493,8 @@ Future<void> showRowContextMenu(
   switch (action) {
     case 'open':
       controller.openEntry(singleTarget!);
+    case 'open_with_default':
+      await openEntryWithDefaultApp(context, ref, singleTarget!);
     case 'view':
       await viewSelected(context, ref, side);
     case 'rename':

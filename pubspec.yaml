@@ -47,7 +47,7 @@ dependencies:
   path: ^1.9.1
 
   # 압축/해제
-  archive: ^3.6.1
+  archive: ^4.3.0
 
   # 네트워크 드라이브 자격증명 보안 저장 (SMB/FTP)
   flutter_secure_storage: ^9.2.2
@@ -63,6 +63,14 @@ dependencies:
 
   # FTP 클라이언트 (순수 Dart — ARCHITECTURE.md 4장에서 정한 B안)
   ftpconnect: ^3.0.0
+
+  # PDF 뷰어 (Windows/macOS/Linux 모두 지원 — pdfx는 Linux 미지원이라 제외)
+  pdfrx: ^2.6.5
+
+  # 오디오/비디오 뷰어 (Windows/macOS/Linux 데스크톱 지원, libmpv 기반)
+  media_kit: ^1.2.6
+  media_kit_video: ^2.0.1
+  media_kit_libs_video: ^1.0.7
 
 dev_dependencies:
   flutter_test:
