@@ -111,4 +111,5 @@ jobs:
             artifacts/windows-zip/*.zip \
             artifacts/linux-tarball/*.tar.gz \
             --title "$TAG" \
+            --notes-file .github/release-notes-header.md \
             --generate-notes

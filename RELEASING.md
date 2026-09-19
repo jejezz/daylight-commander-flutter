@@ -37,8 +37,13 @@ git push origin v1.1.0
 1. `macos-latest`/`windows-latest`/`ubuntu-latest` 세 러너에서 각각
    `flutter build <platform> --release` 실행
 2. macOS는 `.dmg`, Windows는 `.zip`, Linux는 `.tar.gz`로 패키징
-3. 세 파일을 전부 첨부해 GitHub Release 하나를 생성 (릴리스 노트는
-   `--generate-notes`로 커밋 로그에서 자동 생성)
+3. 세 파일을 전부 첨부해 GitHub Release 하나를 생성. 릴리스 노트는
+   `.github/release-notes-header.md`(플랫폼별 설치 방법 — macOS의
+   quarantine/`xattr -cr` 안내 포함)를 맨 앞에 붙이고, 그 뒤에
+   `--generate-notes`로 커밋 로그 기반 변경 이력을 자동으로 이어붙인다.
+   **설치 안내 문구를 바꾸려면 이 파일을 고치면 다음 릴리스부터 반영된다**
+   (과거 릴리스 노트는 소급 적용 안 됨 — 이미 나온 릴리스는
+   `gh release edit <태그> --notes-file ...`로 직접 고쳐야 함)
 
 위 "0. 버전 올리기"에서 태그를 push하면 그걸로 끝이다. GitHub 저장소의
 **Actions** 탭에서 진행 상황을 볼 수 있고, 완료되면 **Releases** 탭에 새

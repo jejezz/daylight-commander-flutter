@@ -26,7 +26,36 @@ Total Commander / Midnight Commander 스타일의 무료 2단(dual-pane) 데스�
 
 Windows · macOS · Linux
 
-## 시작하기
+## 다운로드 및 설치
+
+빌드된 실행 파일은 [Releases 페이지](https://github.com/jejezz/daylight-commander-flutter/releases/latest)에서 받을 수 있습니다.
+
+### macOS
+
+1. `DaylightCommander-macos.dmg`를 열고 `Daylight Commander.app`을
+   Applications 폴더로 드래그
+2. **처음 실행할 때 "손상되었습니다" 또는 "확인되지 않은 개발자" 경고가
+   뜨면** — Apple 공증(notarization)을 받지 않은 빌드라서 인터넷에서 받은
+   파일에 자동으로 붙는 격리(quarantine) 속성 때문입니다. 터미널에서
+   아래 명령을 실행하면 해결됩니다:
+
+   ```bash
+   xattr -cr "/Applications/Daylight Commander.app"
+   ```
+
+   실행 후 다시 더블클릭하면 정상적으로 열립니다.
+
+### Windows
+
+1. `DaylightCommander-windows.zip` 압축을 풀고 `daylight_commander.exe` 실행
+2. 서명되지 않은 실행 파일이라 SmartScreen 경고가 뜰 수 있습니다 —
+   "추가 정보" → "실행"을 클릭하면 됩니다
+
+### Linux
+
+1. `DaylightCommander-linux.tar.gz` 압축을 풀고 안의 실행 파일 실행
+
+## 소스에서 빌드하기 (개발자용)
 
 ### 요구 사항
 
