@@ -4,9 +4,16 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 
 import 'package:daylight_commander/application/ftp_session_manager.dart';
+import 'package:daylight_commander/application/sftp_session_manager.dart';
+import 'package:daylight_commander/application/webdav_session_manager.dart';
 import 'package:daylight_commander/presentation/home/pane_controller.dart';
 
-PaneController _newController(String path) => PaneController(path, FtpSessionManager());
+PaneController _newController(String path) => PaneController(
+      path,
+      FtpSessionManager(),
+      SftpSessionManager(),
+      WebdavSessionManager(),
+    );
 
 Future<void> _waitLoaded(PaneController controller) async {
   for (var i = 0; i < 100 && controller.state.loading; i++) {

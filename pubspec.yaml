@@ -64,6 +64,16 @@ dependencies:
   # FTP 클라이언트 (순수 Dart — ARCHITECTURE.md 4장에서 정한 B안)
   ftpconnect: ^3.0.0
 
+  # SFTP 클라이언트 (순수 Dart SSH 구현). ftpconnect가 이미 dartssh2 ^3.3.1을
+  # 전이 의존성으로 물고 있어서 그 버전대에 맞춤.
+  dartssh2: ^3.3.1
+
+  # WebDAV 클라이언트 (순수 Dart, HTTP/HTTPS 모두 지원)
+  webdav_client: ^1.2.2
+
+  # webdav_client가 던지는 DioException(404 등)을 직접 잡아야 해서 명시적으로도 추가
+  dio: ^5.11.1
+
   # PDF 뷰어 (Windows/macOS/Linux 모두 지원 — pdfx는 Linux 미지원이라 제외)
   pdfrx: ^2.6.5
 

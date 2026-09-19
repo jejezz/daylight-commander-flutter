@@ -4,7 +4,11 @@ import '../../application/cancel_token.dart';
 import '../../application/file_operation_service.dart';
 import '../../application/ftp_session_manager.dart';
 import '../../application/ftp_transfer_service.dart';
+import '../../application/sftp_session_manager.dart';
+import '../../application/sftp_transfer_service.dart';
 import '../../application/transfer_router.dart';
+import '../../application/webdav_session_manager.dart';
+import '../../application/webdav_transfer_service.dart';
 import '../../domain/entities/file_entry.dart';
 
 enum OperationKind { copy, move, delete }
@@ -45,6 +49,8 @@ class OperationController extends StateNotifier<OperationState?> {
     required Uri destinationDir,
     required ConflictResolver onConflict,
     required FtpSessionManager ftpSessions,
+    required SftpSessionManager sftpSessions,
+    required WebdavSessionManager webdavSessions,
   }) {
     return _run(
       OperationKind.copy,
@@ -54,6 +60,8 @@ class OperationController extends StateNotifier<OperationState?> {
         isMove: false,
         onConflict: onConflict,
         ftpSessions: ftpSessions,
+        sftpSessions: sftpSessions,
+        webdavSessions: webdavSessions,
         onProgress: onProgress,
         cancelToken: token,
       ),
@@ -65,6 +73,8 @@ class OperationController extends StateNotifier<OperationState?> {
     required Uri destinationDir,
     required ConflictResolver onConflict,
     required FtpSessionManager ftpSessions,
+    required SftpSessionManager sftpSessions,
+    required WebdavSessionManager webdavSessions,
   }) {
     return _run(
       OperationKind.move,
@@ -74,6 +84,8 @@ class OperationController extends StateNotifier<OperationState?> {
         isMove: true,
         onConflict: onConflict,
         ftpSessions: ftpSessions,
+        sftpSessions: sftpSessions,
+        webdavSessions: webdavSessions,
         onProgress: onProgress,
         cancelToken: token,
       ),
@@ -84,17 +96,27 @@ class OperationController extends StateNotifier<OperationState?> {
     required List<FileEntry> entries,
     required bool toTrash,
     required FtpSessionManager ftpSessions,
+    required SftpSessionManager sftpSessions,
+    required WebdavSessionManager webdavSessions,
   }) {
     return _run(OperationKind.delete, (token, onProgress) async {
       final ftpTransfer = FtpTransferService(ftpSessions);
+      final sftpTransfer = SftpTransferService(sftpSessions);
+      final webdavTransfer = WebdavTransferService(webdavSessions);
       final total = entries.length;
       var done = 0;
       for (final entry in entries) {
         token.throwIfCancelled();
-        if (entry.location.scheme == 'ftp') {
-          await ftpTransfer.deleteEntry(entry);
-        } else {
-          await _service.delete(entries: [entry], toTrash: toTrash);
+        switch (entry.location.scheme) {
+          case 'ftp':
+            await ftpTransfer.deleteEntry(entry);
+          case 'sftp':
+            await sftpTransfer.deleteEntry(entry);
+          case 'webdav':
+          case 'webdavs':
+            await webdavTransfer.deleteEntry(entry);
+          default:
+            await _service.delete(entries: [entry], toTrash: toTrash);
         }
         done++;
         onProgress(FileOperationProgress(done: done, total: total, currentName: entry.name));

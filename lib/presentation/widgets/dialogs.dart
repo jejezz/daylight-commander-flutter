@@ -5,6 +5,8 @@ import '../../core/bytes_format.dart';
 import '../../domain/entities/file_conflict.dart';
 import '../home/ftp_profiles_provider.dart';
 import '../home/network_profiles_provider.dart';
+import '../home/sftp_profiles_provider.dart';
+import '../home/webdav_profiles_provider.dart';
 
 /// 새 폴더/이름변경에 쓰는 단일 텍스트 입력 다이얼로그.
 Future<String?> promptForName(
@@ -331,6 +333,316 @@ class _FtpConnectDialogState extends ConsumerState<_FtpConnectDialog> {
               port: int.tryParse(_portController.text.trim()) ?? 21,
               username: _anonymous ? 'anonymous' : _userController.text.trim(),
               password: _anonymous ? '' : _passController.text,
+              save: _save,
+            ),
+          ),
+          child: const Text('연결'),
+        ),
+      ],
+    );
+  }
+}
+
+/// SFTP 서버 연결 정보 입력. FTP와 달리 익명 로그인 개념이 없어 사용자명이
+/// 항상 필요하다. 비밀번호는 이 연결에만 쓰이고 저장하지 않는다.
+class SftpConnectRequest {
+  const SftpConnectRequest({
+    required this.host,
+    required this.port,
+    required this.username,
+    required this.password,
+    required this.save,
+  });
+
+  final String host;
+  final int port;
+  final String username;
+  final String password;
+  final bool save;
+}
+
+Future<SftpConnectRequest?> showSftpConnectDialog(BuildContext context) {
+  return showDialog<SftpConnectRequest>(
+    context: context,
+    builder: (context) => const _SftpConnectDialog(),
+  );
+}
+
+class _SftpConnectDialog extends ConsumerStatefulWidget {
+  const _SftpConnectDialog();
+
+  @override
+  ConsumerState<_SftpConnectDialog> createState() => _SftpConnectDialogState();
+}
+
+class _SftpConnectDialogState extends ConsumerState<_SftpConnectDialog> {
+  final _hostController = TextEditingController();
+  final _portController = TextEditingController(text: '22');
+  final _userController = TextEditingController();
+  final _passController = TextEditingController();
+  bool _save = false;
+
+  @override
+  void dispose() {
+    _hostController.dispose();
+    _portController.dispose();
+    _userController.dispose();
+    _passController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final profiles = ref.watch(sftpProfilesProvider);
+    return AlertDialog(
+      title: const Text('SFTP 서버 연결'),
+      content: SizedBox(
+        width: 360,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (profiles.isNotEmpty) ...[
+              const Text('저장된 서버', style: TextStyle(fontWeight: FontWeight.w500)),
+              for (final profile in profiles)
+                ListTile(
+                  dense: true,
+                  contentPadding: EdgeInsets.zero,
+                  title: Text('${profile.username}@${profile.host}:${profile.port}'),
+                  onTap: () {
+                    _hostController.text = profile.host;
+                    _portController.text = profile.port.toString();
+                    _userController.text = profile.username;
+                  },
+                  trailing: IconButton(
+                    icon: const Icon(Icons.close, size: 16),
+                    onPressed: () => ref.read(sftpProfilesProvider.notifier).remove(profile),
+                  ),
+                ),
+              const Divider(),
+            ],
+            Row(
+              children: [
+                Expanded(
+                  flex: 3,
+                  child: TextField(
+                    controller: _hostController,
+                    autofocus: true,
+                    decoration: const InputDecoration(labelText: '호스트'),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: TextField(
+                    controller: _portController,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(labelText: '포트'),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _userController,
+              decoration: const InputDecoration(labelText: '사용자명'),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _passController,
+              obscureText: true,
+              decoration: const InputDecoration(labelText: '비밀번호'),
+            ),
+            CheckboxListTile(
+              contentPadding: EdgeInsets.zero,
+              value: _save,
+              onChanged: (v) => setState(() => _save = v ?? false),
+              title: const Text('이 서버 정보 저장 (비밀번호 제외)'),
+            ),
+            const Text(
+              '비밀번호는 이 연결에만 사용되고 저장되지 않습니다.',
+              style: TextStyle(fontSize: 11.5),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('취소'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.of(context).pop(
+            SftpConnectRequest(
+              host: _hostController.text.trim(),
+              port: int.tryParse(_portController.text.trim()) ?? 22,
+              username: _userController.text.trim(),
+              password: _passController.text,
+              save: _save,
+            ),
+          ),
+          child: const Text('연결'),
+        ),
+      ],
+    );
+  }
+}
+
+/// WebDAV 서버 연결 정보 입력. HTTP(S) 기반이라 SMB/FTP와 달리 보안 연결
+/// 여부(HTTPS)를 고른다. 비밀번호는 이 연결에만 쓰이고 저장하지 않는다.
+class WebdavConnectRequest {
+  const WebdavConnectRequest({
+    required this.host,
+    required this.port,
+    required this.username,
+    required this.password,
+    required this.useHttps,
+    required this.save,
+  });
+
+  final String host;
+  final int port;
+  final String username;
+  final String password;
+  final bool useHttps;
+  final bool save;
+}
+
+Future<WebdavConnectRequest?> showWebdavConnectDialog(BuildContext context) {
+  return showDialog<WebdavConnectRequest>(
+    context: context,
+    builder: (context) => const _WebdavConnectDialog(),
+  );
+}
+
+class _WebdavConnectDialog extends ConsumerStatefulWidget {
+  const _WebdavConnectDialog();
+
+  @override
+  ConsumerState<_WebdavConnectDialog> createState() => _WebdavConnectDialogState();
+}
+
+class _WebdavConnectDialogState extends ConsumerState<_WebdavConnectDialog> {
+  final _hostController = TextEditingController();
+  final _portController = TextEditingController(text: '443');
+  final _userController = TextEditingController();
+  final _passController = TextEditingController();
+  bool _useHttps = true;
+  bool _save = false;
+
+  @override
+  void dispose() {
+    _hostController.dispose();
+    _portController.dispose();
+    _userController.dispose();
+    _passController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final profiles = ref.watch(webdavProfilesProvider);
+    return AlertDialog(
+      title: const Text('WebDAV 서버 연결'),
+      content: SizedBox(
+        width: 360,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (profiles.isNotEmpty) ...[
+              const Text('저장된 서버', style: TextStyle(fontWeight: FontWeight.w500)),
+              for (final profile in profiles)
+                ListTile(
+                  dense: true,
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(
+                    '${profile.username}@${profile.host}:${profile.port}'
+                    '${profile.useHttps ? " (https)" : " (http)"}',
+                  ),
+                  onTap: () {
+                    _hostController.text = profile.host;
+                    _portController.text = profile.port.toString();
+                    _userController.text = profile.username;
+                    setState(() => _useHttps = profile.useHttps);
+                  },
+                  trailing: IconButton(
+                    icon: const Icon(Icons.close, size: 16),
+                    onPressed: () => ref.read(webdavProfilesProvider.notifier).remove(profile),
+                  ),
+                ),
+              const Divider(),
+            ],
+            Row(
+              children: [
+                Expanded(
+                  flex: 3,
+                  child: TextField(
+                    controller: _hostController,
+                    autofocus: true,
+                    decoration: const InputDecoration(labelText: '호스트'),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: TextField(
+                    controller: _portController,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(labelText: '포트'),
+                  ),
+                ),
+              ],
+            ),
+            CheckboxListTile(
+              contentPadding: EdgeInsets.zero,
+              value: _useHttps,
+              onChanged: (v) {
+                final next = v ?? true;
+                setState(() {
+                  _useHttps = next;
+                  if (_portController.text == '443' || _portController.text == '80') {
+                    _portController.text = next ? '443' : '80';
+                  }
+                });
+              },
+              title: const Text('HTTPS 사용'),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _userController,
+              decoration: const InputDecoration(labelText: '사용자명'),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _passController,
+              obscureText: true,
+              decoration: const InputDecoration(labelText: '비밀번호'),
+            ),
+            CheckboxListTile(
+              contentPadding: EdgeInsets.zero,
+              value: _save,
+              onChanged: (v) => setState(() => _save = v ?? false),
+              title: const Text('이 서버 정보 저장 (비밀번호 제외)'),
+            ),
+            const Text(
+              '비밀번호는 이 연결에만 사용되고 저장되지 않습니다.',
+              style: TextStyle(fontSize: 11.5),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('취소'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.of(context).pop(
+            WebdavConnectRequest(
+              host: _hostController.text.trim(),
+              port: int.tryParse(_portController.text.trim()) ?? (_useHttps ? 443 : 80),
+              username: _userController.text.trim(),
+              password: _passController.text,
+              useHttps: _useHttps,
               save: _save,
             ),
           ),

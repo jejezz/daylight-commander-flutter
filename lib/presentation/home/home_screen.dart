@@ -42,7 +42,7 @@ class HomeScreen extends ConsumerWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final activeSide = ref.watch(activePaneProvider);
     final compareMode = ref.watch(compareModeProvider);
-    final activeIsFtp = isFtpPath(ref.watch(paneControllerProvider(activeSide)).currentPath);
+    final activeIsRemote = isRemotePath(ref.watch(paneControllerProvider(activeSide)).currentPath);
 
     return Scaffold(
       appBar: AppBar(
@@ -61,8 +61,8 @@ class HomeScreen extends ConsumerWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.terminal),
-            tooltip: activeIsFtp ? '터미널 열기 (FTP에서는 사용 불가)' : '터미널 열기 (활성 패널 경로)',
-            onPressed: activeIsFtp ? null : () => openTerminalHere(ref, activeSide),
+            tooltip: activeIsRemote ? '터미널 열기 (네트워크 위치에서는 사용 불가)' : '터미널 열기 (활성 패널 경로)',
+            onPressed: activeIsRemote ? null : () => openTerminalHere(ref, activeSide),
           ),
           IconButton(
             icon: Icon(

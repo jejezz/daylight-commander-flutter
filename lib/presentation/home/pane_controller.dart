@@ -3,8 +3,12 @@ import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../application/ftp_session_manager.dart';
+import '../../application/sftp_session_manager.dart';
 import '../../application/usecases/list_ftp_directory.dart';
 import '../../application/usecases/list_local_directory.dart';
+import '../../application/usecases/list_sftp_directory.dart';
+import '../../application/usecases/list_webdav_directory.dart';
+import '../../application/webdav_session_manager.dart';
 import '../../domain/entities/file_entry.dart';
 
 enum PaneSide { left, right }
@@ -12,11 +16,17 @@ enum PaneSide { left, right }
 PaneSide otherSide(PaneSide side) => side == PaneSide.left ? PaneSide.right : PaneSide.left;
 
 bool isFtpPath(String path) => path.startsWith('ftp://');
+bool isSftpPath(String path) => path.startsWith('sftp://');
+bool isWebdavPath(String path) => path.startsWith('webdav://') || path.startsWith('webdavs://');
 
-/// [path]가 `ftp://`로 시작하면 그대로 파싱하고, 아니면 로컬 파일 경로로 본다.
-/// PaneState.currentPath는 계속 String이지만, 이 헬퍼로 언제든 두 스킴을
-/// 구분해 다룰 수 있다 (ARCHITECTURE.md 4장 — 최소 변경으로 FTP 스킴 추가).
-Uri resolveLocationString(String path) => isFtpPath(path) ? Uri.parse(path) : Uri.file(path);
+/// FTP/SFTP/WebDAV 중 무엇이든 원격 스킴이면 true.
+bool isRemotePath(String path) => isFtpPath(path) || isSftpPath(path) || isWebdavPath(path);
+
+/// [path]가 원격 스킴(`ftp://`/`sftp://`/`webdav(s)://`)이면 그대로 파싱하고,
+/// 아니면 로컬 파일 경로로 본다. PaneState.currentPath는 계속 String이지만,
+/// 이 헬퍼로 언제든 스킴을 구분해 다룰 수 있다 (ARCHITECTURE.md 4장 — 최소
+/// 변경으로 원격 스킴을 추가해 나가는 방식).
+Uri resolveLocationString(String path) => isRemotePath(path) ? Uri.parse(path) : Uri.file(path);
 
 /// [location]을 다시 패널 경로 문자열로 되돌린다 (로컬은 파일 경로, FTP는
 /// URI 문자열 그대로).
@@ -210,13 +220,22 @@ RegExp _globToRegExp(String pattern) {
 }
 
 class PaneController extends StateNotifier<PaneState> {
-  PaneController(String initialPath, this._ftpSessions)
+  PaneController(String initialPath, this._ftpSessions, this._sftpSessions, this._webdavSessions)
       : super(PaneState(currentPath: initialPath)) {
     _load(initialPath, backHistory: const [], forwardHistory: const []);
   }
 
   final _listDirectory = const ListLocalDirectory();
   final FtpSessionManager _ftpSessions;
+  final SftpSessionManager _sftpSessions;
+  final WebdavSessionManager _webdavSessions;
+
+  Future<List<FileEntry>> _listEntries(String path) {
+    if (isFtpPath(path)) return ListFtpDirectory(_ftpSessions)(Uri.parse(path));
+    if (isSftpPath(path)) return ListSftpDirectory(_sftpSessions)(Uri.parse(path));
+    if (isWebdavPath(path)) return ListWebdavDirectory(_webdavSessions)(Uri.parse(path));
+    return _listDirectory(path);
+  }
 
   DateTime? _lastTapAt;
   Uri? _lastTapLocation;
@@ -254,9 +273,7 @@ class PaneController extends StateNotifier<PaneState> {
       quickFilter: '',
     );
     try {
-      final entries = isFtpPath(path)
-          ? await ListFtpDirectory(_ftpSessions)(Uri.parse(path))
-          : await _listDirectory(path);
+      final entries = await _listEntries(path);
       state = state.copyWith(
         currentPath: path,
         entries: _sorted(entries, state.sortField, state.sortAscending),
@@ -302,9 +319,7 @@ class PaneController extends StateNotifier<PaneState> {
 
   Future<void> refresh() async {
     final path = state.currentPath;
-    final entries = isFtpPath(path)
-        ? await ListFtpDirectory(_ftpSessions)(Uri.parse(path))
-        : await _listDirectory(path);
+    final entries = await _listEntries(path);
     final validPaths = entries.map((e) => e.location).toSet();
     final sorted = _sorted(entries, state.sortField, state.sortAscending);
     final visibleCount =
@@ -326,7 +341,7 @@ class PaneController extends StateNotifier<PaneState> {
   }
 
   void goUp() {
-    if (isFtpPath(state.currentPath)) {
+    if (isRemotePath(state.currentPath)) {
       final uri = Uri.parse(state.currentPath);
       final segments = uri.pathSegments.where((s) => s.isNotEmpty).toList();
       if (segments.isEmpty) return; // 이미 루트
@@ -445,7 +460,12 @@ String homeDirectory() {
 
 final paneControllerProvider =
     StateNotifierProvider.family<PaneController, PaneState, PaneSide>(
-  (ref, side) => PaneController(homeDirectory(), ref.read(ftpSessionManagerProvider.notifier)),
+  (ref, side) => PaneController(
+    homeDirectory(),
+    ref.read(ftpSessionManagerProvider.notifier),
+    ref.read(sftpSessionManagerProvider.notifier),
+    ref.read(webdavSessionManagerProvider.notifier),
+  ),
 );
 
 final activePaneProvider = StateProvider<PaneSide>((ref) => PaneSide.left);

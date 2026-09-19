@@ -102,8 +102,10 @@ class PaneView extends ConsumerWidget {
                       ref.read(bookmarksProvider.notifier).remove(path),
                   onConnectSmb: () => connectSmbServer(context, ref),
                   onConnectFtp: () => connectFtpServer(context, ref, side),
-                  onDisconnectFtp: () => disconnectFtp(ref, side),
-                  isFtp: isFtpPath(state.currentPath),
+                  onConnectSftp: () => connectSftpServer(context, ref, side),
+                  onConnectWebdav: () => connectWebdavServer(context, ref, side),
+                  onDisconnectRemote: () => disconnectRemote(ref, side),
+                  isRemote: isRemotePath(state.currentPath),
                 ),
                 const Divider(height: 1),
                 _ColumnHeader(
@@ -254,8 +256,10 @@ class _PathBar extends StatefulWidget {
     required this.onRemoveBookmark,
     required this.onConnectSmb,
     required this.onConnectFtp,
-    required this.onDisconnectFtp,
-    required this.isFtp,
+    required this.onConnectSftp,
+    required this.onConnectWebdav,
+    required this.onDisconnectRemote,
+    required this.isRemote,
   });
 
   final String path;
@@ -277,8 +281,10 @@ class _PathBar extends StatefulWidget {
   final ValueChanged<String> onRemoveBookmark;
   final VoidCallback onConnectSmb;
   final VoidCallback onConnectFtp;
-  final VoidCallback onDisconnectFtp;
-  final bool isFtp;
+  final VoidCallback onConnectSftp;
+  final VoidCallback onConnectWebdav;
+  final VoidCallback onDisconnectRemote;
+  final bool isRemote;
 
   @override
   State<_PathBar> createState() => _PathBarState();
@@ -338,22 +344,36 @@ class _PathBarState extends State<_PathBar> {
                 PopupMenuItem(value: drive.path, child: Text(drive.name)),
             ],
           ),
-          IconButton(
-            visualDensity: VisualDensity.compact,
-            icon: const Icon(Icons.dns_outlined, size: 15),
-            tooltip: 'SMB 서버 연결',
-            onPressed: widget.onConnectSmb,
-          ),
-          IconButton(
-            visualDensity: VisualDensity.compact,
+          PopupMenuButton<String>(
+            tooltip: '네트워크 드라이브 연결',
             icon: Icon(
-              widget.isFtp ? Icons.cloud_off_outlined : Icons.cloud_outlined,
+              widget.isRemote ? Icons.cloud_done_outlined : Icons.cloud_outlined,
               size: 15,
             ),
-            tooltip: widget.isFtp ? 'FTP 연결 해제' : 'FTP 서버 연결',
-            onPressed: widget.isFtp
-                ? widget.onDisconnectFtp
-                : widget.onConnectFtp,
+            onSelected: (value) {
+              switch (value) {
+                case 'smb':
+                  widget.onConnectSmb();
+                case 'ftp':
+                  widget.onConnectFtp();
+                case 'sftp':
+                  widget.onConnectSftp();
+                case 'webdav':
+                  widget.onConnectWebdav();
+                case 'disconnect':
+                  widget.onDisconnectRemote();
+              }
+            },
+            itemBuilder: (context) => [
+              if (widget.isRemote) ...[
+                const PopupMenuItem(value: 'disconnect', child: Text('연결 해제')),
+                const PopupMenuDivider(),
+              ],
+              const PopupMenuItem(value: 'smb', child: Text('SMB 서버 연결')),
+              const PopupMenuItem(value: 'ftp', child: Text('FTP 서버 연결')),
+              const PopupMenuItem(value: 'sftp', child: Text('SFTP 서버 연결')),
+              const PopupMenuItem(value: 'webdav', child: Text('WebDAV 서버 연결')),
+            ],
           ),
           IconButton(
             visualDensity: VisualDensity.compact,

@@ -1,4 +1,4 @@
-enum FileSourceType { local, smb, ftp, webdav }
+enum FileSourceType { local, smb, ftp, sftp, webdav }
 
 /// 패널에 표시되는 파일/폴더 한 항목 (ARCHITECTURE.md 3장).
 class FileEntry {

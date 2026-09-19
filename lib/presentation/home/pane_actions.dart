@@ -8,14 +8,20 @@ import '../../application/archive_service.dart';
 import '../../application/file_operation_service.dart';
 import '../../application/ftp_session_manager.dart';
 import '../../application/ftp_transfer_service.dart';
+import '../../application/sftp_session_manager.dart';
+import '../../application/sftp_transfer_service.dart';
 import '../../application/transfer_router.dart';
 import '../../application/usecases/connect_network_drive.dart';
 import '../../application/usecases/local_file_entry.dart';
 import '../../application/usecases/open_terminal.dart';
 import '../../application/usecases/open_with_default_app.dart';
+import '../../application/webdav_session_manager.dart';
+import '../../application/webdav_transfer_service.dart';
 import '../../domain/entities/file_conflict.dart';
 import '../../domain/entities/file_entry.dart';
 import '../../domain/entities/ftp_profile.dart';
+import '../../domain/entities/sftp_profile.dart';
+import '../../domain/entities/webdav_profile.dart';
 import '../viewer/viewer_screen.dart';
 import '../widgets/dialogs.dart';
 import '../widgets/properties_dialog.dart';
@@ -25,6 +31,8 @@ import 'ftp_profiles_provider.dart';
 import 'network_profiles_provider.dart';
 import 'operation_controller.dart';
 import 'pane_controller.dart';
+import 'sftp_profiles_provider.dart';
+import 'webdav_profiles_provider.dart';
 
 const _fileOps = FileOperationService();
 const _archiveService = ArchiveService();
@@ -34,7 +42,7 @@ const _openWithDefaultApp = OpenWithDefaultApp();
 
 Future<void> openTerminalHere(WidgetRef ref, PaneSide side) async {
   final path = ref.read(paneControllerProvider(side)).currentPath;
-  if (isFtpPath(path)) return; // FTP 경로에서는 로컬 터미널을 열 수 없다.
+  if (isRemotePath(path)) return; // 원격 경로에서는 로컬 터미널을 열 수 없다.
   await _openTerminal(path);
 }
 
@@ -135,6 +143,8 @@ Future<void> transferEntries(
 
   final operation = ref.read(operationControllerProvider.notifier);
   final ftpSessions = ref.read(ftpSessionManagerProvider.notifier);
+  final sftpSessions = ref.read(sftpSessionManagerProvider.notifier);
+  final webdavSessions = ref.read(webdavSessionManagerProvider.notifier);
   Future<ConflictAction> onConflict(FileConflict conflict) =>
       showConflictDialog(context, conflict);
 
@@ -145,6 +155,8 @@ Future<void> transferEntries(
         destinationDir: destUri,
         onConflict: onConflict,
         ftpSessions: ftpSessions,
+        sftpSessions: sftpSessions,
+        webdavSessions: webdavSessions,
       );
     } else {
       await operation.runCopy(
@@ -152,6 +164,8 @@ Future<void> transferEntries(
         destinationDir: destUri,
         onConflict: onConflict,
         ftpSessions: ftpSessions,
+        sftpSessions: sftpSessions,
+        webdavSessions: webdavSessions,
       );
     }
   } on UnsupportedError catch (e) {
@@ -176,6 +190,8 @@ Future<void> deleteSelection(BuildContext context, WidgetRef ref, PaneSide side)
         entries: entries,
         toTrash: choice == DeleteChoice.trash,
         ftpSessions: ref.read(ftpSessionManagerProvider.notifier),
+        sftpSessions: ref.read(sftpSessionManagerProvider.notifier),
+        webdavSessions: ref.read(webdavSessionManagerProvider.notifier),
       );
   await ref.read(paneControllerProvider(side).notifier).refresh();
 }
@@ -190,6 +206,14 @@ Future<void> createFolder(BuildContext context, WidgetRef ref, PaneSide side) as
     if (isFtpPath(parentDir)) {
       final ftpSessions = ref.read(ftpSessionManagerProvider.notifier);
       await FtpTransferService(ftpSessions)
+          .createFolder(parentDir: Uri.parse(parentDir), name: name);
+    } else if (isSftpPath(parentDir)) {
+      final sftpSessions = ref.read(sftpSessionManagerProvider.notifier);
+      await SftpTransferService(sftpSessions)
+          .createFolder(parentDir: Uri.parse(parentDir), name: name);
+    } else if (isWebdavPath(parentDir)) {
+      final webdavSessions = ref.read(webdavSessionManagerProvider.notifier);
+      await WebdavTransferService(webdavSessions)
           .createFolder(parentDir: Uri.parse(parentDir), name: name);
     } else {
       await _fileOps.createFolder(parentDir: parentDir, name: name);
@@ -218,11 +242,20 @@ Future<void> renameSelected(BuildContext context, WidgetRef ref, PaneSide side) 
   if (!context.mounted) return;
 
   try {
-    if (entry.location.scheme == 'ftp') {
-      final ftpSessions = ref.read(ftpSessionManagerProvider.notifier);
-      await FtpTransferService(ftpSessions).rename(location: entry.location, newName: newName);
-    } else {
-      await _fileOps.rename(path: entry.location.toFilePath(), newName: newName);
+    switch (entry.location.scheme) {
+      case 'ftp':
+        final ftpSessions = ref.read(ftpSessionManagerProvider.notifier);
+        await FtpTransferService(ftpSessions).rename(location: entry.location, newName: newName);
+      case 'sftp':
+        final sftpSessions = ref.read(sftpSessionManagerProvider.notifier);
+        await SftpTransferService(sftpSessions).rename(location: entry.location, newName: newName);
+      case 'webdav':
+      case 'webdavs':
+        final webdavSessions = ref.read(webdavSessionManagerProvider.notifier);
+        await WebdavTransferService(webdavSessions)
+            .rename(location: entry.location, newName: newName);
+      default:
+        await _fileOps.rename(path: entry.location.toFilePath(), newName: newName);
     }
   } catch (e) {
     if (!context.mounted) return;
@@ -237,32 +270,60 @@ Future<void> toggleBookmark(WidgetRef ref, PaneSide side) async {
   await ref.read(bookmarksProvider.notifier).toggle(path);
 }
 
-/// [entry]를 열 때 쓸 로컬 경로를 얻는다. FTP 항목은 임시 폴더로 내려받고,
-/// 로컬 항목은 그 경로를 그대로 돌려준다. 내장 뷰어(F3)와 OS 기본 앱 열기
-/// 둘 다 이 경로 하나만 있으면 되므로 공용으로 뺐다.
+/// [entry]를 열 때 쓸 로컬 경로를 얻는다. 원격 항목(FTP/SFTP/WebDAV)은 임시
+/// 폴더로 내려받고, 로컬 항목은 그 경로를 그대로 돌려준다. 내장 뷰어(F3)와
+/// OS 기본 앱 열기 둘 다 이 경로 하나만 있으면 되므로 공용으로 뺐다.
 Future<String?> _resolveLocalPath(
   BuildContext context,
   WidgetRef ref,
   FileEntry entry,
 ) async {
-  if (entry.location.scheme != 'ftp') {
+  final scheme = entry.location.scheme;
+  if (scheme == 'file') {
     return entry.location.toFilePath();
   }
-  final client = ref.read(ftpSessionManagerProvider.notifier).clientForUri(entry.location);
+
+  if (scheme == 'ftp') {
+    final client = ref.read(ftpSessionManagerProvider.notifier).clientForUri(entry.location);
+    if (client == null) return null;
+    final tempDir = await Directory.systemTemp.createTemp('daylight_commander_view_');
+    final tempFile = File(p.join(tempDir.path, entry.name));
+    final remoteDir = p.posix.dirname(entry.location.path);
+    await client.changeDirectory(remoteDir.isEmpty ? '/' : remoteDir);
+    final ok = await client.downloadFile(entry.name, tempFile);
+    if (!ok) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('파일을 다운로드하지 못했습니다.')),
+        );
+      }
+      return null;
+    }
+    return tempFile.path;
+  }
+
+  if (scheme == 'sftp') {
+    final client = ref.read(sftpSessionManagerProvider.notifier).clientForUri(entry.location);
+    if (client == null) return null;
+    final tempDir = await Directory.systemTemp.createTemp('daylight_commander_view_');
+    final tempFile = File(p.join(tempDir.path, entry.name));
+    final handle = await client.open(entry.location.path);
+    try {
+      final sink = tempFile.openWrite();
+      await handle.downloadTo(sink);
+      await sink.close();
+    } finally {
+      await handle.close();
+    }
+    return tempFile.path;
+  }
+
+  // webdav / webdavs
+  final client = ref.read(webdavSessionManagerProvider.notifier).clientForUri(entry.location);
   if (client == null) return null;
   final tempDir = await Directory.systemTemp.createTemp('daylight_commander_view_');
   final tempFile = File(p.join(tempDir.path, entry.name));
-  final remoteDir = p.posix.dirname(entry.location.path);
-  await client.changeDirectory(remoteDir.isEmpty ? '/' : remoteDir);
-  final ok = await client.downloadFile(entry.name, tempFile);
-  if (!ok) {
-    if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('파일을 다운로드하지 못했습니다.')),
-      );
-    }
-    return null;
-  }
+  await client.read2File(entry.location.path, tempFile.path);
   return tempFile.path;
 }
 
@@ -301,7 +362,7 @@ Future<void> compressSelection(BuildContext context, WidgetRef ref, PaneSide sid
   if (entries.isEmpty) return;
   if (entries.any((e) => e.location.scheme != 'file')) {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('FTP 항목은 아직 압축을 지원하지 않습니다.')),
+      const SnackBar(content: Text('네트워크 항목은 아직 압축을 지원하지 않습니다.')),
     );
     return;
   }
@@ -398,12 +459,102 @@ Future<void> connectFtpServer(BuildContext context, WidgetRef ref, PaneSide side
   await ref.read(paneControllerProvider(side).notifier).navigateTo(rootUri.toString());
 }
 
-/// 현재 패널이 FTP 위치일 때 그 세션 연결을 끊고 홈 디렉터리로 되돌린다.
-Future<void> disconnectFtp(WidgetRef ref, PaneSide side) async {
+/// SFTP 서버에 연결하고, 성공하면 [side] 패널을 사용자 홈 디렉터리로 이동시킨다
+/// (FTP와 달리 SFTP는 로그인 계정의 홈이 자연스러운 시작 위치).
+Future<void> connectSftpServer(BuildContext context, WidgetRef ref, PaneSide side) async {
+  final request = await showSftpConnectDialog(context);
+  if (request == null || request.host.isEmpty) return;
+  if (!context.mounted) return;
+
+  final sftpSessions = ref.read(sftpSessionManagerProvider.notifier);
+  try {
+    await sftpSessions.connect(
+      host: request.host,
+      port: request.port,
+      username: request.username,
+      password: request.password,
+    );
+  } catch (e) {
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+    return;
+  }
+
+  if (request.save) {
+    await ref.read(sftpProfilesProvider.notifier).add(
+          SftpProfile(host: request.host, port: request.port, username: request.username),
+        );
+  }
+
+  final rootUri = Uri(
+    scheme: 'sftp',
+    userInfo: request.username,
+    host: request.host,
+    port: request.port,
+    path: '/',
+  );
+  await ref.read(paneControllerProvider(side).notifier).navigateTo(rootUri.toString());
+}
+
+/// WebDAV 서버에 연결하고, 성공하면 [side] 패널을 그 서버의 루트로 이동시킨다.
+Future<void> connectWebdavServer(BuildContext context, WidgetRef ref, PaneSide side) async {
+  final request = await showWebdavConnectDialog(context);
+  if (request == null || request.host.isEmpty) return;
+  if (!context.mounted) return;
+
+  final webdavSessions = ref.read(webdavSessionManagerProvider.notifier);
+  try {
+    await webdavSessions.connect(
+      host: request.host,
+      port: request.port,
+      username: request.username,
+      password: request.password,
+      secure: request.useHttps,
+    );
+  } catch (e) {
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+    return;
+  }
+
+  if (request.save) {
+    await ref.read(webdavProfilesProvider.notifier).add(
+          WebdavProfile(
+            host: request.host,
+            port: request.port,
+            username: request.username,
+            useHttps: request.useHttps,
+          ),
+        );
+  }
+
+  final rootUri = Uri(
+    scheme: request.useHttps ? 'webdavs' : 'webdav',
+    userInfo: request.username,
+    host: request.host,
+    port: request.port,
+    path: '/',
+  );
+  await ref.read(paneControllerProvider(side).notifier).navigateTo(rootUri.toString());
+}
+
+/// 현재 패널이 원격 위치(FTP/SFTP/WebDAV)일 때 그 세션 연결을 끊고 홈
+/// 디렉터리로 되돌린다. 어떤 프로토콜이든 경로 문자열만 보고 알아서
+/// 갈라진다 — 패스바에는 통합된 "연결 해제" 버튼 하나만 있으면 된다.
+Future<void> disconnectRemote(WidgetRef ref, PaneSide side) async {
   final path = ref.read(paneControllerProvider(side)).currentPath;
-  if (!isFtpPath(path)) return;
-  final key = FtpSessionManager.keyForUri(Uri.parse(path));
-  await ref.read(ftpSessionManagerProvider.notifier).disconnect(key);
+  if (isFtpPath(path)) {
+    final key = FtpSessionManager.keyForUri(Uri.parse(path));
+    await ref.read(ftpSessionManagerProvider.notifier).disconnect(key);
+  } else if (isSftpPath(path)) {
+    final key = SftpSessionManager.keyForUri(Uri.parse(path));
+    await ref.read(sftpSessionManagerProvider.notifier).disconnect(key);
+  } else if (isWebdavPath(path)) {
+    final key = WebdavSessionManager.keyForUri(Uri.parse(path));
+    await ref.read(webdavSessionManagerProvider.notifier).disconnect(key);
+  } else {
+    return;
+  }
   await ref.read(paneControllerProvider(side).notifier).navigateTo(homeDirectory());
 }
 
@@ -412,7 +563,7 @@ Future<void> showProperties(BuildContext context, WidgetRef ref, PaneSide side) 
   if (selected.length != 1) return;
   if (selected.first.location.scheme != 'file') {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('FTP 항목은 아직 속성 보기를 지원하지 않습니다.')),
+      const SnackBar(content: Text('네트워크 항목은 아직 속성 보기를 지원하지 않습니다.')),
     );
     return;
   }
