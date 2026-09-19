@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- 파일 매니저는 임의 경로(사용자가 선택하지 않은 폴더 포함)에 자유롭게
+	     접근해야 하므로 App Sandbox를 비활성화한다. App Store 배포 대신
+	     공증(notarization)된 독립 배포를 전제로 한다 (ARCHITECTURE.md 9장). -->
+	<key>com.apple.security.app-sandbox</key>
+	<false/>
+	<key>com.apple.security.cs.allow-jit</key>
+	<true/>
+	<key>com.apple.security.network.server</key>
+	<true/>
+</dict>
+</plist>
