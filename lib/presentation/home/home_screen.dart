@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../theme/app_theme.dart';
+import '../theme/theme_mode_provider.dart';
 import '../widgets/operation_banner.dart';
 import 'folder_comparison_provider.dart';
 import 'pane_actions.dart';
@@ -43,6 +44,7 @@ class HomeScreen extends ConsumerWidget {
     final activeSide = ref.watch(activePaneProvider);
     final compareMode = ref.watch(compareModeProvider);
     final activeIsRemote = isRemotePath(ref.watch(paneControllerProvider(activeSide)).currentPath);
+    final themeMode = ref.watch(themeModeProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -72,6 +74,19 @@ class HomeScreen extends ConsumerWidget {
             tooltip: compareMode ? '폴더 비교 끄기' : '폴더 비교 (좌우 패널)',
             onPressed: () =>
                 ref.read(compareModeProvider.notifier).state = !compareMode,
+          ),
+          IconButton(
+            icon: Icon(switch (themeMode) {
+              ThemeMode.system => Icons.brightness_auto_outlined,
+              ThemeMode.light => Icons.light_mode_outlined,
+              ThemeMode.dark => Icons.dark_mode_outlined,
+            }),
+            tooltip: switch (themeMode) {
+              ThemeMode.system => '테마: 시스템 설정 따름 (누르면 라이트로 고정)',
+              ThemeMode.light => '테마: 라이트로 고정 (누르면 다크로 고정)',
+              ThemeMode.dark => '테마: 다크로 고정 (누르면 시스템 설정 따름)',
+            },
+            onPressed: () => ref.read(themeModeProvider.notifier).cycle(),
           ),
           const SizedBox(width: 8),
         ],
