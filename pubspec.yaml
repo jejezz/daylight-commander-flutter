@@ -115,6 +115,7 @@ flutter:
   assets:
     - assets/icons/filetypes/
     - assets/icons/folders/
+    - assets/icons/ui/
 
   fonts:
     - family: SeoulNamsan

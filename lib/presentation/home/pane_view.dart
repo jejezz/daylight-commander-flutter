@@ -10,6 +10,7 @@ import '../../domain/entities/file_entry.dart';
 import '../../l10n/app_localizations.dart';
 import '../theme/app_theme.dart';
 import '../widgets/file_icon.dart';
+import '../widgets/tool_icon.dart';
 import 'bookmarks_provider.dart';
 import 'drag_payload.dart';
 import 'drive_utils.dart';
@@ -321,25 +322,25 @@ class _PathBarState extends State<_PathBar> {
         children: [
           IconButton(
             visualDensity: VisualDensity.compact,
-            icon: const Icon(Icons.arrow_back, size: 15),
+            icon: const ToolIcon('icons8-left.svg', size: 15),
             tooltip: l10n.goBackTooltip,
             onPressed: widget.canGoBack ? widget.onBack : null,
           ),
           IconButton(
             visualDensity: VisualDensity.compact,
-            icon: const Icon(Icons.arrow_forward, size: 15),
+            icon: const ToolIcon('icons8-right.svg', size: 15),
             tooltip: l10n.goForwardTooltip,
             onPressed: widget.canGoForward ? widget.onForward : null,
           ),
           IconButton(
             visualDensity: VisualDensity.compact,
-            icon: const Icon(Icons.arrow_upward, size: 15),
+            icon: const ToolIcon('icons8-up.svg', size: 15),
             tooltip: l10n.goUpTooltip,
             onPressed: widget.onUp,
           ),
           PopupMenuButton<String>(
             tooltip: l10n.switchDriveTooltip,
-            icon: const Icon(Icons.storage_outlined, size: 15),
+            icon: const ToolIcon('icons8-hdd-64.svg', size: 15),
             onSelected: widget.onSelectDrive,
             itemBuilder: (context) => [
               for (final drive in widget.drives)
@@ -348,10 +349,7 @@ class _PathBarState extends State<_PathBar> {
           ),
           PopupMenuButton<String>(
             tooltip: l10n.networkConnectTooltip,
-            icon: Icon(
-              widget.isRemote ? Icons.cloud_done_outlined : Icons.cloud_outlined,
-              size: 15,
-            ),
+            icon: ToolIcon('icons8-cloud-storage-64.svg', size: 15, active: widget.isRemote),
             onSelected: (value) {
               switch (value) {
                 case 'smb':
@@ -379,18 +377,14 @@ class _PathBarState extends State<_PathBar> {
           ),
           IconButton(
             visualDensity: VisualDensity.compact,
-            icon: Icon(
-              widget.isBookmarked ? Icons.star : Icons.star_border,
-              size: 15,
-              color: widget.isBookmarked ? Colors.amber : null,
-            ),
+            icon: ToolIcon('icons8-heart-64.svg', size: 15, active: widget.isBookmarked),
             tooltip: widget.isBookmarked ? l10n.removeBookmarkTooltip : l10n.addBookmarkTooltip,
             onPressed: widget.onToggleBookmark,
           ),
           if (widget.bookmarks.isNotEmpty || widget.recentFolders.isNotEmpty)
             PopupMenuButton<String>(
               tooltip: l10n.bookmarksAndRecentTooltip,
-              icon: const Icon(Icons.bookmarks_outlined, size: 15),
+              icon: const ToolIcon('icons8-favorite-folder-64.svg', size: 15),
               onSelected: widget.onSelectBookmark,
               itemBuilder: (context) => [
                 if (widget.bookmarks.isNotEmpty) ...[
@@ -463,12 +457,7 @@ class _PathBarState extends State<_PathBar> {
           ),
           IconButton(
             visualDensity: VisualDensity.compact,
-            icon: Icon(
-              widget.showHidden
-                  ? Icons.visibility
-                  : Icons.visibility_off_outlined,
-              size: 15,
-            ),
+            icon: ToolIcon('icons8-hide-64.svg', size: 15, active: widget.showHidden),
             tooltip: l10n.showHiddenTooltip,
             onPressed: widget.onToggleHidden,
           ),
@@ -505,11 +494,7 @@ class _ColumnHeader extends StatelessWidget {
               Text(text, style: style),
               if (isActive) ...[
                 const SizedBox(width: 2),
-                Icon(
-                  ascending ? Icons.arrow_drop_up : Icons.arrow_drop_down,
-                  size: 14,
-                  color: style?.color,
-                ),
+                ToolIcon('icons8-sorting-arrows-64.svg', size: 14, flipVertical: !ascending),
               ],
             ],
           ),

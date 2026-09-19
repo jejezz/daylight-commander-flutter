@@ -7,6 +7,7 @@ import '../theme/app_theme.dart';
 import '../theme/locale_provider.dart';
 import '../theme/theme_mode_provider.dart';
 import '../widgets/operation_banner.dart';
+import '../widgets/tool_icon.dart';
 import 'folder_comparison_provider.dart';
 import 'pane_actions.dart';
 import 'pane_controller.dart';
@@ -66,24 +67,21 @@ class HomeScreen extends ConsumerWidget {
         toolbarHeight: 44,
         actions: [
           IconButton(
-            icon: const Icon(Icons.terminal),
+            icon: const ToolIcon('icons8-terminal.svg'),
             tooltip: activeIsRemote ? l10n.openTerminalDisabledTooltip : l10n.openTerminalTooltip,
             onPressed: activeIsRemote ? null : () => openTerminalHere(ref, activeSide),
           ),
           IconButton(
-            icon: Icon(
-              Icons.compare_arrows,
-              color: compareMode ? (isDark ? AppColors.primary : AppColors.primaryDeep) : null,
-            ),
+            icon: ToolIcon('icons8-folder-exchange.svg', active: compareMode),
             tooltip: compareMode ? l10n.compareModeOffTooltip : l10n.compareModeOnTooltip,
             onPressed: () =>
                 ref.read(compareModeProvider.notifier).state = !compareMode,
           ),
           IconButton(
-            icon: Icon(switch (themeMode) {
-              ThemeMode.system => Icons.brightness_auto_outlined,
-              ThemeMode.light => Icons.light_mode_outlined,
-              ThemeMode.dark => Icons.dark_mode_outlined,
+            icon: ToolIcon(switch (themeMode) {
+              ThemeMode.system => 'icons8-automatic-contrast-64.svg',
+              ThemeMode.light => 'icons8-sun-64.svg',
+              ThemeMode.dark => 'icons8-moon-symbol-64.svg',
             }),
             tooltip: switch (themeMode) {
               ThemeMode.system => l10n.themeSystemTooltip,
@@ -93,7 +91,7 @@ class HomeScreen extends ConsumerWidget {
             onPressed: () => ref.read(themeModeProvider.notifier).cycle(),
           ),
           IconButton(
-            icon: const Icon(Icons.translate),
+            icon: const ToolIcon('icons8-language-64.svg'),
             tooltip: l10n.languageTooltip(
               switch (locale?.languageCode) {
                 'ko' => l10n.languageKorean,
@@ -191,7 +189,7 @@ class _SyncBar extends ConsumerWidget {
         Expanded(
           child: OutlinedButton.icon(
             onPressed: leftCount > 0 ? () => syncFolders(context, ref, PaneSide.left) : null,
-            icon: const Icon(Icons.arrow_forward, size: 16),
+            icon: const ToolIcon('icons8-folder-exchange.svg', size: 16),
             label: Text(l10n.syncDiffToRight(leftCount), overflow: TextOverflow.ellipsis),
           ),
         ),
@@ -199,7 +197,7 @@ class _SyncBar extends ConsumerWidget {
         Expanded(
           child: OutlinedButton.icon(
             onPressed: rightCount > 0 ? () => syncFolders(context, ref, PaneSide.right) : null,
-            icon: const Icon(Icons.arrow_back, size: 16),
+            icon: const ToolIcon('icons8-folder-exchange.svg', size: 16),
             label: Text(l10n.syncDiffToLeft(rightCount), overflow: TextOverflow.ellipsis),
           ),
         ),
@@ -209,7 +207,7 @@ class _SyncBar extends ConsumerWidget {
             onPressed: (leftCount > 0 || rightCount > 0)
                 ? () => syncFoldersBidirectional(context, ref)
                 : null,
-            icon: const Icon(Icons.sync, size: 16),
+            icon: const ToolIcon('icons8-folder-exchange.svg', size: 16),
             label: Text(l10n.bidirectionalSyncButton, overflow: TextOverflow.ellipsis),
           ),
         ),
