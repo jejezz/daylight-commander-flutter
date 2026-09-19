@@ -18,9 +18,10 @@ xattr -cr "/Applications/Daylight Commander.app"
 
 ### Windows
 
-`DaylightCommander-windows.zip` 압축을 풀고 `daylight_commander.exe`를
-실행하세요. 서명되지 않은 실행 파일이라 SmartScreen 경고가 뜰 수
-있습니다 — "추가 정보" → "실행"을 클릭하면 됩니다.
+`DaylightCommander-Setup.exe`를 실행해 설치하세요. 서명되지 않은 설치
+파일이라 SmartScreen 경고가 뜰 수 있습니다 — "추가 정보" → "실행"을
+클릭하면 됩니다. 설치 후 시작 메뉴에 바로가기가 생기고, "앱 및 기능"에서
+제거할 수 있습니다.
 
 ### Linux
 

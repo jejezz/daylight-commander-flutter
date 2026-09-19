@@ -85,8 +85,9 @@ Windows · macOS · Linux
 
 ### Windows
 
-1. `DaylightCommander-windows.zip` 압축을 풀고 `daylight_commander.exe` 실행
-2. 서명되지 않은 실행 파일이라 SmartScreen 경고가 뜰 수 있습니다 —
+1. `DaylightCommander-Setup.exe`를 실행해 설치 마법사를 따라가세요
+   (시작 메뉴 바로가기 생성, "앱 및 기능"에서 제거 가능)
+2. 서명되지 않은 설치 파일이라 SmartScreen 경고가 뜰 수 있습니다 —
    "추가 정보" → "실행"을 클릭하면 됩니다
 
 ### Linux
