@@ -123,11 +123,23 @@ Debian 패키지(`.deb`)로 만들 수도 있다 — 둘 다 이 프로젝트에
 올려도 된다):
 
 ```bash
-gh release create v1.1.0 \
+gh release create v1.0.0 \
   dist/DaylightCommander-macos.dmg \
   dist/DaylightCommander-windows.zip \
   dist/DaylightCommander-linux.tar.gz \
-  --title "v1.1.0" \
+  --title "v1.0.0" \
+  --generate-notes
+```
+```bash
+gh release create v1.0.0 \
+  dist/DaylightCommander-windows.zip \
+  --title "v1.0.0" \
+  --generate-notes
+```
+```bash
+gh release create v1.0.0 \
+  dist/DaylightCommander-linux.tar.gz \
+  --title "v1.0.0" \
   --generate-notes
 ```
 
