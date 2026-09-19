@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/bytes_format.dart';
+import '../../core/date_format.dart';
 import '../../domain/entities/file_conflict.dart';
+import '../../domain/entities/file_entry.dart';
 import '../../l10n/app_localizations.dart';
 import '../home/ftp_profiles_provider.dart';
 import '../home/network_profiles_provider.dart';
@@ -741,4 +743,58 @@ Future<ConflictAction> showConflictDialog(
     ),
   );
   return action ?? ConflictAction.cancel;
+}
+
+enum SyncConflictAction { useLeft, useRight, skip, cancel }
+
+/// 양방향 동기화 중 양쪽에 다 있지만 내용이 다른 파일 하나를 만났을 때
+/// 어느 쪽을 쓸지 묻는다. [showConflictDialog]와 달리 "원본→대상" 방향이
+/// 없는 대등한 두 파일 중 하나를 고르는 상황이라 별도 다이얼로그로 뺐다.
+Future<SyncConflictAction> showSyncConflictDialog(
+  BuildContext context, {
+  required FileEntry left,
+  required FileEntry right,
+}) async {
+  final l10n = AppLocalizations.of(context);
+  final action = await showDialog<SyncConflictAction>(
+    context: context,
+    barrierDismissible: false,
+    builder: (context) => AlertDialog(
+      title: Text(l10n.syncConflictTitle(left.name)),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(l10n.syncConflictLeftInfo(
+            formatBytes(left.sizeBytes),
+            formatModified(left.modifiedAt),
+          )),
+          const SizedBox(height: 4),
+          Text(l10n.syncConflictRightInfo(
+            formatBytes(right.sizeBytes),
+            formatModified(right.modifiedAt),
+          )),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(SyncConflictAction.cancel),
+          child: Text(l10n.cancel),
+        ),
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(SyncConflictAction.skip),
+          child: Text(l10n.skip),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.of(context).pop(SyncConflictAction.useLeft),
+          child: Text(l10n.useLeftVersion),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.of(context).pop(SyncConflictAction.useRight),
+          child: Text(l10n.useRightVersion),
+        ),
+      ],
+    ),
+  );
+  return action ?? SyncConflictAction.cancel;
 }

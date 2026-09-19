@@ -203,6 +203,16 @@ class _SyncBar extends ConsumerWidget {
             label: Text(l10n.syncDiffToLeft(rightCount), overflow: TextOverflow.ellipsis),
           ),
         ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: OutlinedButton.icon(
+            onPressed: (leftCount > 0 || rightCount > 0)
+                ? () => syncFoldersBidirectional(context, ref)
+                : null,
+            icon: const Icon(Icons.sync, size: 16),
+            label: Text(l10n.bidirectionalSyncButton, overflow: TextOverflow.ellipsis),
+          ),
+        ),
       ],
     );
   }

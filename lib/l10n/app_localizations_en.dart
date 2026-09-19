@@ -373,6 +373,30 @@ class AppLocalizationsEn extends AppLocalizations {
   String get openWithDefaultAppButton => 'Open with Default App';
 
   @override
+  String get bidirectionalSyncButton => 'Two-way Sync';
+
+  @override
+  String syncConflictTitle(String name) {
+    return '$name — Which version should be used?';
+  }
+
+  @override
+  String syncConflictLeftInfo(String size, String modified) {
+    return 'Left: $size · $modified';
+  }
+
+  @override
+  String syncConflictRightInfo(String size, String modified) {
+    return 'Right: $size · $modified';
+  }
+
+  @override
+  String get useLeftVersion => 'Use Left File';
+
+  @override
+  String get useRightVersion => 'Use Right File';
+
+  @override
   String compressFailed(String error) {
     return 'Compression failed: $error';
   }

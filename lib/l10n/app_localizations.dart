@@ -764,6 +764,42 @@ abstract class AppLocalizations {
   /// **'기본 앱으로 열기'**
   String get openWithDefaultAppButton;
 
+  /// No description provided for @bidirectionalSyncButton.
+  ///
+  /// In ko, this message translates to:
+  /// **'양방향 동기화'**
+  String get bidirectionalSyncButton;
+
+  /// No description provided for @syncConflictTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'{name} — 어느 쪽을 사용할까요?'**
+  String syncConflictTitle(String name);
+
+  /// No description provided for @syncConflictLeftInfo.
+  ///
+  /// In ko, this message translates to:
+  /// **'왼쪽: {size} · {modified}'**
+  String syncConflictLeftInfo(String size, String modified);
+
+  /// No description provided for @syncConflictRightInfo.
+  ///
+  /// In ko, this message translates to:
+  /// **'오른쪽: {size} · {modified}'**
+  String syncConflictRightInfo(String size, String modified);
+
+  /// No description provided for @useLeftVersion.
+  ///
+  /// In ko, this message translates to:
+  /// **'왼쪽 파일 사용'**
+  String get useLeftVersion;
+
+  /// No description provided for @useRightVersion.
+  ///
+  /// In ko, this message translates to:
+  /// **'오른쪽 파일 사용'**
+  String get useRightVersion;
+
   /// No description provided for @compressFailed.
   ///
   /// In ko, this message translates to:
