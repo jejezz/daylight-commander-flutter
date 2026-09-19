@@ -22,6 +22,7 @@ import '../../domain/entities/file_entry.dart';
 import '../../domain/entities/ftp_profile.dart';
 import '../../domain/entities/sftp_profile.dart';
 import '../../domain/entities/webdav_profile.dart';
+import '../../l10n/app_localizations.dart';
 import '../viewer/viewer_screen.dart';
 import '../widgets/dialogs.dart';
 import '../widgets/properties_dialog.dart';
@@ -134,7 +135,7 @@ Future<void> transferEntries(
         (p.posix.equals(destPath, srcPath) || p.posix.isWithin(srcPath, destPath))) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('폴더를 자기 자신 안으로 옮길 수 없습니다.')),
+          SnackBar(content: Text(AppLocalizations.of(context).cannotMoveFolderIntoItself)),
         );
       }
       return;
@@ -197,7 +198,8 @@ Future<void> deleteSelection(BuildContext context, WidgetRef ref, PaneSide side)
 }
 
 Future<void> createFolder(BuildContext context, WidgetRef ref, PaneSide side) async {
-  final name = await promptForName(context, title: '새 폴더', confirmLabel: '만들기');
+  final l10n = AppLocalizations.of(context);
+  final name = await promptForName(context, title: l10n.newFolderTitle, confirmLabel: l10n.createLabel);
   if (name == null || name.isEmpty) return;
   if (!context.mounted) return;
 
@@ -232,11 +234,12 @@ Future<void> renameSelected(BuildContext context, WidgetRef ref, PaneSide side) 
   if (selected.length != 1) return;
   final entry = selected.first;
 
+  final l10n = AppLocalizations.of(context);
   final newName = await promptForName(
     context,
-    title: '이름 변경',
+    title: l10n.renameTitle,
     initialValue: entry.name,
-    confirmLabel: '변경',
+    confirmLabel: l10n.renameLabel,
   );
   if (newName == null || newName.isEmpty || newName == entry.name) return;
   if (!context.mounted) return;
@@ -294,7 +297,7 @@ Future<String?> _resolveLocalPath(
     if (!ok) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('파일을 다운로드하지 못했습니다.')),
+          SnackBar(content: Text(AppLocalizations.of(context).downloadFailed)),
         );
       }
       return null;
@@ -360,9 +363,10 @@ Future<void> compressSelection(BuildContext context, WidgetRef ref, PaneSide sid
   final pane = ref.read(paneControllerProvider(side));
   final entries = pane.selectedEntries;
   if (entries.isEmpty) return;
+  final l10n = AppLocalizations.of(context);
   if (entries.any((e) => e.location.scheme != 'file')) {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('네트워크 항목은 아직 압축을 지원하지 않습니다.')),
+      SnackBar(content: Text(l10n.networkCompressUnsupported)),
     );
     return;
   }
@@ -370,9 +374,9 @@ Future<void> compressSelection(BuildContext context, WidgetRef ref, PaneSide sid
   final defaultName = entries.length == 1 ? '${entries.first.name}.zip' : 'archive.zip';
   final name = await promptForName(
     context,
-    title: '압축',
+    title: l10n.compressLabel,
     initialValue: defaultName,
-    confirmLabel: '압축',
+    confirmLabel: l10n.compressLabel,
   );
   if (name == null || name.isEmpty) return;
   if (!context.mounted) return;
@@ -384,7 +388,8 @@ Future<void> compressSelection(BuildContext context, WidgetRef ref, PaneSide sid
     await _archiveService.compressToZip(sources: entries, zipPath: zipPath);
   } catch (e) {
     if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('압축 실패: $e')));
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(AppLocalizations.of(context).compressFailed('$e'))));
     return;
   }
   await ref.read(paneControllerProvider(side).notifier).refresh();
@@ -408,7 +413,8 @@ Future<void> extractSelection(BuildContext context, WidgetRef ref, PaneSide side
     await _archiveService.extractZip(zipPath: zipPath, destinationDir: destDir);
   } catch (e) {
     if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('압축 풀기 실패: $e')));
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(AppLocalizations.of(context).extractFailed('$e'))));
     return;
   }
   await ref.read(paneControllerProvider(side).notifier).refresh();
@@ -563,7 +569,7 @@ Future<void> showProperties(BuildContext context, WidgetRef ref, PaneSide side) 
   if (selected.length != 1) return;
   if (selected.first.location.scheme != 'file') {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('네트워크 항목은 아직 속성 보기를 지원하지 않습니다.')),
+      SnackBar(content: Text(AppLocalizations.of(context).networkPropertiesUnsupported)),
     );
     return;
   }
@@ -618,25 +624,26 @@ Future<void> showRowContextMenu(
     globalPosition & const Size(1, 1),
     Offset.zero & overlay.size,
   );
+  final l10n = AppLocalizations.of(context);
 
   final action = await showMenu<String>(
     context: context,
     position: position,
     items: [
-      if (canOpen) const PopupMenuItem(value: 'open', child: Text('열기')),
+      if (canOpen) PopupMenuItem(value: 'open', child: Text(l10n.contextMenuOpen)),
       if (canView)
-        const PopupMenuItem(value: 'open_with_default', child: Text('연결된 프로그램으로 열기')),
-      if (canView) const PopupMenuItem(value: 'view', child: Text('보기 (F3)')),
+        PopupMenuItem(value: 'open_with_default', child: Text(l10n.contextMenuOpenWithDefault)),
+      if (canView) PopupMenuItem(value: 'view', child: Text(l10n.contextMenuView)),
       if (singleTarget != null)
-        const PopupMenuItem(value: 'rename', child: Text('이름변경 (F2)')),
-      const PopupMenuItem(value: 'copy', child: Text('복사 → 반대 패널 (F5)')),
-      const PopupMenuItem(value: 'move', child: Text('이동 → 반대 패널 (F6)')),
-      const PopupMenuItem(value: 'delete', child: Text('삭제 (F8)')),
-      if (allLocal) const PopupMenuItem(value: 'compress', child: Text('압축')),
-      if (canExtract) const PopupMenuItem(value: 'extract', child: Text('압축풀기')),
+        PopupMenuItem(value: 'rename', child: Text(l10n.contextMenuRename)),
+      PopupMenuItem(value: 'copy', child: Text(l10n.contextMenuCopy)),
+      PopupMenuItem(value: 'move', child: Text(l10n.contextMenuMove)),
+      PopupMenuItem(value: 'delete', child: Text(l10n.contextMenuDelete)),
+      if (allLocal) PopupMenuItem(value: 'compress', child: Text(l10n.compressLabel)),
+      if (canExtract) PopupMenuItem(value: 'extract', child: Text(l10n.extractLabel)),
       if (singleTarget != null && allLocal)
-        const PopupMenuItem(value: 'properties', child: Text('속성')),
-      if (canBookmark) const PopupMenuItem(value: 'bookmark', child: Text('즐겨찾기 추가')),
+        PopupMenuItem(value: 'properties', child: Text(l10n.propertiesTitle)),
+      if (canBookmark) PopupMenuItem(value: 'bookmark', child: Text(l10n.addBookmarkTooltip)),
     ],
   );
 

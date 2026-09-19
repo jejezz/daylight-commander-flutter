@@ -3,17 +3,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/bytes_format.dart';
 import '../../domain/entities/file_conflict.dart';
+import '../../l10n/app_localizations.dart';
 import '../home/ftp_profiles_provider.dart';
 import '../home/network_profiles_provider.dart';
 import '../home/sftp_profiles_provider.dart';
 import '../home/webdav_profiles_provider.dart';
 
-/// 새 폴더/이름변경에 쓰는 단일 텍스트 입력 다이얼로그.
+/// 새 폴더/이름변경에 쓰는 단일 텍스트 입력 다이얼로그. [confirmLabel]을
+/// 안 넘기면 "확인"(로케일에 맞게 번역됨)을 쓴다.
 Future<String?> promptForName(
   BuildContext context, {
   required String title,
   String initialValue = '',
-  String confirmLabel = '확인',
+  String? confirmLabel,
 }) {
   final controller = TextEditingController(text: initialValue);
   return showDialog<String>(
@@ -28,11 +30,11 @@ Future<String?> promptForName(
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('취소'),
+          child: Text(AppLocalizations.of(context).cancel),
         ),
         FilledButton(
           onPressed: () => Navigator.of(context).pop(controller.text.trim()),
-          child: Text(confirmLabel),
+          child: Text(confirmLabel ?? AppLocalizations.of(context).confirm),
         ),
       ],
     ),
@@ -77,8 +79,9 @@ class _SmbConnectDialogState extends ConsumerState<_SmbConnectDialog> {
   @override
   Widget build(BuildContext context) {
     final profiles = ref.watch(networkProfilesProvider);
+    final l10n = AppLocalizations.of(context);
     return AlertDialog(
-      title: const Text('네트워크 드라이브 연결 (SMB)'),
+      title: Text(l10n.smbConnectTitle),
       content: SizedBox(
         width: 360,
         child: Column(
@@ -86,7 +89,7 @@ class _SmbConnectDialogState extends ConsumerState<_SmbConnectDialog> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (profiles.isNotEmpty) ...[
-              const Text('저장된 서버', style: TextStyle(fontWeight: FontWeight.w500)),
+              Text(l10n.savedServers, style: const TextStyle(fontWeight: FontWeight.w500)),
               for (final profile in profiles)
                 ListTile(
                   dense: true,
@@ -109,22 +112,22 @@ class _SmbConnectDialogState extends ConsumerState<_SmbConnectDialog> {
             TextField(
               controller: _hostController,
               autofocus: true,
-              decoration: const InputDecoration(labelText: '호스트 (예: 192.168.0.10)'),
+              decoration: InputDecoration(labelText: l10n.smbHostHint),
             ),
             const SizedBox(height: 8),
             TextField(
               controller: _shareController,
-              decoration: const InputDecoration(labelText: '공유 이름 (선택)'),
+              decoration: InputDecoration(labelText: l10n.smbShareHint),
             ),
             CheckboxListTile(
               contentPadding: EdgeInsets.zero,
               value: _save,
               onChanged: (v) => setState(() => _save = v ?? false),
-              title: const Text('이 서버 정보 저장 (비밀번호 제외)'),
+              title: Text(l10n.saveServerInfoExcludingPassword),
             ),
-            const Text(
-              '연결하면 OS의 서버 연결 대화상자가 뜹니다. 비밀번호는 그 대화상자에\n직접 입력하세요 — 이 앱은 자격증명을 저장하거나 다루지 않습니다.',
-              style: TextStyle(fontSize: 11.5),
+            Text(
+              l10n.smbDialogNote,
+              style: const TextStyle(fontSize: 11.5),
             ),
           ],
         ),
@@ -132,7 +135,7 @@ class _SmbConnectDialogState extends ConsumerState<_SmbConnectDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('취소'),
+          child: Text(l10n.cancel),
         ),
         FilledButton(
           onPressed: () => Navigator.of(context).pop(
@@ -142,7 +145,7 @@ class _SmbConnectDialogState extends ConsumerState<_SmbConnectDialog> {
               save: _save,
             ),
           ),
-          child: const Text('연결'),
+          child: Text(l10n.connect),
         ),
       ],
     );
@@ -158,31 +161,32 @@ class PatternSelectionResult {
 
 Future<PatternSelectionResult?> showPatternSelectDialog(BuildContext context) {
   final controller = TextEditingController(text: '*.');
+  final l10n = AppLocalizations.of(context);
   return showDialog<PatternSelectionResult>(
     context: context,
     builder: (context) => AlertDialog(
-      title: const Text('패턴으로 선택'),
+      title: Text(l10n.patternSelectTitle),
       content: TextField(
         controller: controller,
         autofocus: true,
-        decoration: const InputDecoration(hintText: '예: *.jpg, IMG_*.png'),
+        decoration: InputDecoration(hintText: l10n.patternHint),
       ),
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('취소'),
+          child: Text(l10n.cancel),
         ),
         TextButton(
           onPressed: () => Navigator.of(context).pop(
             PatternSelectionResult(pattern: controller.text.trim(), add: false),
           ),
-          child: const Text('선택 해제'),
+          child: Text(l10n.deselect),
         ),
         FilledButton(
           onPressed: () => Navigator.of(context).pop(
             PatternSelectionResult(pattern: controller.text.trim(), add: true),
           ),
-          child: const Text('선택 추가'),
+          child: Text(l10n.addToSelection),
         ),
       ],
     ),
@@ -242,8 +246,9 @@ class _FtpConnectDialogState extends ConsumerState<_FtpConnectDialog> {
   @override
   Widget build(BuildContext context) {
     final profiles = ref.watch(ftpProfilesProvider);
+    final l10n = AppLocalizations.of(context);
     return AlertDialog(
-      title: const Text('FTP 서버 연결'),
+      title: Text(l10n.ftpConnectTitle),
       content: SizedBox(
         width: 360,
         child: Column(
@@ -251,7 +256,7 @@ class _FtpConnectDialogState extends ConsumerState<_FtpConnectDialog> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (profiles.isNotEmpty) ...[
-              const Text('저장된 서버', style: TextStyle(fontWeight: FontWeight.w500)),
+              Text(l10n.savedServers, style: const TextStyle(fontWeight: FontWeight.w500)),
               for (final profile in profiles)
                 ListTile(
                   dense: true,
@@ -277,7 +282,7 @@ class _FtpConnectDialogState extends ConsumerState<_FtpConnectDialog> {
                   child: TextField(
                     controller: _hostController,
                     autofocus: true,
-                    decoration: const InputDecoration(labelText: '호스트'),
+                    decoration: InputDecoration(labelText: l10n.host),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -285,7 +290,7 @@ class _FtpConnectDialogState extends ConsumerState<_FtpConnectDialog> {
                   child: TextField(
                     controller: _portController,
                     keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(labelText: '포트'),
+                    decoration: InputDecoration(labelText: l10n.port),
                   ),
                 ),
               ],
@@ -294,29 +299,29 @@ class _FtpConnectDialogState extends ConsumerState<_FtpConnectDialog> {
               contentPadding: EdgeInsets.zero,
               value: _anonymous,
               onChanged: (v) => setState(() => _anonymous = v ?? true),
-              title: const Text('익명(anonymous) 로그인'),
+              title: Text(l10n.anonymousLogin),
             ),
             if (!_anonymous) ...[
               TextField(
                 controller: _userController,
-                decoration: const InputDecoration(labelText: '사용자명'),
+                decoration: InputDecoration(labelText: l10n.username),
               ),
               const SizedBox(height: 8),
               TextField(
                 controller: _passController,
                 obscureText: true,
-                decoration: const InputDecoration(labelText: '비밀번호'),
+                decoration: InputDecoration(labelText: l10n.password),
               ),
             ],
             CheckboxListTile(
               contentPadding: EdgeInsets.zero,
               value: _save,
               onChanged: (v) => setState(() => _save = v ?? false),
-              title: const Text('이 서버 정보 저장 (비밀번호 제외)'),
+              title: Text(l10n.saveServerInfoExcludingPassword),
             ),
-            const Text(
-              '비밀번호는 이 연결에만 사용되고 저장되지 않습니다.',
-              style: TextStyle(fontSize: 11.5),
+            Text(
+              l10n.passwordNotStoredNote,
+              style: const TextStyle(fontSize: 11.5),
             ),
           ],
         ),
@@ -324,7 +329,7 @@ class _FtpConnectDialogState extends ConsumerState<_FtpConnectDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('취소'),
+          child: Text(l10n.cancel),
         ),
         FilledButton(
           onPressed: () => Navigator.of(context).pop(
@@ -336,7 +341,7 @@ class _FtpConnectDialogState extends ConsumerState<_FtpConnectDialog> {
               save: _save,
             ),
           ),
-          child: const Text('연결'),
+          child: Text(l10n.connect),
         ),
       ],
     );
@@ -394,8 +399,9 @@ class _SftpConnectDialogState extends ConsumerState<_SftpConnectDialog> {
   @override
   Widget build(BuildContext context) {
     final profiles = ref.watch(sftpProfilesProvider);
+    final l10n = AppLocalizations.of(context);
     return AlertDialog(
-      title: const Text('SFTP 서버 연결'),
+      title: Text(l10n.sftpConnectTitle),
       content: SizedBox(
         width: 360,
         child: Column(
@@ -403,7 +409,7 @@ class _SftpConnectDialogState extends ConsumerState<_SftpConnectDialog> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (profiles.isNotEmpty) ...[
-              const Text('저장된 서버', style: TextStyle(fontWeight: FontWeight.w500)),
+              Text(l10n.savedServers, style: const TextStyle(fontWeight: FontWeight.w500)),
               for (final profile in profiles)
                 ListTile(
                   dense: true,
@@ -428,7 +434,7 @@ class _SftpConnectDialogState extends ConsumerState<_SftpConnectDialog> {
                   child: TextField(
                     controller: _hostController,
                     autofocus: true,
-                    decoration: const InputDecoration(labelText: '호스트'),
+                    decoration: InputDecoration(labelText: l10n.host),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -436,7 +442,7 @@ class _SftpConnectDialogState extends ConsumerState<_SftpConnectDialog> {
                   child: TextField(
                     controller: _portController,
                     keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(labelText: '포트'),
+                    decoration: InputDecoration(labelText: l10n.port),
                   ),
                 ),
               ],
@@ -444,23 +450,23 @@ class _SftpConnectDialogState extends ConsumerState<_SftpConnectDialog> {
             const SizedBox(height: 8),
             TextField(
               controller: _userController,
-              decoration: const InputDecoration(labelText: '사용자명'),
+              decoration: InputDecoration(labelText: l10n.username),
             ),
             const SizedBox(height: 8),
             TextField(
               controller: _passController,
               obscureText: true,
-              decoration: const InputDecoration(labelText: '비밀번호'),
+              decoration: InputDecoration(labelText: l10n.password),
             ),
             CheckboxListTile(
               contentPadding: EdgeInsets.zero,
               value: _save,
               onChanged: (v) => setState(() => _save = v ?? false),
-              title: const Text('이 서버 정보 저장 (비밀번호 제외)'),
+              title: Text(l10n.saveServerInfoExcludingPassword),
             ),
-            const Text(
-              '비밀번호는 이 연결에만 사용되고 저장되지 않습니다.',
-              style: TextStyle(fontSize: 11.5),
+            Text(
+              l10n.passwordNotStoredNote,
+              style: const TextStyle(fontSize: 11.5),
             ),
           ],
         ),
@@ -468,7 +474,7 @@ class _SftpConnectDialogState extends ConsumerState<_SftpConnectDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('취소'),
+          child: Text(l10n.cancel),
         ),
         FilledButton(
           onPressed: () => Navigator.of(context).pop(
@@ -480,7 +486,7 @@ class _SftpConnectDialogState extends ConsumerState<_SftpConnectDialog> {
               save: _save,
             ),
           ),
-          child: const Text('연결'),
+          child: Text(l10n.connect),
         ),
       ],
     );
@@ -541,8 +547,9 @@ class _WebdavConnectDialogState extends ConsumerState<_WebdavConnectDialog> {
   @override
   Widget build(BuildContext context) {
     final profiles = ref.watch(webdavProfilesProvider);
+    final l10n = AppLocalizations.of(context);
     return AlertDialog(
-      title: const Text('WebDAV 서버 연결'),
+      title: Text(l10n.webdavConnectTitle),
       content: SizedBox(
         width: 360,
         child: Column(
@@ -550,7 +557,7 @@ class _WebdavConnectDialogState extends ConsumerState<_WebdavConnectDialog> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (profiles.isNotEmpty) ...[
-              const Text('저장된 서버', style: TextStyle(fontWeight: FontWeight.w500)),
+              Text(l10n.savedServers, style: const TextStyle(fontWeight: FontWeight.w500)),
               for (final profile in profiles)
                 ListTile(
                   dense: true,
@@ -579,7 +586,7 @@ class _WebdavConnectDialogState extends ConsumerState<_WebdavConnectDialog> {
                   child: TextField(
                     controller: _hostController,
                     autofocus: true,
-                    decoration: const InputDecoration(labelText: '호스트'),
+                    decoration: InputDecoration(labelText: l10n.host),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -587,7 +594,7 @@ class _WebdavConnectDialogState extends ConsumerState<_WebdavConnectDialog> {
                   child: TextField(
                     controller: _portController,
                     keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(labelText: '포트'),
+                    decoration: InputDecoration(labelText: l10n.port),
                   ),
                 ),
               ],
@@ -604,28 +611,28 @@ class _WebdavConnectDialogState extends ConsumerState<_WebdavConnectDialog> {
                   }
                 });
               },
-              title: const Text('HTTPS 사용'),
+              title: Text(l10n.useHttps),
             ),
             const SizedBox(height: 8),
             TextField(
               controller: _userController,
-              decoration: const InputDecoration(labelText: '사용자명'),
+              decoration: InputDecoration(labelText: l10n.username),
             ),
             const SizedBox(height: 8),
             TextField(
               controller: _passController,
               obscureText: true,
-              decoration: const InputDecoration(labelText: '비밀번호'),
+              decoration: InputDecoration(labelText: l10n.password),
             ),
             CheckboxListTile(
               contentPadding: EdgeInsets.zero,
               value: _save,
               onChanged: (v) => setState(() => _save = v ?? false),
-              title: const Text('이 서버 정보 저장 (비밀번호 제외)'),
+              title: Text(l10n.saveServerInfoExcludingPassword),
             ),
-            const Text(
-              '비밀번호는 이 연결에만 사용되고 저장되지 않습니다.',
-              style: TextStyle(fontSize: 11.5),
+            Text(
+              l10n.passwordNotStoredNote,
+              style: const TextStyle(fontSize: 11.5),
             ),
           ],
         ),
@@ -633,7 +640,7 @@ class _WebdavConnectDialogState extends ConsumerState<_WebdavConnectDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('취소'),
+          child: Text(l10n.cancel),
         ),
         FilledButton(
           onPressed: () => Navigator.of(context).pop(
@@ -646,7 +653,7 @@ class _WebdavConnectDialogState extends ConsumerState<_WebdavConnectDialog> {
               save: _save,
             ),
           ),
-          child: const Text('연결'),
+          child: Text(l10n.connect),
         ),
       ],
     );
@@ -659,23 +666,24 @@ Future<DeleteChoice> showDeleteConfirmDialog(
   BuildContext context, {
   required int count,
 }) async {
+  final l10n = AppLocalizations.of(context);
   final choice = await showDialog<DeleteChoice>(
     context: context,
     builder: (context) => AlertDialog(
-      title: const Text('삭제'),
-      content: Text('선택한 $count개 항목을 삭제할까요?'),
+      title: Text(l10n.deleteTitle),
+      content: Text(l10n.deleteConfirmMessage(count)),
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(DeleteChoice.cancel),
-          child: const Text('취소'),
+          child: Text(l10n.cancel),
         ),
         TextButton(
           onPressed: () => Navigator.of(context).pop(DeleteChoice.permanent),
-          child: const Text('영구 삭제'),
+          child: Text(l10n.permanentDelete),
         ),
         FilledButton(
           onPressed: () => Navigator.of(context).pop(DeleteChoice.trash),
-          child: const Text('휴지통으로 이동'),
+          child: Text(l10n.moveToTrash),
         ),
       ],
     ),
@@ -688,45 +696,46 @@ Future<ConflictAction> showConflictDialog(
   BuildContext context,
   FileConflict conflict,
 ) async {
+  final l10n = AppLocalizations.of(context);
   final action = await showDialog<ConflictAction>(
     context: context,
     barrierDismissible: false,
     builder: (context) => AlertDialog(
-      title: const Text('같은 이름의 파일이 있습니다'),
+      title: Text(l10n.conflictTitle),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(conflict.destinationPath, style: Theme.of(context).textTheme.bodyMedium),
           const SizedBox(height: 12),
-          Text('원본: ${formatBytes(conflict.sourceSizeBytes)}'),
-          Text('대상: ${formatBytes(conflict.destinationSizeBytes)}'),
+          Text(l10n.sourceLabel(formatBytes(conflict.sourceSizeBytes))),
+          Text(l10n.destinationLabel(formatBytes(conflict.destinationSizeBytes))),
         ],
       ),
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(ConflictAction.cancel),
-          child: const Text('취소'),
+          child: Text(l10n.cancel),
         ),
         TextButton(
           onPressed: () => Navigator.of(context).pop(ConflictAction.skipAll),
-          child: const Text('모두 건너뛰기'),
+          child: Text(l10n.skipAll),
         ),
         TextButton(
           onPressed: () => Navigator.of(context).pop(ConflictAction.skip),
-          child: const Text('건너뛰기'),
+          child: Text(l10n.skip),
         ),
         TextButton(
           onPressed: () => Navigator.of(context).pop(ConflictAction.rename),
-          child: const Text('이름 바꿔서 복사'),
+          child: Text(l10n.renameAndCopy),
         ),
         TextButton(
           onPressed: () => Navigator.of(context).pop(ConflictAction.overwriteAll),
-          child: const Text('모두 덮어쓰기'),
+          child: Text(l10n.overwriteAll),
         ),
         FilledButton(
           onPressed: () => Navigator.of(context).pop(ConflictAction.overwrite),
-          child: const Text('덮어쓰기'),
+          child: Text(l10n.overwrite),
         ),
       ],
     ),

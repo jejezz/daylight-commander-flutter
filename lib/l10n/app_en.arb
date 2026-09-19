@@ -1,0 +1,199 @@
+{
+  "@@locale": "en",
+
+  "cancel": "Cancel",
+  "confirm": "OK",
+  "connect": "Connect",
+  "close": "Close",
+  "host": "Host",
+  "port": "Port",
+  "username": "Username",
+  "password": "Password",
+  "savedServers": "Saved Servers",
+  "saveServerInfoExcludingPassword": "Save this server (excluding password)",
+  "passwordNotStoredNote": "The password is used only for this connection and is never stored.",
+
+  "newFolderTitle": "New Folder",
+  "createLabel": "Create",
+  "renameTitle": "Rename",
+  "renameLabel": "Rename",
+
+  "smbConnectTitle": "Connect Network Drive (SMB)",
+  "smbHostHint": "Host (e.g. 192.168.0.10)",
+  "smbShareHint": "Share name (optional)",
+  "smbDialogNote": "Connecting opens the OS's own server connection dialog. Enter the password there\ndirectly — this app never stores or handles credentials.",
+
+  "ftpConnectTitle": "Connect to FTP Server",
+  "anonymousLogin": "Anonymous login",
+
+  "sftpConnectTitle": "Connect to SFTP Server",
+
+  "webdavConnectTitle": "Connect to WebDAV Server",
+  "useHttps": "Use HTTPS",
+
+  "patternSelectTitle": "Select by Pattern",
+  "patternHint": "e.g. *.jpg, IMG_*.png",
+  "deselect": "Deselect",
+  "addToSelection": "Add to Selection",
+
+  "deleteTitle": "Delete",
+  "deleteConfirmMessage": "Delete the selected {count} item(s)?",
+  "@deleteConfirmMessage": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "permanentDelete": "Delete Permanently",
+  "moveToTrash": "Move to Trash",
+
+  "conflictTitle": "A file with the same name already exists",
+  "sourceLabel": "Source: {size}",
+  "@sourceLabel": {
+    "placeholders": {
+      "size": { "type": "String" }
+    }
+  },
+  "destinationLabel": "Destination: {size}",
+  "@destinationLabel": {
+    "placeholders": {
+      "size": { "type": "String" }
+    }
+  },
+  "skipAll": "Skip All",
+  "skip": "Skip",
+  "renameAndCopy": "Rename and Copy",
+  "overwriteAll": "Overwrite All",
+  "overwrite": "Overwrite",
+
+  "propertiesTitle": "Properties",
+  "ownerLabel": "Owner",
+  "groupLabel": "Group",
+  "otherLabel": "Other",
+  "readLabel": "Read",
+  "writeLabel": "Write",
+  "executeLabel": "Execute",
+  "nameLabel": "Name",
+  "pathLabel": "Path",
+  "typeLabel": "Type",
+  "folderType": "Folder",
+  "fileType": "File",
+  "sizeLabel": "Size",
+  "modifiedLabel": "Modified",
+  "permissionsLabel": "Permissions",
+  "readOnly": "Read-only",
+
+  "openTerminalDisabledTooltip": "Open Terminal (unavailable on network locations)",
+  "openTerminalTooltip": "Open Terminal (active pane's path)",
+  "compareModeOffTooltip": "Turn off folder comparison",
+  "compareModeOnTooltip": "Compare Folders (left/right panes)",
+  "themeSystemTooltip": "Theme: Following system (tap to switch to Light)",
+  "themeLightTooltip": "Theme: Light (tap to switch to Dark)",
+  "themeDarkTooltip": "Theme: Dark (tap to follow system)",
+  "languageTooltip": "Language: {current} (tap to switch to {next})",
+  "@languageTooltip": {
+    "placeholders": {
+      "current": { "type": "String" },
+      "next": { "type": "String" }
+    }
+  },
+  "languageSystem": "System",
+  "languageKorean": "한국어",
+  "languageEnglish": "English",
+  "syncDiffToRight": "{count} diff(s) → Copy",
+  "@syncDiffToRight": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "syncDiffToLeft": "← Copy {count} diff(s)",
+  "@syncDiffToLeft": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "fnView": "F3 View",
+  "fnNewFolder": "F7 New Folder",
+  "fnRename": "F2 Rename",
+  "fnCopy": "F5 Copy",
+  "fnMove": "F6 Move",
+  "fnDelete": "F8 Delete",
+  "compressLabel": "Compress",
+  "extractLabel": "Extract",
+  "fnPatternSelect": "Pattern Select",
+
+  "goBackTooltip": "Back",
+  "goForwardTooltip": "Forward",
+  "goUpTooltip": "Parent Folder",
+  "switchDriveTooltip": "Switch Drive",
+  "networkConnectTooltip": "Connect Network Drive",
+  "disconnectMenuItem": "Disconnect",
+  "smbConnectMenuItem": "Connect to SMB Server",
+  "bookmarksAndRecentTooltip": "Bookmarks · Recent",
+  "bookmarksSectionLabel": "Bookmarks",
+  "recentSectionLabel": "Recent",
+  "addBookmarkTooltip": "Add Bookmark",
+  "removeBookmarkTooltip": "Remove Bookmark",
+  "showHiddenTooltip": "Show Hidden Files",
+  "itemCountLabel": "{count} item(s)",
+  "@itemCountLabel": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "selectedCountLabel": "{count} selected · {size}",
+  "@selectedCountLabel": {
+    "placeholders": {
+      "count": { "type": "int" },
+      "size": { "type": "String" }
+    }
+  },
+  "searchStatusLabel": "Search: \"{query}\" · {base}",
+  "@searchStatusLabel": {
+    "placeholders": {
+      "query": { "type": "String" },
+      "base": { "type": "String" }
+    }
+  },
+
+  "cannotMoveFolderIntoItself": "Can't move a folder into itself.",
+  "downloadFailed": "Failed to download the file.",
+  "networkCompressUnsupported": "Compressing network items isn't supported yet.",
+  "networkPropertiesUnsupported": "Viewing properties for network items isn't supported yet.",
+  "contextMenuOpen": "Open",
+  "contextMenuOpenWithDefault": "Open with Default App",
+  "contextMenuView": "View (F3)",
+  "contextMenuRename": "Rename (F2)",
+  "contextMenuCopy": "Copy → Other Pane (F5)",
+  "contextMenuMove": "Move → Other Pane (F6)",
+  "contextMenuDelete": "Delete (F8)",
+
+  "normalView": "Normal View",
+  "hexView": "View as Hex",
+  "imageLoadError": "Couldn't open the image: {error}",
+  "@imageLoadError": {
+    "placeholders": {
+      "error": { "type": "String" }
+    }
+  },
+  "hexTruncatedNote": "Showing only the first {kb}KB.",
+  "@hexTruncatedNote": {
+    "placeholders": {
+      "kb": { "type": "int" }
+    }
+  },
+  "unsupportedFormat": "Preview isn't supported for this file type.",
+  "openWithDefaultAppButton": "Open with Default App",
+
+  "compressFailed": "Compression failed: {error}",
+  "@compressFailed": {
+    "placeholders": {
+      "error": { "type": "String" }
+    }
+  },
+  "extractFailed": "Extraction failed: {error}",
+  "@extractFailed": {
+    "placeholders": {
+      "error": { "type": "String" }
+    }
+  }
+}

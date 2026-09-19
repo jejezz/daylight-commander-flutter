@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../theme/app_theme.dart';
+import '../theme/locale_provider.dart';
 import '../theme/theme_mode_provider.dart';
 import '../widgets/operation_banner.dart';
 import 'folder_comparison_provider.dart';
@@ -45,6 +47,8 @@ class HomeScreen extends ConsumerWidget {
     final compareMode = ref.watch(compareModeProvider);
     final activeIsRemote = isRemotePath(ref.watch(paneControllerProvider(activeSide)).currentPath);
     final themeMode = ref.watch(themeModeProvider);
+    final locale = ref.watch(localeProvider);
+    final l10n = AppLocalizations.of(context);
 
     return Scaffold(
       appBar: AppBar(
@@ -63,7 +67,7 @@ class HomeScreen extends ConsumerWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.terminal),
-            tooltip: activeIsRemote ? '터미널 열기 (네트워크 위치에서는 사용 불가)' : '터미널 열기 (활성 패널 경로)',
+            tooltip: activeIsRemote ? l10n.openTerminalDisabledTooltip : l10n.openTerminalTooltip,
             onPressed: activeIsRemote ? null : () => openTerminalHere(ref, activeSide),
           ),
           IconButton(
@@ -71,7 +75,7 @@ class HomeScreen extends ConsumerWidget {
               Icons.compare_arrows,
               color: compareMode ? (isDark ? AppColors.primary : AppColors.primaryDeep) : null,
             ),
-            tooltip: compareMode ? '폴더 비교 끄기' : '폴더 비교 (좌우 패널)',
+            tooltip: compareMode ? l10n.compareModeOffTooltip : l10n.compareModeOnTooltip,
             onPressed: () =>
                 ref.read(compareModeProvider.notifier).state = !compareMode,
           ),
@@ -82,11 +86,27 @@ class HomeScreen extends ConsumerWidget {
               ThemeMode.dark => Icons.dark_mode_outlined,
             }),
             tooltip: switch (themeMode) {
-              ThemeMode.system => '테마: 시스템 설정 따름 (누르면 라이트로 고정)',
-              ThemeMode.light => '테마: 라이트로 고정 (누르면 다크로 고정)',
-              ThemeMode.dark => '테마: 다크로 고정 (누르면 시스템 설정 따름)',
+              ThemeMode.system => l10n.themeSystemTooltip,
+              ThemeMode.light => l10n.themeLightTooltip,
+              ThemeMode.dark => l10n.themeDarkTooltip,
             },
             onPressed: () => ref.read(themeModeProvider.notifier).cycle(),
+          ),
+          IconButton(
+            icon: const Icon(Icons.translate),
+            tooltip: l10n.languageTooltip(
+              switch (locale?.languageCode) {
+                'ko' => l10n.languageKorean,
+                'en' => l10n.languageEnglish,
+                _ => l10n.languageSystem,
+              },
+              switch (locale?.languageCode) {
+                'ko' => l10n.languageEnglish,
+                'en' => l10n.languageSystem,
+                _ => l10n.languageKorean,
+              },
+            ),
+            onPressed: () => ref.read(localeProvider.notifier).cycle(),
           ),
           const SizedBox(width: 8),
         ],
@@ -164,6 +184,7 @@ class _SyncBar extends ConsumerWidget {
     final comparison = ref.watch(folderComparisonProvider);
     final leftCount = comparison?.left.length ?? 0;
     final rightCount = comparison?.right.length ?? 0;
+    final l10n = AppLocalizations.of(context);
 
     return Row(
       children: [
@@ -171,7 +192,7 @@ class _SyncBar extends ConsumerWidget {
           child: OutlinedButton.icon(
             onPressed: leftCount > 0 ? () => syncFolders(context, ref, PaneSide.left) : null,
             icon: const Icon(Icons.arrow_forward, size: 16),
-            label: Text('차이 $leftCount개 → 복사', overflow: TextOverflow.ellipsis),
+            label: Text(l10n.syncDiffToRight(leftCount), overflow: TextOverflow.ellipsis),
           ),
         ),
         const SizedBox(width: 8),
@@ -179,7 +200,7 @@ class _SyncBar extends ConsumerWidget {
           child: OutlinedButton.icon(
             onPressed: rightCount > 0 ? () => syncFolders(context, ref, PaneSide.right) : null,
             icon: const Icon(Icons.arrow_back, size: 16),
-            label: Text('← 차이 $rightCount개 복사', overflow: TextOverflow.ellipsis),
+            label: Text(l10n.syncDiffToLeft(rightCount), overflow: TextOverflow.ellipsis),
           ),
         ),
       ],
@@ -204,37 +225,38 @@ class _FunctionBar extends ConsumerWidget {
         !selected.first.isDirectory &&
         selected.first.name.toLowerCase().endsWith('.zip');
     final canShowProperties = selected.length == 1 && selected.first.location.scheme == 'file';
+    final l10n = AppLocalizations.of(context);
 
     return Column(
       children: [
         Row(
           children: [
             _FnButton(
-              label: 'F3 보기',
+              label: l10n.fnView,
               icon: Icons.visibility_outlined,
               onPressed: canView ? () => viewSelected(context, ref, activeSide) : null,
             ),
             _FnButton(
-              label: 'F7 새 폴더',
+              label: l10n.fnNewFolder,
               icon: Icons.create_new_folder_outlined,
               onPressed: () => createFolder(context, ref, activeSide),
             ),
             _FnButton(
-              label: 'F2 이름변경',
+              label: l10n.fnRename,
               icon: Icons.drive_file_rename_outline,
               onPressed: selectionCount == 1
                   ? () => renameSelected(context, ref, activeSide)
                   : null,
             ),
             _FnButton(
-              label: 'F5 복사',
+              label: l10n.fnCopy,
               icon: Icons.content_copy_outlined,
               onPressed: selectionCount > 0
                   ? () => copySelectionToOtherPane(context, ref, activeSide)
                   : null,
             ),
             _FnButton(
-              label: 'F6 이동',
+              label: l10n.fnMove,
               icon: Icons.drive_file_move_outline,
               onPressed: selectionCount > 0
                   ? () => moveSelectionToOtherPane(context, ref, activeSide)
@@ -246,32 +268,32 @@ class _FunctionBar extends ConsumerWidget {
         Row(
           children: [
             _FnButton(
-              label: 'F8 삭제',
+              label: l10n.fnDelete,
               icon: Icons.delete_outline,
               onPressed: selectionCount > 0
                   ? () => deleteSelection(context, ref, activeSide)
                   : null,
             ),
             _FnButton(
-              label: '압축',
+              label: l10n.compressLabel,
               icon: Icons.folder_zip_outlined,
               onPressed: selectionCount > 0 && allLocal
                   ? () => compressSelection(context, ref, activeSide)
                   : null,
             ),
             _FnButton(
-              label: '압축풀기',
+              label: l10n.extractLabel,
               icon: Icons.unarchive_outlined,
               onPressed: canExtract ? () => extractSelection(context, ref, activeSide) : null,
             ),
             _FnButton(
-              label: '속성',
+              label: l10n.propertiesTitle,
               icon: Icons.info_outline,
               onPressed:
                   canShowProperties ? () => showProperties(context, ref, activeSide) : null,
             ),
             _FnButton(
-              label: '패턴선택',
+              label: l10n.fnPatternSelect,
               icon: Icons.filter_alt_outlined,
               onPressed: () => selectByPattern(context, ref, activeSide),
             ),

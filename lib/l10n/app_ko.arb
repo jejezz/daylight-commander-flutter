@@ -1,0 +1,199 @@
+{
+  "@@locale": "ko",
+
+  "cancel": "취소",
+  "confirm": "확인",
+  "connect": "연결",
+  "close": "닫기",
+  "host": "호스트",
+  "port": "포트",
+  "username": "사용자명",
+  "password": "비밀번호",
+  "savedServers": "저장된 서버",
+  "saveServerInfoExcludingPassword": "이 서버 정보 저장 (비밀번호 제외)",
+  "passwordNotStoredNote": "비밀번호는 이 연결에만 사용되고 저장되지 않습니다.",
+
+  "newFolderTitle": "새 폴더",
+  "createLabel": "만들기",
+  "renameTitle": "이름 변경",
+  "renameLabel": "변경",
+
+  "smbConnectTitle": "네트워크 드라이브 연결 (SMB)",
+  "smbHostHint": "호스트 (예: 192.168.0.10)",
+  "smbShareHint": "공유 이름 (선택)",
+  "smbDialogNote": "연결하면 OS의 서버 연결 대화상자가 뜹니다. 비밀번호는 그 대화상자에\n직접 입력하세요 — 이 앱은 자격증명을 저장하거나 다루지 않습니다.",
+
+  "ftpConnectTitle": "FTP 서버 연결",
+  "anonymousLogin": "익명(anonymous) 로그인",
+
+  "sftpConnectTitle": "SFTP 서버 연결",
+
+  "webdavConnectTitle": "WebDAV 서버 연결",
+  "useHttps": "HTTPS 사용",
+
+  "patternSelectTitle": "패턴으로 선택",
+  "patternHint": "예: *.jpg, IMG_*.png",
+  "deselect": "선택 해제",
+  "addToSelection": "선택 추가",
+
+  "deleteTitle": "삭제",
+  "deleteConfirmMessage": "선택한 {count}개 항목을 삭제할까요?",
+  "@deleteConfirmMessage": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "permanentDelete": "영구 삭제",
+  "moveToTrash": "휴지통으로 이동",
+
+  "conflictTitle": "같은 이름의 파일이 있습니다",
+  "sourceLabel": "원본: {size}",
+  "@sourceLabel": {
+    "placeholders": {
+      "size": { "type": "String" }
+    }
+  },
+  "destinationLabel": "대상: {size}",
+  "@destinationLabel": {
+    "placeholders": {
+      "size": { "type": "String" }
+    }
+  },
+  "skipAll": "모두 건너뛰기",
+  "skip": "건너뛰기",
+  "renameAndCopy": "이름 바꿔서 복사",
+  "overwriteAll": "모두 덮어쓰기",
+  "overwrite": "덮어쓰기",
+
+  "propertiesTitle": "속성",
+  "ownerLabel": "소유자",
+  "groupLabel": "그룹",
+  "otherLabel": "기타",
+  "readLabel": "읽기",
+  "writeLabel": "쓰기",
+  "executeLabel": "실행",
+  "nameLabel": "이름",
+  "pathLabel": "경로",
+  "typeLabel": "종류",
+  "folderType": "폴더",
+  "fileType": "파일",
+  "sizeLabel": "크기",
+  "modifiedLabel": "수정일",
+  "permissionsLabel": "권한",
+  "readOnly": "읽기 전용",
+
+  "openTerminalDisabledTooltip": "터미널 열기 (네트워크 위치에서는 사용 불가)",
+  "openTerminalTooltip": "터미널 열기 (활성 패널 경로)",
+  "compareModeOffTooltip": "폴더 비교 끄기",
+  "compareModeOnTooltip": "폴더 비교 (좌우 패널)",
+  "themeSystemTooltip": "테마: 시스템 설정 따름 (누르면 라이트로 고정)",
+  "themeLightTooltip": "테마: 라이트로 고정 (누르면 다크로 고정)",
+  "themeDarkTooltip": "테마: 다크로 고정 (누르면 시스템 설정 따름)",
+  "languageTooltip": "언어: {current} (누르면 {next}로 전환)",
+  "@languageTooltip": {
+    "placeholders": {
+      "current": { "type": "String" },
+      "next": { "type": "String" }
+    }
+  },
+  "languageSystem": "시스템 설정",
+  "languageKorean": "한국어",
+  "languageEnglish": "English",
+  "syncDiffToRight": "차이 {count}개 → 복사",
+  "@syncDiffToRight": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "syncDiffToLeft": "← 차이 {count}개 복사",
+  "@syncDiffToLeft": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "fnView": "F3 보기",
+  "fnNewFolder": "F7 새 폴더",
+  "fnRename": "F2 이름변경",
+  "fnCopy": "F5 복사",
+  "fnMove": "F6 이동",
+  "fnDelete": "F8 삭제",
+  "compressLabel": "압축",
+  "extractLabel": "압축풀기",
+  "fnPatternSelect": "패턴선택",
+
+  "goBackTooltip": "뒤로",
+  "goForwardTooltip": "앞으로",
+  "goUpTooltip": "상위 폴더",
+  "switchDriveTooltip": "드라이브 전환",
+  "networkConnectTooltip": "네트워크 드라이브 연결",
+  "disconnectMenuItem": "연결 해제",
+  "smbConnectMenuItem": "SMB 서버 연결",
+  "bookmarksAndRecentTooltip": "즐겨찾기 · 최근 방문",
+  "bookmarksSectionLabel": "즐겨찾기",
+  "recentSectionLabel": "최근 방문",
+  "addBookmarkTooltip": "즐겨찾기 추가",
+  "removeBookmarkTooltip": "즐겨찾기 해제",
+  "showHiddenTooltip": "숨김 파일 표시",
+  "itemCountLabel": "{count}개 항목",
+  "@itemCountLabel": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "selectedCountLabel": "{count}개 선택됨 · {size}",
+  "@selectedCountLabel": {
+    "placeholders": {
+      "count": { "type": "int" },
+      "size": { "type": "String" }
+    }
+  },
+  "searchStatusLabel": "검색: \"{query}\" · {base}",
+  "@searchStatusLabel": {
+    "placeholders": {
+      "query": { "type": "String" },
+      "base": { "type": "String" }
+    }
+  },
+
+  "cannotMoveFolderIntoItself": "폴더를 자기 자신 안으로 옮길 수 없습니다.",
+  "downloadFailed": "파일을 다운로드하지 못했습니다.",
+  "networkCompressUnsupported": "네트워크 항목은 아직 압축을 지원하지 않습니다.",
+  "networkPropertiesUnsupported": "네트워크 항목은 아직 속성 보기를 지원하지 않습니다.",
+  "contextMenuOpen": "열기",
+  "contextMenuOpenWithDefault": "연결된 프로그램으로 열기",
+  "contextMenuView": "보기 (F3)",
+  "contextMenuRename": "이름변경 (F2)",
+  "contextMenuCopy": "복사 → 반대 패널 (F5)",
+  "contextMenuMove": "이동 → 반대 패널 (F6)",
+  "contextMenuDelete": "삭제 (F8)",
+
+  "normalView": "일반 보기",
+  "hexView": "Hex로 보기",
+  "imageLoadError": "이미지를 열 수 없습니다: {error}",
+  "@imageLoadError": {
+    "placeholders": {
+      "error": { "type": "String" }
+    }
+  },
+  "hexTruncatedNote": "처음 {kb}KB만 표시합니다.",
+  "@hexTruncatedNote": {
+    "placeholders": {
+      "kb": { "type": "int" }
+    }
+  },
+  "unsupportedFormat": "미리보기를 지원하지 않는 파일 형식입니다.",
+  "openWithDefaultAppButton": "기본 앱으로 열기",
+
+  "compressFailed": "압축 실패: {error}",
+  "@compressFailed": {
+    "placeholders": {
+      "error": { "type": "String" }
+    }
+  },
+  "extractFailed": "압축 풀기 실패: {error}",
+  "@extractFailed": {
+    "placeholders": {
+      "error": { "type": "String" }
+    }
+  }
+}

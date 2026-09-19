@@ -31,6 +31,11 @@ dependencies:
   flutter:
     sdk: flutter
 
+  # i18n (한국어/영어)
+  flutter_localizations:
+    sdk: flutter
+  intl: ^0.20.2
+
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
@@ -98,6 +103,9 @@ dev_dependencies:
 
 # The following section is specific to Flutter packages.
 flutter:
+
+  # ARB 파일(lib/l10n/*.arb)로부터 AppLocalizations를 생성한다.
+  generate: true
 
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
