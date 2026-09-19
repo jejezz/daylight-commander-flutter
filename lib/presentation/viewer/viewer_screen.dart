@@ -8,6 +8,7 @@ import 'package:media_kit_video/media_kit_video.dart';
 import 'package:pdfrx/pdfrx.dart';
 
 import '../../application/usecases/open_with_default_app.dart';
+import '../../l10n/app_localizations.dart';
 
 const _openWithDefaultApp = OpenWithDefaultApp();
 
@@ -68,7 +69,9 @@ class _ViewerScreenState extends State<ViewerScreen> {
         actions: [
           IconButton(
             icon: Icon(_showHex ? Icons.description_outlined : Icons.memory),
-            tooltip: _showHex ? '일반 보기' : 'Hex로 보기',
+            tooltip: _showHex
+                ? AppLocalizations.of(context).normalView
+                : AppLocalizations.of(context).hexView,
             onPressed: () => setState(() => _showHex = !_showHex),
           ),
           const SizedBox(width: 8),
@@ -92,7 +95,8 @@ class _ImageViewer extends StatelessWidget {
       child: Center(
         child: Image.file(
           File(path),
-          errorBuilder: (context, error, stack) => Text('이미지를 열 수 없습니다: $error'),
+          errorBuilder: (context, error, stack) =>
+              Text(AppLocalizations.of(context).imageLoadError('$error')),
         ),
       ),
     );
@@ -356,7 +360,7 @@ class _HexViewerState extends State<_HexViewer> {
             child: Align(
               alignment: Alignment.centerLeft,
               child: Text(
-                '처음 ${_maxBytes ~/ 1024}KB만 표시합니다.',
+                AppLocalizations.of(context).hexTruncatedNote(_maxBytes ~/ 1024),
                 style: Theme.of(context).textTheme.labelSmall,
               ),
             ),
@@ -396,15 +400,16 @@ class _UnsupportedViewer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Text('미리보기를 지원하지 않는 파일 형식입니다.'),
+          Text(l10n.unsupportedFormat),
           const SizedBox(height: 12),
           FilledButton(
             onPressed: () => _openWithDefaultApp(path),
-            child: const Text('기본 앱으로 열기'),
+            child: Text(l10n.openWithDefaultAppButton),
           ),
         ],
       ),

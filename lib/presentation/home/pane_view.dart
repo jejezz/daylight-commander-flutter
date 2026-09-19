@@ -7,6 +7,7 @@ import '../../core/bytes_format.dart';
 import '../../core/date_format.dart';
 import '../../domain/entities/drive_entry.dart';
 import '../../domain/entities/file_entry.dart';
+import '../../l10n/app_localizations.dart';
 import '../theme/app_theme.dart';
 import '../widgets/file_icon.dart';
 import 'bookmarks_provider.dart';
@@ -313,6 +314,7 @@ class _PathBarState extends State<_PathBar> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
       child: Row(
@@ -320,23 +322,23 @@ class _PathBarState extends State<_PathBar> {
           IconButton(
             visualDensity: VisualDensity.compact,
             icon: const Icon(Icons.arrow_back, size: 15),
-            tooltip: '뒤로',
+            tooltip: l10n.goBackTooltip,
             onPressed: widget.canGoBack ? widget.onBack : null,
           ),
           IconButton(
             visualDensity: VisualDensity.compact,
             icon: const Icon(Icons.arrow_forward, size: 15),
-            tooltip: '앞으로',
+            tooltip: l10n.goForwardTooltip,
             onPressed: widget.canGoForward ? widget.onForward : null,
           ),
           IconButton(
             visualDensity: VisualDensity.compact,
             icon: const Icon(Icons.arrow_upward, size: 15),
-            tooltip: '상위 폴더',
+            tooltip: l10n.goUpTooltip,
             onPressed: widget.onUp,
           ),
           PopupMenuButton<String>(
-            tooltip: '드라이브 전환',
+            tooltip: l10n.switchDriveTooltip,
             icon: const Icon(Icons.storage_outlined, size: 15),
             onSelected: widget.onSelectDrive,
             itemBuilder: (context) => [
@@ -345,7 +347,7 @@ class _PathBarState extends State<_PathBar> {
             ],
           ),
           PopupMenuButton<String>(
-            tooltip: '네트워크 드라이브 연결',
+            tooltip: l10n.networkConnectTooltip,
             icon: Icon(
               widget.isRemote ? Icons.cloud_done_outlined : Icons.cloud_outlined,
               size: 15,
@@ -366,13 +368,13 @@ class _PathBarState extends State<_PathBar> {
             },
             itemBuilder: (context) => [
               if (widget.isRemote) ...[
-                const PopupMenuItem(value: 'disconnect', child: Text('연결 해제')),
+                PopupMenuItem(value: 'disconnect', child: Text(l10n.disconnectMenuItem)),
                 const PopupMenuDivider(),
               ],
-              const PopupMenuItem(value: 'smb', child: Text('SMB 서버 연결')),
-              const PopupMenuItem(value: 'ftp', child: Text('FTP 서버 연결')),
-              const PopupMenuItem(value: 'sftp', child: Text('SFTP 서버 연결')),
-              const PopupMenuItem(value: 'webdav', child: Text('WebDAV 서버 연결')),
+              PopupMenuItem(value: 'smb', child: Text(l10n.smbConnectMenuItem)),
+              PopupMenuItem(value: 'ftp', child: Text(l10n.ftpConnectTitle)),
+              PopupMenuItem(value: 'sftp', child: Text(l10n.sftpConnectTitle)),
+              PopupMenuItem(value: 'webdav', child: Text(l10n.webdavConnectTitle)),
             ],
           ),
           IconButton(
@@ -382,22 +384,22 @@ class _PathBarState extends State<_PathBar> {
               size: 15,
               color: widget.isBookmarked ? Colors.amber : null,
             ),
-            tooltip: widget.isBookmarked ? '즐겨찾기 해제' : '즐겨찾기 추가',
+            tooltip: widget.isBookmarked ? l10n.removeBookmarkTooltip : l10n.addBookmarkTooltip,
             onPressed: widget.onToggleBookmark,
           ),
           if (widget.bookmarks.isNotEmpty || widget.recentFolders.isNotEmpty)
             PopupMenuButton<String>(
-              tooltip: '즐겨찾기 · 최근 방문',
+              tooltip: l10n.bookmarksAndRecentTooltip,
               icon: const Icon(Icons.bookmarks_outlined, size: 15),
               onSelected: widget.onSelectBookmark,
               itemBuilder: (context) => [
                 if (widget.bookmarks.isNotEmpty) ...[
-                  const PopupMenuItem<String>(
+                  PopupMenuItem<String>(
                     enabled: false,
                     height: 26,
                     child: Text(
-                      '즐겨찾기',
-                      style: TextStyle(
+                      l10n.bookmarksSectionLabel,
+                      style: const TextStyle(
                         fontWeight: FontWeight.w600,
                         fontSize: 11,
                       ),
@@ -427,12 +429,12 @@ class _PathBarState extends State<_PathBar> {
                 ],
                 if (widget.recentFolders.isNotEmpty) ...[
                   if (widget.bookmarks.isNotEmpty) const PopupMenuDivider(),
-                  const PopupMenuItem<String>(
+                  PopupMenuItem<String>(
                     enabled: false,
                     height: 26,
                     child: Text(
-                      '최근 방문',
-                      style: TextStyle(
+                      l10n.recentSectionLabel,
+                      style: const TextStyle(
                         fontWeight: FontWeight.w600,
                         fontSize: 11,
                       ),
@@ -467,7 +469,7 @@ class _PathBarState extends State<_PathBar> {
                   : Icons.visibility_off_outlined,
               size: 15,
             ),
-            tooltip: '숨김 파일 표시',
+            tooltip: l10n.showHiddenTooltip,
             onPressed: widget.onToggleHidden,
           ),
         ],
@@ -515,14 +517,15 @@ class _ColumnHeader extends StatelessWidget {
       );
     }
 
+    final l10n = AppLocalizations.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 10),
       child: Row(
         children: [
           const SizedBox(width: 30),
-          Expanded(child: label('이름', SortField.name)),
-          SizedBox(width: 60, child: label('크기', SortField.size)),
-          SizedBox(width: 90, child: label('수정일', SortField.modified)),
+          Expanded(child: label(l10n.nameLabel, SortField.name)),
+          SizedBox(width: 60, child: label(l10n.sizeLabel, SortField.size)),
+          SizedBox(width: 105, child: label(l10n.modifiedLabel, SortField.modified)),
         ],
       ),
     );
@@ -604,7 +607,7 @@ class _FileRow extends StatelessWidget {
             ),
           ),
           SizedBox(
-            width: 90,
+            width: 105,
             child: Text(
               formatModified(entry.modifiedAt),
               style: theme.textTheme.labelSmall,
@@ -694,7 +697,9 @@ class _DragFeedback extends StatelessWidget {
                   const SizedBox(width: 6),
                   Flexible(
                     child: Text(
-                      multi ? '${payload.entries.length}개 항목' : first.name,
+                      multi
+                          ? AppLocalizations.of(context).itemCountLabel(payload.entries.length)
+                          : first.name,
                       overflow: TextOverflow.ellipsis,
                       style: theme.textTheme.bodyMedium,
                     ),
@@ -724,10 +729,11 @@ class _PaneStatusBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final base = selectedCount > 0
-        ? '$selectedCount개 선택됨 · ${formatBytes(selectedBytes)}'
-        : '$count개 항목';
-    final label = quickFilter.isEmpty ? base : '검색: "$quickFilter" · $base';
+        ? l10n.selectedCountLabel(selectedCount, formatBytes(selectedBytes))
+        : l10n.itemCountLabel(count);
+    final label = quickFilter.isEmpty ? base : l10n.searchStatusLabel(quickFilter, base);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       child: Text(label, style: Theme.of(context).textTheme.labelSmall),

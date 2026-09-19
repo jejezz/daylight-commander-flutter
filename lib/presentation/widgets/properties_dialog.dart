@@ -6,6 +6,7 @@ import '../../application/file_attributes_service.dart';
 import '../../core/bytes_format.dart';
 import '../../core/date_format.dart';
 import '../../domain/entities/file_entry.dart';
+import '../../l10n/app_localizations.dart';
 
 Future<void> showPropertiesDialog(BuildContext context, FileEntry entry) {
   return showDialog<void>(
@@ -25,8 +26,6 @@ class _PropertiesDialog extends StatefulWidget {
 
 class _PropertiesDialogState extends State<_PropertiesDialog> {
   static const _service = FileAttributesService();
-  static const _rowLabels = ['소유자', '그룹', '기타'];
-  static const _colLabels = ['읽기', '쓰기', '실행'];
 
   FileAttributesInfo? _info;
 
@@ -61,8 +60,9 @@ class _PropertiesDialogState extends State<_PropertiesDialog> {
   Widget build(BuildContext context) {
     final entry = widget.entry;
     final info = _info;
+    final l10n = AppLocalizations.of(context);
     return AlertDialog(
-      title: const Text('속성'),
+      title: Text(l10n.propertiesTitle),
       content: SizedBox(
         width: 380,
         child: info == null
@@ -74,25 +74,25 @@ class _PropertiesDialogState extends State<_PropertiesDialog> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _row('이름', entry.name),
-                  _row('경로', entry.location.toFilePath()),
-                  _row('종류', entry.isDirectory ? '폴더' : '파일'),
-                  _row('크기', formatBytes(info.sizeBytes)),
-                  _row('수정일', formatModified(info.modified)),
-                  _row('권한', info.permissionString),
+                  _row(l10n.nameLabel, entry.name),
+                  _row(l10n.pathLabel, entry.location.toFilePath()),
+                  _row(l10n.typeLabel, entry.isDirectory ? l10n.folderType : l10n.fileType),
+                  _row(l10n.sizeLabel, formatBytes(info.sizeBytes)),
+                  _row(l10n.modifiedLabel, formatModified(info.modified)),
+                  _row(l10n.permissionsLabel, info.permissionString),
                   const SizedBox(height: 12),
                   if (Platform.isWindows)
                     CheckboxListTile(
                       contentPadding: EdgeInsets.zero,
                       value: info.isReadOnly,
                       onChanged: (v) => _toggleReadOnly(v ?? false),
-                      title: const Text('읽기 전용'),
+                      title: Text(l10n.readOnly),
                     )
                   else
                     _PermissionGrid(
                       mode: info.posixMode,
-                      rowLabels: _rowLabels,
-                      colLabels: _colLabels,
+                      rowLabels: [l10n.ownerLabel, l10n.groupLabel, l10n.otherLabel],
+                      colLabels: [l10n.readLabel, l10n.writeLabel, l10n.executeLabel],
                       onToggle: _togglePosixBit,
                     ),
                 ],
@@ -101,7 +101,7 @@ class _PropertiesDialogState extends State<_PropertiesDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('닫기'),
+          child: Text(l10n.close),
         ),
       ],
     );
