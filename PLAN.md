@@ -124,7 +124,9 @@ UI 디자인은 이후 별도로 결정한다. 본 문서는 기능 범위 확�
    - 검증: `test/folder_comparison_test.dart`에 `diffPairs` 테스트 추가(총 81개 테스트 통과), macOS 디버그 빌드에서 `compareModeProvider` 기본값을 일시적으로 true로 바꿔 새 버튼 렌더링을 창 단위 캡처로 확인 후 원복
    - 압축파일 내부 미리보기: zip을 풀지 않고 F3/컨텍스트 메뉴 "보기"로 열면 내부 파일/폴더 구조를 훑어볼 수 있는 전용 뷰어(`ArchiveViewerScreen`)가 뜬다. `archive` 패키지의 `InputFileStream` + `ZipDecoder`로 중앙 디렉터리만 읽어 목록을 만들고(전체를 메모리에 올리지 않음), 이름의 슬래시로 가상 폴더 구조를 구성해 ".." 항목으로 상위 이동. 파일을 탭하면 그 파일 하나만 임시 폴더로 꺼내 기존 `ViewerScreen`(텍스트/이미지/PDF/오디오/비디오/Hex 뷰어)으로 그대로 연다 — zip 전체는 절대 풀지 않음
    - 검증: `test/archive_service_test.dart`에 `listZipEntries`/`extractZipEntry` 단위테스트, `test/archive_viewer_screen_test.dart`에 폴더 드릴다운·파일 열기 위젯테스트 추가(총 85개 테스트 통과). 위젯테스트에서 알게 된 점: `flutter test`의 FakeAsync 존 안에서 탭 콜백으로 시작되는 실제 dart:io 비동기 작업(파일 읽기/쓰기, 화면 전환)은 `pump()`만으로 끝나지 않으므로, 탭 자체를 `tester.runAsync()` 콜백 안에서 실행해야 함. macOS 디버그 빌드로 앱이 새 코드로 정상 구동되는지 창 단위 캡처로 확인
-   - **아직 남은 P2 항목**: Hex 뷰어 대용량 스트리밍
+   - **아직 남은 P2 항목**: Hex 뷰어 대용량 스트리밍 — 사용자 판단으로 필수
+     요소는 아니라고 보류 결정 (2026-09-20). 현재도 256KB까지는 미리보기
+     되므로 실사용에 큰 지장은 없음
 10. PDF/미디어(오디오·비디오) 뷰어 — **완료**:
     - PDF: `pdfrx` 채택 (Windows/macOS/Linux 모두 지원, PDFium 기반). 처음 검토한 `pdfx`는 Linux 미지원이라 제외
     - 오디오/비디오: `media_kit` + `media_kit_video` + `media_kit_libs_video` 채택 (libmpv 기반, 3개 데스크톱 플랫폼 모두 지원). `main.dart`에서 앱 시작 시 `MediaKit.ensureInitialized()` 1회 호출 필요
