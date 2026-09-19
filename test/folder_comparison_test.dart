@@ -58,4 +58,22 @@ void main() {
     expect(result.left, isEmpty);
     expect(result.right, isEmpty);
   });
+
+  test('diffPairs: 다른 파일만 짝지어 돌려주고 한쪽에만 있는 파일은 뺀다', () {
+    final left = [
+      _file('a.txt', size: 10),
+      _file('only_left.txt', size: 5),
+    ];
+    final right = [
+      _file('a.txt', size: 20),
+      _file('only_right.txt', size: 5),
+    ];
+
+    final pairs = diffPairs(left, right);
+
+    expect(pairs, hasLength(1));
+    expect(pairs.single.$1.name, 'a.txt');
+    expect(pairs.single.$1.sizeBytes, 10);
+    expect(pairs.single.$2.sizeBytes, 20);
+  });
 }

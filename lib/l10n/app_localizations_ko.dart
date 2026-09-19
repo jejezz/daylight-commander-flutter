@@ -366,6 +366,30 @@ class AppLocalizationsKo extends AppLocalizations {
   String get openWithDefaultAppButton => '기본 앱으로 열기';
 
   @override
+  String get bidirectionalSyncButton => '양방향 동기화';
+
+  @override
+  String syncConflictTitle(String name) {
+    return '$name — 어느 쪽을 사용할까요?';
+  }
+
+  @override
+  String syncConflictLeftInfo(String size, String modified) {
+    return '왼쪽: $size · $modified';
+  }
+
+  @override
+  String syncConflictRightInfo(String size, String modified) {
+    return '오른쪽: $size · $modified';
+  }
+
+  @override
+  String get useLeftVersion => '왼쪽 파일 사용';
+
+  @override
+  String get useRightVersion => '오른쪽 파일 사용';
+
+  @override
   String compressFailed(String error) {
     return '압축 실패: $error';
   }

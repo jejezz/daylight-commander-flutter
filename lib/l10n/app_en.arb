@@ -184,6 +184,30 @@
   "unsupportedFormat": "Preview isn't supported for this file type.",
   "openWithDefaultAppButton": "Open with Default App",
 
+  "bidirectionalSyncButton": "Two-way Sync",
+  "syncConflictTitle": "{name} — Which version should be used?",
+  "@syncConflictTitle": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "syncConflictLeftInfo": "Left: {size} · {modified}",
+  "@syncConflictLeftInfo": {
+    "placeholders": {
+      "size": { "type": "String" },
+      "modified": { "type": "String" }
+    }
+  },
+  "syncConflictRightInfo": "Right: {size} · {modified}",
+  "@syncConflictRightInfo": {
+    "placeholders": {
+      "size": { "type": "String" },
+      "modified": { "type": "String" }
+    }
+  },
+  "useLeftVersion": "Use Left File",
+  "useRightVersion": "Use Right File",
+
   "compressFailed": "Compression failed: {error}",
   "@compressFailed": {
     "placeholders": {

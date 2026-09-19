@@ -70,6 +70,76 @@ Future<void> syncFolders(BuildContext context, WidgetRef ref, PaneSide from) asy
   );
 }
 
+/// 좌우 폴더를 양방향으로 동기화한다 (PLAN.md P2). 한쪽에만 있는 항목은
+/// 자동으로 반대쪽에 복사하고, 양쪽에 다 있지만 내용이 다른 파일은
+/// [diffPairs]로 짝지어 하나씩 [showSyncConflictDialog]로 물어본다 — "최신
+/// 파일 우선" 같은 자동 병합은 하지 않는다.
+Future<void> syncFoldersBidirectional(BuildContext context, WidgetRef ref) async {
+  final leftEntries = ref.read(paneControllerProvider(PaneSide.left)).entries;
+  final rightEntries = ref.read(paneControllerProvider(PaneSide.right)).entries;
+  final comparison = compareFolders(leftEntries, rightEntries);
+
+  final leftOnly = leftEntries
+      .where((e) => comparison.left[e.location] == FileDiffStatus.onlyHere)
+      .toList();
+  final rightOnly = rightEntries
+      .where((e) => comparison.right[e.location] == FileDiffStatus.onlyHere)
+      .toList();
+
+  final leftDir = ref.read(paneControllerProvider(PaneSide.left)).currentPath;
+  final rightDir = ref.read(paneControllerProvider(PaneSide.right)).currentPath;
+
+  if (leftOnly.isNotEmpty) {
+    await transferEntries(
+      context,
+      ref,
+      fromSide: PaneSide.left,
+      entries: leftOnly,
+      destinationDir: rightDir,
+      isMove: false,
+    );
+  }
+  if (!context.mounted) return;
+  if (rightOnly.isNotEmpty) {
+    await transferEntries(
+      context,
+      ref,
+      fromSide: PaneSide.right,
+      entries: rightOnly,
+      destinationDir: leftDir,
+      isMove: false,
+    );
+  }
+
+  final pairs = diffPairs(leftEntries, rightEntries);
+  if (pairs.isEmpty) return;
+
+  final operation = ref.read(operationControllerProvider.notifier);
+  final ftpSessions = ref.read(ftpSessionManagerProvider.notifier);
+  final sftpSessions = ref.read(sftpSessionManagerProvider.notifier);
+  final webdavSessions = ref.read(webdavSessionManagerProvider.notifier);
+
+  for (final (left, right) in pairs) {
+    if (!context.mounted) return;
+    final action = await showSyncConflictDialog(context, left: left, right: right);
+    if (action == SyncConflictAction.cancel) return;
+    if (action == SyncConflictAction.skip) continue;
+
+    final useLeft = action == SyncConflictAction.useLeft;
+    await operation.runCopy(
+      sources: [useLeft ? left : right],
+      destinationDir: resolveLocationString(useLeft ? rightDir : leftDir),
+      onConflict: (_) async => ConflictAction.overwrite,
+      ftpSessions: ftpSessions,
+      sftpSessions: sftpSessions,
+      webdavSessions: webdavSessions,
+    );
+  }
+
+  await ref.read(paneControllerProvider(PaneSide.left).notifier).refresh();
+  await ref.read(paneControllerProvider(PaneSide.right).notifier).refresh();
+}
+
 Future<void> copySelectionToOtherPane(
   BuildContext context,
   WidgetRef ref,

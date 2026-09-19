@@ -49,6 +49,22 @@ FolderComparison compareFolders(List<FileEntry> left, List<FileEntry> right) {
   return FolderComparison(left: leftResult, right: rightResult);
 }
 
+/// 양쪽에 다 있지만 내용이 다른 파일들을 이름으로 짝지어 돌려준다. 양방향
+/// 동기화에서 그 파일 하나하나에 대해 어느 쪽을 쓸지 물어볼 때 쓴다.
+List<(FileEntry left, FileEntry right)> diffPairs(List<FileEntry> left, List<FileEntry> right) {
+  final leftByName = {for (final e in left) e.name: e};
+  final rightByName = {for (final e in right) e.name: e};
+
+  final pairs = <(FileEntry, FileEntry)>[];
+  for (final entry in leftByName.values) {
+    final other = rightByName[entry.name];
+    if (other != null && _contentDiffers(entry, other)) {
+      pairs.add((entry, other));
+    }
+  }
+  return pairs;
+}
+
 /// 폴더 비교 모드 on/off.
 final compareModeProvider = StateProvider<bool>((ref) => false);
 
