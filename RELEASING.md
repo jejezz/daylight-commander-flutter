@@ -36,7 +36,8 @@ git push origin v1.1.0
 
 1. `macos-latest`/`windows-latest`/`ubuntu-latest` 세 러너에서 각각
    `flutter build <platform> --release` 실행
-2. macOS는 `.dmg`, Windows는 `.zip`, Linux는 `.tar.gz`로 패키징
+2. macOS는 `.dmg`, Windows는 Inno Setup 설치 파일(`.exe`), Linux는
+   `.tar.gz`로 패키징
 3. 세 파일을 전부 첨부해 GitHub Release 하나를 생성. 릴리스 노트는
    `.github/release-notes-header.md`(플랫폼별 설치 방법 — macOS의
    quarantine/`xattr -cr` 안내 포함)를 맨 앞에 붙이고, 그 뒤에
@@ -102,22 +103,25 @@ hdiutil create -volname "Daylight Commander" \
 
 ### Windows (Windows 머신 필요)
 
+[Inno Setup](https://jrsoftware.org/isinfo.php)이 설치되어 있어야 한다
+(`choco install innosetup` 또는 공식 사이트에서 다운로드).
+
 ```powershell
 flutter build windows --release
-mkdir dist -Force
-Compress-Archive -Path build\windows\x64\runner\Release\* `
-  -DestinationPath dist\DaylightCommander-windows.zip
+& "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" /DMyAppVersion=1.1.0 windows\installer.iss
 ```
+
+`windows\installer.iss`가 `build\windows\x64\runner\Release` 폴더 전체를
+묶어 `dist\DaylightCommander-Setup.exe` 설치 마법사를 만든다 (시작 메뉴
+바로가기, "앱 및 기능"에서 제거 가능). `/DMyAppVersion`은 설치 프로그램의
+버전 표시용이라 생략해도 빌드는 되지만(기본값 `0.0.0`), 릴리스 CI는
+`pubspec.yaml`의 버전을 읽어 자동으로 채운다.
 
 `build\windows\` 아래 정확한 경로는 Flutter 버전에 따라
 `build\windows\runner\Release`일 수도 있다(이 프로젝트는 Flutter 3.47.1
 기준 `x64\runner\Release`로 확인됨) — 못 찾으면
-`Get-ChildItem -Recurse -Directory -Filter Release build\windows`로 확인.
-
-간단한 zip 배포 대신 진짜 설치 마법사(.exe)를 만들고 싶다면 [Inno
-Setup](https://jrsoftware.org/isinfo.php)으로 `Release` 폴더 전체를 묶는
-스크립트를 작성하는 방법이 있다 (이 프로젝트에는 아직 `.iss` 스크립트가
-없음 — 필요해지면 추가).
+`Get-ChildItem -Recurse -Directory -Filter Release build\windows`로 확인
+하고 `installer.iss`의 `[Files]` 섹션 경로도 맞춰 고쳐야 한다.
 
 ### Linux (Linux 머신 필요)
 
@@ -147,7 +151,7 @@ Debian 패키지(`.deb`)로 만들 수도 있다 — 둘 다 이 프로젝트에
 ```bash
 gh release create v1.0.0 \
   dist/DaylightCommander-macos.dmg \
-  dist/DaylightCommander-windows.zip \
+  dist/DaylightCommander-Setup.exe \
   dist/DaylightCommander-linux.tar.gz \
   --title "v1.0.0" \
   --generate-notes
@@ -161,7 +165,6 @@ v1.0.0 dist/...`로 파일만 추가할 수 있다.
 ## 향후 개선 여지
 
 - macOS 코드사이닝/공증 (Apple Developer Program 필요)
-- Windows용 정식 설치 마법사 (Inno Setup 등)
 - Linux AppImage/.deb/.rpm 패키징
 - Linux `.desktop` 파일 + 아이콘 설치 (현재 앱 아이콘은 macOS/Windows에만
   적용되어 있음 — PLAN.md 참고)
