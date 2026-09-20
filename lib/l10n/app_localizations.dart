@@ -170,6 +170,12 @@ abstract class AppLocalizations {
   /// **'새 폴더'**
   String get newFolderTitle;
 
+  /// No description provided for @newFileTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'새 파일'**
+  String get newFileTitle;
+
   /// No description provided for @createLabel.
   ///
   /// In ko, this message translates to:
@@ -542,6 +548,12 @@ abstract class AppLocalizations {
   /// **'F7 새 폴더'**
   String get fnNewFolder;
 
+  /// No description provided for @newFileButtonLabel.
+  ///
+  /// In ko, this message translates to:
+  /// **'새 파일'**
+  String get newFileButtonLabel;
+
   /// No description provided for @fnRename.
   ///
   /// In ko, this message translates to:
@@ -601,6 +613,12 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'상위 폴더'**
   String get goUpTooltip;
+
+  /// No description provided for @refreshTooltip.
+  ///
+  /// In ko, this message translates to:
+  /// **'새로고침'**
+  String get refreshTooltip;
 
   /// No description provided for @switchDriveTooltip.
   ///

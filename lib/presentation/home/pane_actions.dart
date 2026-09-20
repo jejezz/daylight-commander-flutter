@@ -299,6 +299,37 @@ Future<void> createFolder(BuildContext context, WidgetRef ref, PaneSide side) as
   await ref.read(paneControllerProvider(side).notifier).refresh();
 }
 
+Future<void> createFile(BuildContext context, WidgetRef ref, PaneSide side) async {
+  final l10n = AppLocalizations.of(context);
+  final name = await promptForName(context, title: l10n.newFileTitle, confirmLabel: l10n.createLabel);
+  if (name == null || name.isEmpty) return;
+  if (!context.mounted) return;
+
+  final parentDir = ref.read(paneControllerProvider(side)).currentPath;
+  try {
+    if (isFtpPath(parentDir)) {
+      final ftpSessions = ref.read(ftpSessionManagerProvider.notifier);
+      await FtpTransferService(ftpSessions)
+          .createFile(parentDir: Uri.parse(parentDir), name: name);
+    } else if (isSftpPath(parentDir)) {
+      final sftpSessions = ref.read(sftpSessionManagerProvider.notifier);
+      await SftpTransferService(sftpSessions)
+          .createFile(parentDir: Uri.parse(parentDir), name: name);
+    } else if (isWebdavPath(parentDir)) {
+      final webdavSessions = ref.read(webdavSessionManagerProvider.notifier);
+      await WebdavTransferService(webdavSessions)
+          .createFile(parentDir: Uri.parse(parentDir), name: name);
+    } else {
+      await _fileOps.createFile(parentDir: parentDir, name: name);
+    }
+  } catch (e) {
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+    return;
+  }
+  await ref.read(paneControllerProvider(side).notifier).refresh();
+}
+
 Future<void> renameSelected(BuildContext context, WidgetRef ref, PaneSide side) async {
   final pane = ref.read(paneControllerProvider(side));
   final selected = pane.selectedEntries;

@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:dio/dio.dart' hide CancelToken, ProgressCallback;
 import 'package:path/path.dart' as p;
@@ -230,6 +231,12 @@ class WebdavTransferService {
     final client = _requireClient(parentDir);
     final path = parentDir.path.isEmpty ? '/' : parentDir.path;
     await client.mkdir('$path/$name');
+  }
+
+  Future<void> createFile({required Uri parentDir, required String name}) async {
+    final client = _requireClient(parentDir);
+    final path = parentDir.path.isEmpty ? '/' : parentDir.path;
+    await client.write('$path/$name', Uint8List(0));
   }
 
   Future<void> rename({required Uri location, required String newName}) async {

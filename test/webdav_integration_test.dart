@@ -154,6 +154,17 @@ void main() {
   );
 
   test(
+    '새 파일 생성',
+    () async {
+      await WebdavTransferService(sessions).createFile(parentDir: rootUri, name: 'newfile.txt');
+      final file = File(p.join(serverRoot.path, 'newfile.txt'));
+      expect(file.existsSync(), isTrue);
+      expect(file.lengthSync(), 0);
+    },
+    skip: !_webdavServerAvailable ? 'wsgidav 미설치 — 로컬 통합 테스트 스킵' : false,
+  );
+
+  test(
     '이름 변경',
     () async {
       File(p.join(serverRoot.path, 'old_name.txt')).writeAsStringSync('x');

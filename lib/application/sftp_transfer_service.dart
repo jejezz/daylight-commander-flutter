@@ -285,6 +285,16 @@ class SftpTransferService {
     await client.mkdir('$path/$name');
   }
 
+  Future<void> createFile({required Uri parentDir, required String name}) async {
+    final client = _requireClient(parentDir);
+    final path = parentDir.path.isEmpty ? '/' : parentDir.path;
+    final handle = await client.open(
+      '$path/$name',
+      mode: SftpFileOpenMode.create | SftpFileOpenMode.write | SftpFileOpenMode.truncate,
+    );
+    await handle.close();
+  }
+
   Future<void> rename({required Uri location, required String newName}) async {
     final client = _requireClient(location);
     final dir = p.posix.dirname(location.path);

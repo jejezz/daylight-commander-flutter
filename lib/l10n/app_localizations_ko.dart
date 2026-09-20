@@ -46,6 +46,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get newFolderTitle => '새 폴더';
 
   @override
+  String get newFileTitle => '새 파일';
+
+  @override
   String get createLabel => '만들기';
 
   @override
@@ -245,6 +248,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get fnNewFolder => 'F7 새 폴더';
 
   @override
+  String get newFileButtonLabel => '새 파일';
+
+  @override
   String get fnRename => 'F2 이름변경';
 
   @override
@@ -273,6 +279,9 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get goUpTooltip => '상위 폴더';
+
+  @override
+  String get refreshTooltip => '새로고침';
 
   @override
   String get switchDriveTooltip => '드라이브 전환';

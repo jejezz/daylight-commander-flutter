@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:ftpconnect/ftpconnect.dart';
 import 'package:path/path.dart' as p;
@@ -219,6 +220,14 @@ class FtpTransferService {
     await client.changeDirectory(path);
     final ok = await client.makeDirectory(name);
     if (!ok) throw StateError('폴더 생성 실패: $name');
+  }
+
+  Future<void> createFile({required Uri parentDir, required String name}) async {
+    final client = _requireClient(parentDir);
+    final path = parentDir.path.isEmpty ? '/' : parentDir.path;
+    await client.changeDirectory(path);
+    final ok = await client.uploadData(Uint8List(0), name);
+    if (!ok) throw StateError('파일 생성 실패: $name');
   }
 
   Future<void> rename({required Uri location, required String newName}) async {

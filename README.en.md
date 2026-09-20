@@ -27,8 +27,8 @@ path, and the theme/language toggle buttons in the app bar.
 ## Key Features
 
 ### Navigation & Selection
-- **Dual-pane navigation**: back/forward/up, direct address bar input, drive
-  switching, click-to-sort columns (name/size/modified)
+- **Dual-pane navigation**: back/forward/up, refresh (`Ctrl`/`Cmd`+`R`), direct
+  address bar input, drive switching, click-to-sort columns (name/size/modified)
 - **Multi-select**: mouse (click/Shift/Ctrl) and keyboard (arrow-key cursor +
   Space) both supported, select all, pattern-based (`*.jpg`) select/deselect
 - **Quick search**: type while a pane is focused to instantly filter by name
@@ -36,8 +36,8 @@ path, and the theme/language toggle buttons in the app bar.
 
 ### File Operations
 - Copy/move (F5/F6, with skip/overwrite/rename/apply-to-all on conflict),
-  delete (F8, trash or permanent), new folder (F7), rename (F2), progress
-  display + cancel
+  delete (F8, trash or permanent), new folder (F7)/new file, rename (F2),
+  progress display + cancel
 - Compress/extract (zip) — also supports **browsing zip contents without
   extracting** (F3 / right-click "View")
 - View and edit properties, including read-only/rwx permissions (`chmod` on

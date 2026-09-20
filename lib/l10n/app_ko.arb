@@ -14,6 +14,7 @@
   "passwordNotStoredNote": "비밀번호는 이 연결에만 사용되고 저장되지 않습니다.",
 
   "newFolderTitle": "새 폴더",
+  "newFileTitle": "새 파일",
   "createLabel": "만들기",
   "renameTitle": "이름 변경",
   "renameLabel": "변경",
@@ -116,6 +117,7 @@
   },
   "fnView": "F3 보기",
   "fnNewFolder": "F7 새 폴더",
+  "newFileButtonLabel": "새 파일",
   "fnRename": "F2 이름변경",
   "fnCopy": "F5 복사",
   "fnMove": "F6 이동",
@@ -127,6 +129,7 @@
   "goBackTooltip": "뒤로",
   "goForwardTooltip": "앞으로",
   "goUpTooltip": "상위 폴더",
+  "refreshTooltip": "새로고침",
   "switchDriveTooltip": "드라이브 전환",
   "networkConnectTooltip": "네트워크 드라이브 연결",
   "disconnectMenuItem": "연결 해제",

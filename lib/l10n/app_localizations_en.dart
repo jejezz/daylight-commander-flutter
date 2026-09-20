@@ -48,6 +48,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get newFolderTitle => 'New Folder';
 
   @override
+  String get newFileTitle => 'New File';
+
+  @override
   String get createLabel => 'Create';
 
   @override
@@ -249,6 +252,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fnNewFolder => 'F7 New Folder';
 
   @override
+  String get newFileButtonLabel => 'New File';
+
+  @override
   String get fnRename => 'F2 Rename';
 
   @override
@@ -277,6 +283,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get goUpTooltip => 'Parent Folder';
+
+  @override
+  String get refreshTooltip => 'Refresh';
 
   @override
   String get switchDriveTooltip => 'Switch Drive';
