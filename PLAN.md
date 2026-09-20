@@ -265,3 +265,27 @@ UI 디자인은 이후 별도로 결정한다. 본 문서는 기능 범위 확�
       추가(3개 프로토콜 전부 실제 로컬 테스트 서버로 검증 — createFolder와
       동일한 검증 수준). 전체 테스트 95개 통과, macOS 디버그 빌드로 새
       새로고침 아이콘과 "새 파일" 버튼 렌더링을 창 단위 캡처로 확인
+
+17. Bundle/Application ID를 `com.ptype.*`에서 `art.zoomon.*`로 변경 —
+    **완료** (사용자 요청, 14번의 저작권 정리에 이어): 이 앱이 ptype
+    조직과 무관하다는 게 이유. Developer ID 배포는 App ID를 Apple에 미리
+    등록할 필요가 없어서 기술적으로도 문제없이 바꿀 수 있었음
+    - macOS: `AppInfo.xcconfig`의 `PRODUCT_BUNDLE_IDENTIFIER`
+      `com.ptype.daylightCommander` → `art.zoomon.daylightcommander`,
+      `Runner.xcodeproj/project.pbxproj`의 RunnerTests 타깃도 동일하게
+      맞춤
+    - Linux: `linux/CMakeLists.txt`의 GTK `APPLICATION_ID`도
+      `art.zoomon.daylightcommander`로 통일
+    - Windows: 별도 App ID 개념이 없어 해당 없음. 다만 같은 작업 중
+      `windows/installer.iss`의 `MyAppPublisher`가 아직 `com.ptype`로
+      남아있던 걸 발견해 `jyahn`으로 같이 정리(14번에서 Runner.rc
+      CompanyName은 이미 고쳤는데 설치 스크립트가 나중에 추가되며 누락됨)
+    - **주의(문서화함, RELEASING.md 참고 필요 없음 — 그냥 알아둘 것)**:
+      macOS/Linux는 앱 설정 저장소가 이 식별자를 키로 쓰므로, 기존
+      사용자가 새 버전으로 업그레이드하면 로컬 설정(즐겨찾기·최근
+      폴더·서버 프로필·테마/언어/글자크기)이 초기화된다 — macOS 기준
+      "다른 앱"으로 인식되기 때문. 아직 사용자가 소수인 시점이라 사용자
+      본인이 감수하기로 결정
+    - 검증: `flutter analyze` 클린, 전체 테스트 95개 통과(로직 변경 없음),
+      macOS 디버그 빌드 후 `defaults read .../Info CFBundleIdentifier`로
+      새 식별자가 실제 빌드에 반영됐는지 확인, 앱 정상 실행 확인

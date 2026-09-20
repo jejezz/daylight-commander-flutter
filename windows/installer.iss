@@ -9,7 +9,7 @@
 
 #define MyAppName "Daylight Commander"
 #define MyAppExeName "daylight_commander.exe"
-#define MyAppPublisher "com.ptype"
+#define MyAppPublisher "jyahn"
 
 [Setup]
 ; 업그레이드 설치가 같은 앱으로 인식되도록 고정된 GUID를 쓴다 — 절대 바꾸지 말 것.
