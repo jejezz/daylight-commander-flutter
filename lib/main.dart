@@ -8,6 +8,7 @@ import 'package:window_manager/window_manager.dart';
 import 'l10n/app_localizations.dart';
 import 'presentation/home/home_screen.dart';
 import 'presentation/theme/app_theme.dart';
+import 'presentation/theme/font_scale_provider.dart';
 import 'presentation/theme/locale_provider.dart';
 import 'presentation/theme/theme_mode_provider.dart';
 
@@ -38,6 +39,7 @@ class DaylightCommanderApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final themeMode = ref.watch(themeModeProvider);
     final locale = ref.watch(localeProvider);
+    final fontScale = ref.watch(fontScaleProvider);
     return MaterialApp(
       title: 'Daylight Commander',
       debugShowCheckedModeBanner: false,
@@ -47,6 +49,10 @@ class DaylightCommanderApp extends ConsumerWidget {
       locale: locale,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
+      builder: (context, child) => MediaQuery(
+        data: MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(fontScale)),
+        child: child!,
+      ),
       home: const HomeScreen(),
     );
   }

@@ -153,7 +153,13 @@ class _ArchiveViewerScreenState extends State<ArchiveViewerScreen> {
                           children: [
                             Text(formatBytes(node.size)),
                             const SizedBox(width: 16),
-                            SizedBox(width: 90, child: Text(formatModified(node.modifiedAt))),
+                            SizedBox(
+                              width: 90,
+                              child: Text(
+                                formatModified(node.modifiedAt),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
                           ],
                         ),
                   onTap: () {

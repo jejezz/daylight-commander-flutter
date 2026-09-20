@@ -89,6 +89,9 @@
   "themeSystemTooltip": "Theme: Following system (tap to switch to Light)",
   "themeLightTooltip": "Theme: Light (tap to switch to Dark)",
   "themeDarkTooltip": "Theme: Dark (tap to follow system)",
+  "fontScaleNormalTooltip": "Font size: Normal (tap for Large)",
+  "fontScaleLargeTooltip": "Font size: Large (tap for Small)",
+  "fontScaleSmallTooltip": "Font size: Small (tap for Normal)",
   "languageTooltip": "Language: {current} (tap to switch to {next})",
   "@languageTooltip": {
     "placeholders": {
