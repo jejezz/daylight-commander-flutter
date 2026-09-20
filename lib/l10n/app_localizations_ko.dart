@@ -401,6 +401,56 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
+  String get aboutMenuTooltip => '정보';
+
+  @override
+  String get aboutDialogTitle => 'Daylight Commander 정보';
+
+  @override
+  String get aboutTagline =>
+      'Total Commander · Midnight Commander 스타일의 무료 2단 패널 데스크톱 파일 매니저';
+
+  @override
+  String aboutVersionLabel(String version) {
+    return '버전 $version';
+  }
+
+  @override
+  String get aboutDescription =>
+      'Windows·macOS·Linux를 모두 지원하며, 키보드 중심의 빠른 조작과 SMB/FTP/SFTP/WebDAV 네트워크 드라이브, 내장 뷰어, 폴더 비교·동기화까지 갖춘 클래식 파일 매니저를 목표로 만들었습니다.';
+
+  @override
+  String get aboutFeaturesTitle => '주요 기능';
+
+  @override
+  String get aboutFeatureNavigation => '2단 패널 탐색, 마우스·키보드 다중 선택, 패턴 기반 선택';
+
+  @override
+  String get aboutFeatureFileOps => '복사·이동·삭제·압축, 진행률 표시와 충돌 시 스킵/덮어쓰기/이름변경';
+
+  @override
+  String get aboutFeatureNetwork =>
+      'SMB·FTP·SFTP·WebDAV 네트워크 드라이브 (비밀번호는 절대 저장하지 않음)';
+
+  @override
+  String get aboutFeatureViewer => '텍스트·이미지·PDF·오디오·비디오 내장 뷰어, 압축파일 내부 미리보기';
+
+  @override
+  String get aboutFeatureSync => '폴더 비교와 단방향·양방향 동기화';
+
+  @override
+  String get aboutFeatureLocaleTheme => '한국어·영어 다국어 지원, 라이트·다크 테마';
+
+  @override
+  String get aboutTechStackLabel => 'Flutter(Dart)로 제작';
+
+  @override
+  String get aboutLicenseLabel => '라이선스: MIT';
+
+  @override
+  String get aboutGithubButton => 'GitHub 저장소 열기';
+
+  @override
   String compressFailed(String error) {
     return '압축 실패: $error';
   }

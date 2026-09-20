@@ -195,3 +195,20 @@ UI 디자인은 이후 별도로 결정한다. 본 문서는 기능 범위 확�
       로직 변경이 아니라 신규 테스트는 추가하지 않음), macOS 디버그
       빌드로 라이트/다크 테마 두 화면과 폴더비교 켠 화면(동기화 바)까지
       창 단위 캡처로 새 아이콘 렌더링 확인
+
+14. 라이선스 · 앱 정보(About) · 영문 README — **완료** (사용자 요청):
+    - `LICENSE`(MIT, Copyright (c) 2026 jyahn) 신규 작성. Windows/macOS
+      네이티브 메타데이터의 저작권 표시(`windows/runner/Runner.rc`의
+      `CompanyName`/`LegalCopyright`, `macos/Runner/Configs/AppInfo.xcconfig`의
+      `PRODUCT_COPYRIGHT`)도 기존 `com.ptype`에서 `jyahn`으로 통일. 앱 ID
+      (`com.ptype.daylight_commander` 등 기술 식별자)는 빌드 스크립트가
+      참조하므로 그대로 둠
+    - `README.en.md` 신규: 기존 한국어 README를 영문으로 번역, 양쪽 문서
+      상단에 언어 전환 링크 추가
+    - 앱 안에 정보(About) 다이얼로그 신규 추가 — 앱바 우측 끝에 아이콘 추가.
+      `PackageInfo.fromPlatform()`으로 실제 빌드 버전을 읽어와 표시(하드코딩
+      안 함), 태그라인/기능 요약/기술 스택/라이선스/GitHub 링크 포함.
+      GitHub 링크는 `url_launcher` 패키지 없이 기존 `OpenTerminal`과 같은
+      방식(`Process.start` OS별 분기)의 신규 `OpenUrl` 유스케이스로 연다
+    - 검증: `flutter analyze` 클린, 전체 테스트 85개 통과, macOS 디버그
+      빌드로 정보 다이얼로그 렌더링과 실제 버전 표시를 창 단위 캡처로 확인

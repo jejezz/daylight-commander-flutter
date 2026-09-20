@@ -6,6 +6,7 @@ import '../../l10n/app_localizations.dart';
 import '../theme/app_theme.dart';
 import '../theme/locale_provider.dart';
 import '../theme/theme_mode_provider.dart';
+import '../widgets/about_dialog.dart';
 import '../widgets/operation_banner.dart';
 import '../widgets/tool_icon.dart';
 import 'folder_comparison_provider.dart';
@@ -105,6 +106,11 @@ class HomeScreen extends ConsumerWidget {
               },
             ),
             onPressed: () => ref.read(localeProvider.notifier).cycle(),
+          ),
+          IconButton(
+            icon: const Icon(Icons.info_outline),
+            tooltip: l10n.aboutMenuTooltip,
+            onPressed: () => showAboutInfoDialog(context),
           ),
           const SizedBox(width: 8),
         ],

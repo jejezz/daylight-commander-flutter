@@ -217,6 +217,27 @@
     }
   },
 
+  "aboutMenuTooltip": "About",
+  "aboutDialogTitle": "About Daylight Commander",
+  "aboutTagline": "A free, dual-pane desktop file manager inspired by Total Commander and Midnight Commander",
+  "aboutVersionLabel": "Version {version}",
+  "@aboutVersionLabel": {
+    "placeholders": {
+      "version": { "type": "String" }
+    }
+  },
+  "aboutDescription": "Built for Windows, macOS, and Linux, it aims to be a classic file manager with fast keyboard-driven navigation, SMB/FTP/SFTP/WebDAV network drives, built-in viewers, and folder comparison and sync.",
+  "aboutFeaturesTitle": "Key Features",
+  "aboutFeatureNavigation": "Dual-pane navigation, mouse and keyboard multi-select, pattern-based selection",
+  "aboutFeatureFileOps": "Copy, move, delete, and compress with progress and conflict handling (skip/overwrite/rename)",
+  "aboutFeatureNetwork": "SMB, FTP, SFTP, and WebDAV network drives (passwords are never stored)",
+  "aboutFeatureViewer": "Built-in text, image, PDF, audio, and video viewers, plus browsing zip contents without extracting",
+  "aboutFeatureSync": "Folder comparison with one-way and two-way sync",
+  "aboutFeatureLocaleTheme": "Korean and English localization, light and dark themes",
+  "aboutTechStackLabel": "Built with Flutter (Dart)",
+  "aboutLicenseLabel": "License: MIT",
+  "aboutGithubButton": "Open GitHub Repository",
+
   "compressFailed": "Compression failed: {error}",
   "@compressFailed": {
     "placeholders": {

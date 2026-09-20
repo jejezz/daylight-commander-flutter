@@ -408,6 +408,61 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get aboutMenuTooltip => 'About';
+
+  @override
+  String get aboutDialogTitle => 'About Daylight Commander';
+
+  @override
+  String get aboutTagline =>
+      'A free, dual-pane desktop file manager inspired by Total Commander and Midnight Commander';
+
+  @override
+  String aboutVersionLabel(String version) {
+    return 'Version $version';
+  }
+
+  @override
+  String get aboutDescription =>
+      'Built for Windows, macOS, and Linux, it aims to be a classic file manager with fast keyboard-driven navigation, SMB/FTP/SFTP/WebDAV network drives, built-in viewers, and folder comparison and sync.';
+
+  @override
+  String get aboutFeaturesTitle => 'Key Features';
+
+  @override
+  String get aboutFeatureNavigation =>
+      'Dual-pane navigation, mouse and keyboard multi-select, pattern-based selection';
+
+  @override
+  String get aboutFeatureFileOps =>
+      'Copy, move, delete, and compress with progress and conflict handling (skip/overwrite/rename)';
+
+  @override
+  String get aboutFeatureNetwork =>
+      'SMB, FTP, SFTP, and WebDAV network drives (passwords are never stored)';
+
+  @override
+  String get aboutFeatureViewer =>
+      'Built-in text, image, PDF, audio, and video viewers, plus browsing zip contents without extracting';
+
+  @override
+  String get aboutFeatureSync =>
+      'Folder comparison with one-way and two-way sync';
+
+  @override
+  String get aboutFeatureLocaleTheme =>
+      'Korean and English localization, light and dark themes';
+
+  @override
+  String get aboutTechStackLabel => 'Built with Flutter (Dart)';
+
+  @override
+  String get aboutLicenseLabel => 'License: MIT';
+
+  @override
+  String get aboutGithubButton => 'Open GitHub Repository';
+
+  @override
   String compressFailed(String error) {
     return 'Compression failed: $error';
   }

@@ -89,11 +89,11 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "com.ptype" "\0"
+            VALUE "CompanyName", "jyahn" "\0"
             VALUE "FileDescription", "Daylight Commander" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
             VALUE "InternalName", "daylight_commander" "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2026 com.ptype. All rights reserved." "\0"
+            VALUE "LegalCopyright", "Copyright (C) 2026 jyahn. All rights reserved." "\0"
             VALUE "OriginalFilename", "daylight_commander.exe" "\0"
             VALUE "ProductName", "Daylight Commander" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
