@@ -205,11 +205,14 @@ UI 디자인은 이후 별도로 결정한다. 본 문서는 기능 범위 확�
       참조하므로 그대로 둠
     - `README.en.md` 신규: 기존 한국어 README를 영문으로 번역, 양쪽 문서
       상단에 언어 전환 링크 추가
-    - 앱 안에 정보(About) 다이얼로그 신규 추가 — 앱바 우측 끝에 아이콘 추가.
-      `PackageInfo.fromPlatform()`으로 실제 빌드 버전을 읽어와 표시(하드코딩
-      안 함), 태그라인/기능 요약/기술 스택/라이선스/GitHub 링크 포함.
-      GitHub 링크는 `url_launcher` 패키지 없이 기존 `OpenTerminal`과 같은
-      방식(`Process.start` OS별 분기)의 신규 `OpenUrl` 유스케이스로 연다
+    - 앱 안에 정보(About) 다이얼로그 신규 추가 — 앱바 우측 끝에 아이콘 추가
+      (처음엔 매칭되는 새 아이콘이 없어 Material `info_outline` 사용,
+      이후 사용자가 `icons8-information.svg`를 추가로 받아와 `ToolIcon`으로
+      교체). `PackageInfo.fromPlatform()`으로 실제 빌드 버전을 읽어와
+      표시(하드코딩 안 함), 태그라인/기능 요약/기술 스택/라이선스/GitHub
+      링크 포함. GitHub 링크는 `url_launcher` 패키지 없이 기존
+      `OpenTerminal`과 같은 방식(`Process.start` OS별 분기)의 신규
+      `OpenUrl` 유스케이스로 연다
     - 검증: `flutter analyze` 클린, 전체 테스트 85개 통과, macOS 디버그
       빌드로 정보 다이얼로그 렌더링과 실제 버전 표시를 창 단위 캡처로 확인
 
@@ -221,8 +224,11 @@ UI 디자인은 이후 별도로 결정한다. 본 문서는 기능 범위 확�
       `TextScaler.linear(fontScale)`로 감싸 앱 전체에 적용. OS 접근성
       글자 배율과는 곱해서 합성하지 않고 그냥 대체함 — 데스크톱 확대/축소
       기능(VS Code 줌 등)과 같은 방식으로 충분하다고 판단
-    - 매칭되는 새 아이콘이 없어 Material 아이콘 사용(`format_size`/
-      `text_increase`/`text_decrease`)
+    - 처음엔 매칭되는 새 아이콘이 없어 Material 아이콘 사용(`format_size`/
+      `text_increase`/`text_decrease`)이었다가, 사용자가 `icons8-ocr.svg`를
+      추가로 받아와 `ToolIcon`으로 교체 — 언어 토글과 마찬가지로 3단계
+      상태 전부에 같은 아이콘 하나를 쓰고 툴팁으로만 구분(icons8 세트에
+      상태별 아이콘이 없을 때의 기존 패턴)
     - **테스트가 실제로 잡은 버그**: 글자를 크게(1.15배) 했을 때
       `_ColumnHeader`(이름/크기/수정일 정렬 헤더)의 고정폭 `SizedBox`
       (크기 60px/수정일 105px) 안의 `Row`가 넘쳐 `RenderFlex overflowed`

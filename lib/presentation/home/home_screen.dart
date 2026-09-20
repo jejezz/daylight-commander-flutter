@@ -94,11 +94,7 @@ class HomeScreen extends ConsumerWidget {
             onPressed: () => ref.read(themeModeProvider.notifier).cycle(),
           ),
           IconButton(
-            icon: Icon(switch (fontScale) {
-              1.15 => Icons.text_increase,
-              0.9 => Icons.text_decrease,
-              _ => Icons.format_size,
-            }),
+            icon: const ToolIcon('icons8-ocr.svg'),
             tooltip: switch (fontScale) {
               1.15 => l10n.fontScaleLargeTooltip,
               0.9 => l10n.fontScaleSmallTooltip,
@@ -123,7 +119,7 @@ class HomeScreen extends ConsumerWidget {
             onPressed: () => ref.read(localeProvider.notifier).cycle(),
           ),
           IconButton(
-            icon: const Icon(Icons.info_outline),
+            icon: const ToolIcon('icons8-information.svg'),
             tooltip: l10n.aboutMenuTooltip,
             onPressed: () => showAboutInfoDialog(context),
           ),
