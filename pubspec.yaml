@@ -87,6 +87,10 @@ dependencies:
   media_kit_video: ^2.0.1
   media_kit_libs_video: ^1.0.7
 
+  # 정보(About) 다이얼로그에 실제 앱 버전을 pubspec.yaml과 어긋나지 않게
+  # 표시하기 위함 (이미 다른 패키지의 전이 의존성으로 들어와 있던 버전)
+  package_info_plus: ^9.0.1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

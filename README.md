@@ -3,14 +3,16 @@
 [![Latest Release](https://img.shields.io/github/v/release/jejezz/daylight-commander-flutter?label=release)](https://github.com/jejezz/daylight-commander-flutter/releases/latest)
 [![Platforms](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-blue)](#지원-플랫폼)
 [![Built with Flutter](https://img.shields.io/badge/built%20with-Flutter-02569B?logo=flutter&logoColor=white)](https://flutter.dev)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+
+**[English](README.en.md) | 한국어**
 
 Total Commander / Midnight Commander 스타일의 **무료 2단(dual-pane) 데스크톱 파일
 매니저**입니다. Flutter로 만들었고 Windows, macOS, Linux를 모두 지원합니다
 (모바일은 대상이 아닙니다).
 
 빠른 키보드 중심 조작, SMB/FTP/SFTP/WebDAV 네트워크 드라이브, 내장 뷰어,
-폴더 비교·동기화까지 — 별도 설치 없이 압축만 풀면 바로 쓸 수 있는 클래식
-파일 매니저를 목표로 합니다.
+폴더 비교·동기화까지 갖춘 클래식 파일 매니저를 목표로 합니다.
 
 ## 스크린샷
 
@@ -142,3 +144,7 @@ pip3 install --user pyftpdlib asyncssh wsgidav cheroot
 - [`ARCHITECTURE.md`](ARCHITECTURE.md) — 아키텍처 설계와 주요 기술적 결정 근거
 - [`UI_UX.md`](UI_UX.md) — 테마, 아이콘 시스템, 컴포넌트/단축키 가이드
 - [`RELEASING.md`](RELEASING.md) — 설치 파일 빌드 및 GitHub Release 배포 방법
+
+## 라이선스
+
+[MIT License](LICENSE) — Copyright © 2026 jyahn

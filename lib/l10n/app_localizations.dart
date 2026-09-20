@@ -818,6 +818,96 @@ abstract class AppLocalizations {
   /// **'파일을 여는 데 실패했습니다: {error}'**
   String archiveEntryOpenFailed(String error);
 
+  /// No description provided for @aboutMenuTooltip.
+  ///
+  /// In ko, this message translates to:
+  /// **'정보'**
+  String get aboutMenuTooltip;
+
+  /// No description provided for @aboutDialogTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'Daylight Commander 정보'**
+  String get aboutDialogTitle;
+
+  /// No description provided for @aboutTagline.
+  ///
+  /// In ko, this message translates to:
+  /// **'Total Commander · Midnight Commander 스타일의 무료 2단 패널 데스크톱 파일 매니저'**
+  String get aboutTagline;
+
+  /// No description provided for @aboutVersionLabel.
+  ///
+  /// In ko, this message translates to:
+  /// **'버전 {version}'**
+  String aboutVersionLabel(String version);
+
+  /// No description provided for @aboutDescription.
+  ///
+  /// In ko, this message translates to:
+  /// **'Windows·macOS·Linux를 모두 지원하며, 키보드 중심의 빠른 조작과 SMB/FTP/SFTP/WebDAV 네트워크 드라이브, 내장 뷰어, 폴더 비교·동기화까지 갖춘 클래식 파일 매니저를 목표로 만들었습니다.'**
+  String get aboutDescription;
+
+  /// No description provided for @aboutFeaturesTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'주요 기능'**
+  String get aboutFeaturesTitle;
+
+  /// No description provided for @aboutFeatureNavigation.
+  ///
+  /// In ko, this message translates to:
+  /// **'2단 패널 탐색, 마우스·키보드 다중 선택, 패턴 기반 선택'**
+  String get aboutFeatureNavigation;
+
+  /// No description provided for @aboutFeatureFileOps.
+  ///
+  /// In ko, this message translates to:
+  /// **'복사·이동·삭제·압축, 진행률 표시와 충돌 시 스킵/덮어쓰기/이름변경'**
+  String get aboutFeatureFileOps;
+
+  /// No description provided for @aboutFeatureNetwork.
+  ///
+  /// In ko, this message translates to:
+  /// **'SMB·FTP·SFTP·WebDAV 네트워크 드라이브 (비밀번호는 절대 저장하지 않음)'**
+  String get aboutFeatureNetwork;
+
+  /// No description provided for @aboutFeatureViewer.
+  ///
+  /// In ko, this message translates to:
+  /// **'텍스트·이미지·PDF·오디오·비디오 내장 뷰어, 압축파일 내부 미리보기'**
+  String get aboutFeatureViewer;
+
+  /// No description provided for @aboutFeatureSync.
+  ///
+  /// In ko, this message translates to:
+  /// **'폴더 비교와 단방향·양방향 동기화'**
+  String get aboutFeatureSync;
+
+  /// No description provided for @aboutFeatureLocaleTheme.
+  ///
+  /// In ko, this message translates to:
+  /// **'한국어·영어 다국어 지원, 라이트·다크 테마'**
+  String get aboutFeatureLocaleTheme;
+
+  /// No description provided for @aboutTechStackLabel.
+  ///
+  /// In ko, this message translates to:
+  /// **'Flutter(Dart)로 제작'**
+  String get aboutTechStackLabel;
+
+  /// No description provided for @aboutLicenseLabel.
+  ///
+  /// In ko, this message translates to:
+  /// **'라이선스: MIT'**
+  String get aboutLicenseLabel;
+
+  /// No description provided for @aboutGithubButton.
+  ///
+  /// In ko, this message translates to:
+  /// **'GitHub 저장소 열기'**
+  String get aboutGithubButton;
+
   /// No description provided for @compressFailed.
   ///
   /// In ko, this message translates to:
