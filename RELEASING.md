@@ -63,6 +63,61 @@ Release → **Run workflow** 버튼으로 수동 실행할 수도 있다(이 경
 - 워크플로가 쓰는 Flutter 버전은 `release.yml`의 `FLUTTER_VERSION`
   환경변수로 고정되어 있다(현재 `3.47.1`, 이 프로젝트를 개발한 버전과
   동일). Flutter를 업그레이드하면 이 값도 같이 올려준다.
+- macOS 서명/공증에 필요한 GitHub Secrets 6개를 설정해야 한다 — 바로
+  아래 "macOS 코드사이닝 · 공증 설정" 참고. 설정 전까지는 워크플로의
+  macOS 잡이 그 단계에서 실패한다.
+
+### macOS 코드사이닝 · 공증 설정 (최초 1회)
+
+Apple Developer Program 멤버십(연 $99)과 **Developer ID Application**
+인증서가 있어야 한다. 아래 값들은 전부 **본인만 다루고 저장소 Secrets에
+직접 등록**해야 한다 — Claude나 다른 사람에게 인증서 파일·비밀번호·앱
+암호를 전달하지 말 것.
+
+1. **Developer ID Application 인증서를 .p12로 내보내기**
+   - Xcode에서 이미 만들어 키체인에 있다면: Keychain Access 앱 → 로그인
+     키체인 → "내 인증서"에서 `Developer ID Application: 이름 (팀ID)`을
+     찾아 우클릭 → "내보내기" → `.p12` 형식, 내보낼 때 비밀번호를 하나
+     정해 입력(이게 `MACOS_CERTIFICATE_PASSWORD`가 됨)
+   - 아직 인증서가 없다면 Xcode → Settings → Accounts → 팀 선택 →
+     "Manage Certificates" → `+` → "Developer ID Application"으로 생성한
+     뒤 위 방법으로 내보낸다
+
+2. **.p12를 base64로 인코딩**
+
+   ```bash
+   base64 -i DeveloperID.p12 | pbcopy
+   ```
+
+   (클립보드에 복사됨 — 이 값이 `MACOS_CERTIFICATE_P12_BASE64`)
+
+3. **App-specific password 만들기** — [appleid.apple.com](https://appleid.apple.com)
+   로그인 → 로그인 및 보안 → "앱 암호" → 새로 생성. **Apple ID 로그인
+   비밀번호 자체가 아니라 이 앱 암호**를 쓴다 (`APPLE_ID_PASSWORD`)
+
+4. **Team ID 확인** — [developer.apple.com/account](https://developer.apple.com/account)
+   → Membership 탭에서 10자리 Team ID 확인 (`APPLE_TEAM_ID`)
+
+5. **저장소에 Secrets 등록** (GitHub CLI 사용, 본인 터미널에서 직접 실행):
+
+   ```bash
+   gh secret set MACOS_CERTIFICATE_P12_BASE64   # 붙여넣기 프롬프트가 뜨면 2번 값 붙여넣기
+   gh secret set MACOS_CERTIFICATE_PASSWORD     # 1번에서 정한 .p12 내보내기 비밀번호
+   gh secret set MACOS_KEYCHAIN_PASSWORD        # CI 임시 키체인용 — 아무 문자열이나 새로 정해서 입력
+   gh secret set APPLE_ID                       # Apple ID 이메일
+   gh secret set APPLE_ID_PASSWORD              # 3번의 앱 암호
+   gh secret set APPLE_TEAM_ID                  # 4번의 Team ID
+   ```
+
+   또는 GitHub 웹에서 **Settings → Secrets and variables → Actions →
+   New repository secret**으로 하나씩 등록해도 된다.
+
+6. 다음 릴리스 태그부터 CI가 자동으로 서명 → 공증 → DMG에 티켓 스테이플까지
+   끝낸다. 결과물을 받은 사용자는 `xattr -cr` 없이 바로 실행할 수 있다.
+   **이 파이프라인은 아직 실제 인증서로 검증된 적이 없으니, 다음 릴리스
+   실행 결과(Actions 로그)를 꼭 확인할 것** — 서명 아이덴티티를 못 찾거나
+   공증이 거부되면(예: 하드닝된 런타임과 충돌하는 서드파티 바이너리) 로그에
+   원인이 나온다.
 
 ## B. 로컬에서 수동으로 빌드+패키징
 
@@ -84,22 +139,18 @@ hdiutil create -volname "Daylight Commander" \
 `hdiutil`/`codesign` 둘 다 macOS에 기본 내장되어 있어 별도 설치가 필요
 없다. 결과물은 `dist/DaylightCommander-macos.dmg`.
 
-> **다운받은 사람이 앱을 못 여는 문제(중요)**: Apple Developer 인증서가
-> 없어서 정식 서명/공증(notarization)을 못 한다. `codesign --sign -`로
-> 애드혹 서명은 해두지만, 그래도 macOS는 인터넷에서 받은(quarantine
-> 속성이 붙은) 앱을 처음 열 때 막는다 — DMG를 열고 앱을 Applications
-> 등으로 **꺼내는(extract) 순간 Finder가 이 속성을 그대로 따라 붙인다.**
-> 흔히 "손상되었습니다(damaged)" 또는 "확인되지 않은 개발자"라는 메시지가
-> 뜨는데, 우클릭 → 열기로 안 풀릴 때가 많다. 가장 확실한 해결책은
-> 터미널에서 quarantine 속성을 직접 지우는 것:
+> **이 로컬 빌드는 애드혹 서명만 된다(다운받는 사람 배포용 아님)**: 위
+> 명령은 `codesign --sign -`로 애드혹 서명만 하므로, 이 산출물을 다른
+> 사람에게 그대로 배포하면 "손상되었습니다"/"확인되지 않은 개발자" 경고가
+> 뜬다. 정식 배포용 DMG(서명 + Apple 공증까지 끝난 것)는 GitHub Actions
+> 릴리스 파이프라인이 만든다 — 아래 "macOS 코드사이닝 · 공증 설정" 참고.
+> 이 머신에서 직접 만든 걸 자기 자신만 테스트해볼 때는:
 >
 > ```bash
 > xattr -cr "/Applications/Daylight Commander.app"
 > ```
 >
-> (경로는 실제로 옮긴 위치에 맞게). 이후 더블클릭하면 정상적으로 열린다.
-> 정식 배포를 하려면 Apple Developer Program 가입 후 코드사이닝/공증이
-> 필요하다 — 지금은 범위 밖으로 둔다.
+> 로 quarantine 속성을 지우면 실행된다 (경로는 실제로 옮긴 위치에 맞게).
 
 ### Windows (Windows 머신 필요)
 
@@ -164,7 +215,6 @@ v1.0.0 dist/...`로 파일만 추가할 수 있다.
 
 ## 향후 개선 여지
 
-- macOS 코드사이닝/공증 (Apple Developer Program 필요)
 - Linux AppImage/.deb/.rpm 패키징
 - Linux `.desktop` 파일 + 아이콘 설치 (현재 앱 아이콘은 macOS/Windows에만
   적용되어 있음 — PLAN.md 참고)

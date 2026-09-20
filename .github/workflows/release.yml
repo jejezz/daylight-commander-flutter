@@ -4,6 +4,11 @@ name: Release
 # 패키징하고, 하나의 GitHub Release에 세 파일을 모두 첨부한다.
 # 수동으로도 실행 가능(workflow_dispatch) — 이 경우 태그가 없으므로
 # GITHUB_SHA 기반 임시 이름으로 릴리스를 만든다.
+#
+# macOS 빌드는 Apple Developer ID로 서명 + 공증(notarization)한다. 저장소
+# Secrets에 MACOS_CERTIFICATE_P12_BASE64 / MACOS_CERTIFICATE_PASSWORD /
+# MACOS_KEYCHAIN_PASSWORD / APPLE_ID / APPLE_ID_PASSWORD / APPLE_TEAM_ID가
+# 설정되어 있어야 한다 — 설정 방법은 RELEASING.md 참고.
 on:
   push:
     tags:
@@ -24,16 +29,48 @@ jobs:
           channel: stable
       - run: flutter pub get
       - run: flutter build macos --release
-      - name: 애드혹 서명 + DMG로 패키징
+      - name: Developer ID 인증서를 임시 키체인으로 가져오기
+        env:
+          MACOS_CERTIFICATE_P12_BASE64: ${{ secrets.MACOS_CERTIFICATE_P12_BASE64 }}
+          MACOS_CERTIFICATE_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
+          MACOS_KEYCHAIN_PASSWORD: ${{ secrets.MACOS_KEYCHAIN_PASSWORD }}
+        run: |
+          echo "$MACOS_CERTIFICATE_P12_BASE64" | base64 --decode > certificate.p12
+          security create-keychain -p "$MACOS_KEYCHAIN_PASSWORD" build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p "$MACOS_KEYCHAIN_PASSWORD" build.keychain
+          security set-keychain-settings -lut 21600 build.keychain
+          security import certificate.p12 -k build.keychain -P "$MACOS_CERTIFICATE_PASSWORD" \
+            -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple:,codesign: \
+            -s -k "$MACOS_KEYCHAIN_PASSWORD" build.keychain
+          rm certificate.p12
+      - name: 서명 + 공증 + DMG로 패키징
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
           mkdir -p dist
           APP_PATH=$(find build/macos/Build/Products/Release -maxdepth 1 -name '*.app')
-          # Apple Developer 인증서가 없어 정식 서명/공증은 못 하지만, 애드혹
-          # 서명이라도 있어야 Gatekeeper가 "손상됨"이 아니라 "확인되지 않은
-          # 개발자"로 분류해 사용자가 우회를 시도할 수 있다.
-          codesign --force --deep --sign - "$APP_PATH"
+          IDENTITY=$(security find-identity -v -p codesigning build.keychain \
+            | grep "Developer ID Application" | head -1 | sed -E 's/.*"(.*)"/\1/')
+          if [ -z "$IDENTITY" ]; then
+            echo "::error::키체인에서 Developer ID Application 인증서를 찾지 못함"
+            exit 1
+          fi
+          # --options runtime(하드닝된 런타임)은 공증에 필수. --timestamp로
+          # 보안 타임스탬프도 같이 남긴다 (역시 공증 요건).
+          codesign --force --deep --options runtime --timestamp --sign "$IDENTITY" "$APP_PATH"
           hdiutil create -volname "Daylight Commander" -srcfolder "$APP_PATH" \
             -ov -format UDZO dist/DaylightCommander-macos.dmg
+          xcrun notarytool submit dist/DaylightCommander-macos.dmg \
+            --apple-id "$APPLE_ID" --team-id "$APPLE_TEAM_ID" --password "$APPLE_ID_PASSWORD" \
+            --wait
+          xcrun stapler staple dist/DaylightCommander-macos.dmg
+      - name: 임시 키체인 정리
+        if: always()
+        run: security delete-keychain build.keychain || true
       - uses: actions/upload-artifact@v4
         with:
           name: macos-dmg
