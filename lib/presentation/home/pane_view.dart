@@ -343,7 +343,7 @@ class _PathBarState extends State<_PathBar> {
           ),
           IconButton(
             visualDensity: VisualDensity.compact,
-            icon: const Icon(Icons.refresh, size: 15),
+            icon: const ToolIcon('icons8-refresh.svg', size: 15),
             tooltip: l10n.refreshTooltip,
             onPressed: widget.onRefresh,
           ),
