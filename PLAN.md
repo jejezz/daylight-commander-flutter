@@ -212,3 +212,27 @@ UI 디자인은 이후 별도로 결정한다. 본 문서는 기능 범위 확�
       방식(`Process.start` OS별 분기)의 신규 `OpenUrl` 유스케이스로 연다
     - 검증: `flutter analyze` 클린, 전체 테스트 85개 통과, macOS 디버그
       빌드로 정보 다이얼로그 렌더링과 실제 버전 표시를 창 단위 캡처로 확인
+
+15. 런타임 글자 크기 조절 — **완료** (사용자 요청):
+    - 앱바에 3단계(보통 → 크게(1.15배) → 작게(0.9배) → 다시 보통)로
+      순환하는 토글 버튼 추가. `ThemeModeController`/`LocaleController`와
+      완전히 같은 패턴(`FontScaleController`, `shared_preferences`로 저장)
+    - `main.dart`의 `MaterialApp.builder`에서 `MediaQuery`를
+      `TextScaler.linear(fontScale)`로 감싸 앱 전체에 적용. OS 접근성
+      글자 배율과는 곱해서 합성하지 않고 그냥 대체함 — 데스크톱 확대/축소
+      기능(VS Code 줌 등)과 같은 방식으로 충분하다고 판단
+    - 매칭되는 새 아이콘이 없어 Material 아이콘 사용(`format_size`/
+      `text_increase`/`text_decrease`)
+    - **테스트가 실제로 잡은 버그**: 글자를 크게(1.15배) 했을 때
+      `_ColumnHeader`(이름/크기/수정일 정렬 헤더)의 고정폭 `SizedBox`
+      (크기 60px/수정일 105px) 안의 `Row`가 넘쳐 `RenderFlex overflowed`
+      에러가 4번(양쪽 패널 × 컬럼 2개) 발생 — i18n 때 컬럼 오버플로
+      버그와 같은 종류. 헤더 Row의 라벨 텍스트를 `Flexible` +
+      `TextOverflow.ellipsis`로 감싸 해결(넘치면 잘라내고 말줄임표).
+      같은 이유로 `_FileRow`의 크기/수정일 셀과 `ArchiveViewerScreen`의
+      수정일 셀에도 `overflow: TextOverflow.ellipsis`를 미리 추가해둠
+    - 검증: `test/font_scale_test.dart`(컨트롤러 순환/영속성 단위테스트),
+      `test/font_scale_overflow_test.dart`(글자 크기를 크게 한 채로 2-pane
+      화면을 그려 오버플로 예외가 없는지 확인 — 위 버그를 처음 잡아낸
+      테스트) 신규 추가. macOS 디버그 빌드에 `defaults write`로 글자 크기
+      "크게" 상태를 강제해 창 단위 캡처로 실제 렌더링 확인

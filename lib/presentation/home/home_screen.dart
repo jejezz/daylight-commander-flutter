@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../l10n/app_localizations.dart';
 import '../theme/app_theme.dart';
+import '../theme/font_scale_provider.dart';
 import '../theme/locale_provider.dart';
 import '../theme/theme_mode_provider.dart';
 import '../widgets/about_dialog.dart';
@@ -50,6 +51,7 @@ class HomeScreen extends ConsumerWidget {
     final activeIsRemote = isRemotePath(ref.watch(paneControllerProvider(activeSide)).currentPath);
     final themeMode = ref.watch(themeModeProvider);
     final locale = ref.watch(localeProvider);
+    final fontScale = ref.watch(fontScaleProvider);
     final l10n = AppLocalizations.of(context);
 
     return Scaffold(
@@ -90,6 +92,19 @@ class HomeScreen extends ConsumerWidget {
               ThemeMode.dark => l10n.themeDarkTooltip,
             },
             onPressed: () => ref.read(themeModeProvider.notifier).cycle(),
+          ),
+          IconButton(
+            icon: Icon(switch (fontScale) {
+              1.15 => Icons.text_increase,
+              0.9 => Icons.text_decrease,
+              _ => Icons.format_size,
+            }),
+            tooltip: switch (fontScale) {
+              1.15 => l10n.fontScaleLargeTooltip,
+              0.9 => l10n.fontScaleSmallTooltip,
+              _ => l10n.fontScaleNormalTooltip,
+            },
+            onPressed: () => ref.read(fontScaleProvider.notifier).cycle(),
           ),
           IconButton(
             icon: const ToolIcon('icons8-language-64.svg'),

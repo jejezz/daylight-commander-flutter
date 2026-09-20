@@ -489,9 +489,10 @@ class _ColumnHeader extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
           child: Row(
-            mainAxisSize: MainAxisSize.min,
             children: [
-              Text(text, style: style),
+              // 글자 크기를 키웠을 때 컬럼 고정폭(SizedBox)을 넘으면 잘라내고
+              // 말줄임표를 붙인다 — 넘치는 대신 우아하게 줄어들게.
+              Flexible(child: Text(text, style: style, overflow: TextOverflow.ellipsis)),
               if (isActive) ...[
                 const SizedBox(width: 2),
                 ToolIcon('icons8-sorting-arrows-64.svg', size: 14, flipVertical: !ascending),
@@ -589,6 +590,7 @@ class _FileRow extends StatelessWidget {
               entry.isDirectory ? '--' : formatBytes(entry.sizeBytes),
               style: theme.textTheme.labelSmall,
               textAlign: TextAlign.right,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
           SizedBox(
@@ -597,6 +599,7 @@ class _FileRow extends StatelessWidget {
               formatModified(entry.modifiedAt),
               style: theme.textTheme.labelSmall,
               textAlign: TextAlign.right,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],

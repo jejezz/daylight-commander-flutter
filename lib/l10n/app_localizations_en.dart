@@ -210,6 +210,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get themeDarkTooltip => 'Theme: Dark (tap to follow system)';
 
   @override
+  String get fontScaleNormalTooltip => 'Font size: Normal (tap for Large)';
+
+  @override
+  String get fontScaleLargeTooltip => 'Font size: Large (tap for Small)';
+
+  @override
+  String get fontScaleSmallTooltip => 'Font size: Small (tap for Normal)';
+
+  @override
   String languageTooltip(String current, String next) {
     return 'Language: $current (tap to switch to $next)';
   }

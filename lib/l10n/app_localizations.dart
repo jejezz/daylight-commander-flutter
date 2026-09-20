@@ -476,6 +476,24 @@ abstract class AppLocalizations {
   /// **'테마: 다크로 고정 (누르면 시스템 설정 따름)'**
   String get themeDarkTooltip;
 
+  /// No description provided for @fontScaleNormalTooltip.
+  ///
+  /// In ko, this message translates to:
+  /// **'글자 크기: 보통 (누르면 크게)'**
+  String get fontScaleNormalTooltip;
+
+  /// No description provided for @fontScaleLargeTooltip.
+  ///
+  /// In ko, this message translates to:
+  /// **'글자 크기: 크게 (누르면 작게)'**
+  String get fontScaleLargeTooltip;
+
+  /// No description provided for @fontScaleSmallTooltip.
+  ///
+  /// In ko, this message translates to:
+  /// **'글자 크기: 작게 (누르면 보통)'**
+  String get fontScaleSmallTooltip;
+
   /// No description provided for @languageTooltip.
   ///
   /// In ko, this message translates to:

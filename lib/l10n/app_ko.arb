@@ -89,6 +89,9 @@
   "themeSystemTooltip": "테마: 시스템 설정 따름 (누르면 라이트로 고정)",
   "themeLightTooltip": "테마: 라이트로 고정 (누르면 다크로 고정)",
   "themeDarkTooltip": "테마: 다크로 고정 (누르면 시스템 설정 따름)",
+  "fontScaleNormalTooltip": "글자 크기: 보통 (누르면 크게)",
+  "fontScaleLargeTooltip": "글자 크기: 크게 (누르면 작게)",
+  "fontScaleSmallTooltip": "글자 크기: 작게 (누르면 보통)",
   "languageTooltip": "언어: {current} (누르면 {next}로 전환)",
   "@languageTooltip": {
     "placeholders": {

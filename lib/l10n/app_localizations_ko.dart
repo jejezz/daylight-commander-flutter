@@ -206,6 +206,15 @@ class AppLocalizationsKo extends AppLocalizations {
   String get themeDarkTooltip => '테마: 다크로 고정 (누르면 시스템 설정 따름)';
 
   @override
+  String get fontScaleNormalTooltip => '글자 크기: 보통 (누르면 크게)';
+
+  @override
+  String get fontScaleLargeTooltip => '글자 크기: 크게 (누르면 작게)';
+
+  @override
+  String get fontScaleSmallTooltip => '글자 크기: 작게 (누르면 보통)';
+
+  @override
   String languageTooltip(String current, String next) {
     return '언어: $current (누르면 $next로 전환)';
   }
