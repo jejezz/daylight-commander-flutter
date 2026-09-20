@@ -95,6 +95,7 @@ class PaneView extends ConsumerWidget {
                   onUp: controller.goUp,
                   onBack: controller.goBack,
                   onForward: controller.goForward,
+                  onRefresh: controller.refresh,
                   onSubmitPath: controller.navigateTo,
                   onSelectDrive: controller.navigateTo,
                   onToggleHidden: controller.toggleShowHidden,
@@ -250,6 +251,7 @@ class _PathBar extends StatefulWidget {
     required this.onUp,
     required this.onBack,
     required this.onForward,
+    required this.onRefresh,
     required this.onSubmitPath,
     required this.onSelectDrive,
     required this.onToggleHidden,
@@ -275,6 +277,7 @@ class _PathBar extends StatefulWidget {
   final VoidCallback onUp;
   final VoidCallback onBack;
   final VoidCallback onForward;
+  final VoidCallback onRefresh;
   final ValueChanged<String> onSubmitPath;
   final ValueChanged<String> onSelectDrive;
   final VoidCallback onToggleHidden;
@@ -337,6 +340,12 @@ class _PathBarState extends State<_PathBar> {
             icon: const ToolIcon('icons8-up.svg', size: 15),
             tooltip: l10n.goUpTooltip,
             onPressed: widget.onUp,
+          ),
+          IconButton(
+            visualDensity: VisualDensity.compact,
+            icon: const ToolIcon('icons8-refresh.svg', size: 15),
+            tooltip: l10n.refreshTooltip,
+            onPressed: widget.onRefresh,
           ),
           PopupMenuButton<String>(
             tooltip: l10n.switchDriveTooltip,

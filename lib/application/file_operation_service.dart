@@ -185,6 +185,14 @@ class FileOperationService {
     await dir.create();
   }
 
+  Future<void> createFile({required String parentDir, required String name}) async {
+    final file = File(p.join(parentDir, name));
+    if (await file.exists()) {
+      throw StateError('이미 같은 이름의 파일이 있습니다.');
+    }
+    await file.create();
+  }
+
   Future<void> rename({required String path, required String newName}) async {
     final newPath = p.join(p.dirname(path), newName);
     if (await FileSystemEntity.type(newPath) != FileSystemEntityType.notFound) {

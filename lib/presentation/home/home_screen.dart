@@ -136,6 +136,10 @@ class HomeScreen extends ConsumerWidget {
               moveSelectionToOtherPane(context, ref, activeSide),
           const SingleActivator(LogicalKeyboardKey.f7): () =>
               createFolder(context, ref, activeSide),
+          const SingleActivator(LogicalKeyboardKey.keyR, control: true): () =>
+              ref.read(paneControllerProvider(activeSide).notifier).refresh(),
+          const SingleActivator(LogicalKeyboardKey.keyR, meta: true): () =>
+              ref.read(paneControllerProvider(activeSide).notifier).refresh(),
           const SingleActivator(LogicalKeyboardKey.f8): () =>
               deleteSelection(context, ref, activeSide),
           const SingleActivator(LogicalKeyboardKey.delete): () =>
@@ -265,6 +269,11 @@ class _FunctionBar extends ConsumerWidget {
               label: l10n.fnNewFolder,
               icon: Icons.create_new_folder_outlined,
               onPressed: () => createFolder(context, ref, activeSide),
+            ),
+            _FnButton(
+              label: l10n.newFileButtonLabel,
+              icon: Icons.note_add_outlined,
+              onPressed: () => createFile(context, ref, activeSide),
             ),
             _FnButton(
               label: l10n.fnRename,

@@ -14,6 +14,7 @@
   "passwordNotStoredNote": "The password is used only for this connection and is never stored.",
 
   "newFolderTitle": "New Folder",
+  "newFileTitle": "New File",
   "createLabel": "Create",
   "renameTitle": "Rename",
   "renameLabel": "Rename",
@@ -116,6 +117,7 @@
   },
   "fnView": "F3 View",
   "fnNewFolder": "F7 New Folder",
+  "newFileButtonLabel": "New File",
   "fnRename": "F2 Rename",
   "fnCopy": "F5 Copy",
   "fnMove": "F6 Move",
@@ -127,6 +129,7 @@
   "goBackTooltip": "Back",
   "goForwardTooltip": "Forward",
   "goUpTooltip": "Parent Folder",
+  "refreshTooltip": "Refresh",
   "switchDriveTooltip": "Switch Drive",
   "networkConnectTooltip": "Connect Network Drive",
   "disconnectMenuItem": "Disconnect",

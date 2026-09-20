@@ -242,3 +242,26 @@ UI 디자인은 이후 별도로 결정한다. 본 문서는 기능 범위 확�
       화면을 그려 오버플로 예외가 없는지 확인 — 위 버그를 처음 잡아낸
       테스트) 신규 추가. macOS 디버그 빌드에 `defaults write`로 글자 크기
       "크게" 상태를 강제해 창 단위 캡처로 실제 렌더링 확인
+
+16. 폴더 새로고침 · 새 파일 생성 — **완료** (사용자 요청):
+    - 새로고침: 각 패널 툴바에 아이콘 버튼 추가(뒤로/앞으로/상위폴더
+      옆), `Ctrl+R`/`Cmd+R` 단축키도 추가. 실제 재조회 로직은 이미 있던
+      `PaneController.refresh()`를 그대로 노출한 것 — 지금까지는 파일
+      작업 뒤 내부적으로만 호출됐음. 처음엔 매칭되는 새 아이콘이 없어
+      Material `Icons.refresh` 사용했다가, 사용자가 `icons8-refresh.svg`를
+      추가로 받아와 `ToolIcon`으로 교체
+    - 새 파일: F-바에 "새 파일" 버튼 추가 (F7 새 폴더 바로 옆, 전용 F키는
+      없음 — 압축/속성/패턴선택처럼 F키 없이 버튼만 있는 기존 항목과
+      같은 패턴). `createFolder`와 완전히 같은 구조로 로컬/FTP/SFTP/
+      WebDAV 4개 백엔드 모두 지원:
+      - 로컬: `File(path).create()`
+      - SFTP: `client.open(path, mode: create|write|truncate)` 후 close
+      - WebDAV: `client.write(path, Uint8List(0))`
+      - FTP: `client.uploadData(Uint8List(0), name)` — ftpconnect는 로컬
+        파일 없이 메모리 바이트를 바로 올리는 API가 있어 임시 파일 불필요
+    - 검증: `file_operation_service_test.dart`에 로컬 `createFile` 단위
+      테스트 추가, `ftp_integration_test.dart`/`sftp_integration_test.dart`/
+      `webdav_integration_test.dart`에 각각 "새 파일 생성" 통합테스트
+      추가(3개 프로토콜 전부 실제 로컬 테스트 서버로 검증 — createFolder와
+      동일한 검증 수준). 전체 테스트 95개 통과, macOS 디버그 빌드로 새
+      새로고침 아이콘과 "새 파일" 버튼 렌더링을 창 단위 캡처로 확인

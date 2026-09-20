@@ -185,6 +185,23 @@ void main() {
     );
   });
 
+  test('createFile: 빈 파일을 만든다', () async {
+    await service.createFile(parentDir: tempDir.path, name: 'new.txt');
+
+    final file = File(p.join(tempDir.path, 'new.txt'));
+    expect(file.existsSync(), isTrue);
+    expect(file.lengthSync(), 0);
+  });
+
+  test('createFile: 같은 이름이 있으면 예외를 던진다', () async {
+    File(p.join(tempDir.path, 'dup.txt')).writeAsStringSync('x');
+
+    expect(
+      () => service.createFile(parentDir: tempDir.path, name: 'dup.txt'),
+      throwsA(isA<StateError>()),
+    );
+  });
+
   test('rename: 파일 이름을 바꾼다', () async {
     final file = File(p.join(tempDir.path, 'old.txt'))..writeAsStringSync('x');
 
