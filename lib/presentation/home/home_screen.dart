@@ -20,6 +20,16 @@ class HomeScreen extends ConsumerWidget {
 
   KeyEventResult _handleQuickSearchKey(WidgetRef ref, PaneSide activeSide, KeyEvent event) {
     if (event is! KeyDownEvent) return KeyEventResult.ignored;
+
+    // A TextField (e.g. the path bar) has focus: let it handle typing itself.
+    // Otherwise this handler would swallow the key event before the platform
+    // can deliver the typed character to the text field.
+    final primaryFocus = FocusManager.instance.primaryFocus;
+    if (primaryFocus != null &&
+        primaryFocus.context?.findAncestorWidgetOfExactType<EditableText>() != null) {
+      return KeyEventResult.ignored;
+    }
+
     final controller = ref.read(paneControllerProvider(activeSide).notifier);
 
     if (event.logicalKey == LogicalKeyboardKey.backspace) {
