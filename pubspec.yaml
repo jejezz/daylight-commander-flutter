@@ -60,6 +60,9 @@ dependencies:
   # 데스크톱 창 제어 (커스텀 타이틀바 등)
   window_manager: ^0.4.3
 
+  # Windows 드라이브 목록을 네트워크 접근 없이 즉시 조회 (GetLogicalDrives)
+  win32: ^5.5.0
+
   # OS → 앱 드래그앤드롭
   desktop_drop: ^0.6.0
 
