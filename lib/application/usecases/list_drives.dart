@@ -22,8 +22,13 @@ class ListDrives {
     final drives = <DriveEntry>[];
     for (final letter in 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')) {
       final path = '$letter:\\';
-      if (await Directory(path).exists()) {
-        drives.add(DriveEntry(name: path, path: path));
+      try {
+        if (await Directory(path).exists()) {
+          drives.add(DriveEntry(name: path, path: path));
+        }
+      } catch (_) {
+        // 연결이 끊긴 네트워크 드라이브 등 접근할 수 없는 드라이브는 건너뛴다.
+        // 여기서 예외를 던지면 이후 드라이브까지 전부 목록에서 사라진다.
       }
     }
     return drives;
