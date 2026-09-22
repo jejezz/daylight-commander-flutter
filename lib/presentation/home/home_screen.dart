@@ -166,6 +166,14 @@ class HomeScreen extends ConsumerWidget {
               openTerminalHere(ref, activeSide),
           const SingleActivator(LogicalKeyboardKey.backquote, meta: true): () =>
               openTerminalHere(ref, activeSide),
+          const SingleActivator(LogicalKeyboardKey.keyC, control: true): () =>
+              copySelectionToOsClipboard(context, ref, activeSide),
+          const SingleActivator(LogicalKeyboardKey.keyC, meta: true): () =>
+              copySelectionToOsClipboard(context, ref, activeSide),
+          const SingleActivator(LogicalKeyboardKey.keyV, control: true): () =>
+              pasteFromOsClipboard(context, ref, activeSide),
+          const SingleActivator(LogicalKeyboardKey.keyV, meta: true): () =>
+              pasteFromOsClipboard(context, ref, activeSide),
           const SingleActivator(LogicalKeyboardKey.arrowDown): () =>
               ref.read(paneControllerProvider(activeSide).notifier).moveCursor(1),
           const SingleActivator(LogicalKeyboardKey.arrowUp): () =>
