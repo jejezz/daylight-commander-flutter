@@ -15,6 +15,7 @@ import '../../application/usecases/connect_network_drive.dart';
 import '../../application/usecases/local_file_entry.dart';
 import '../../application/usecases/open_terminal.dart';
 import '../../application/usecases/open_with_default_app.dart';
+import '../../application/usecases/reveal_in_file_manager.dart';
 import '../../application/webdav_session_manager.dart';
 import '../../application/webdav_transfer_service.dart';
 import '../../domain/entities/file_conflict.dart';
@@ -41,6 +42,7 @@ const _archiveService = ArchiveService();
 const _connectNetworkDrive = ConnectNetworkDrive();
 const _openTerminal = OpenTerminal();
 const _openWithDefaultApp = OpenWithDefaultApp();
+const _revealInFileManager = RevealInFileManager();
 
 Future<void> openTerminalHere(WidgetRef ref, PaneSide side) async {
   final path = ref.read(paneControllerProvider(side)).currentPath;
@@ -470,6 +472,18 @@ Future<void> openEntryWithDefaultApp(
   await _openWithDefaultApp(path);
 }
 
+/// 선택한 항목 중 첫 번째를 OS 파일 관리자(Finder/탐색기)에서 부모 폴더 안에
+/// 선택된 상태로 연다. 앱 안에서 파일 목록 밖으로 직접 드래그 아웃하는 대신,
+/// 실제 OS 파일 관리자로 보내 거기서 드래그하게 하는 우회 수단이다. 원격
+/// 항목은 로컬 경로가 없어 지원하지 않는다.
+Future<void> revealSelectedInFileManager(WidgetRef ref, PaneSide side) async {
+  final entries = ref.read(paneControllerProvider(side)).selectedEntries;
+  if (entries.isEmpty) return;
+  final target = entries.first;
+  if (target.location.scheme != 'file') return;
+  await _revealInFileManager(target.location.toFilePath());
+}
+
 Future<void> compressSelection(BuildContext context, WidgetRef ref, PaneSide side) async {
   final pane = ref.read(paneControllerProvider(side));
   final entries = pane.selectedEntries;
@@ -755,6 +769,11 @@ Future<void> showRowContextMenu(
       if (singleTarget != null && allLocal)
         PopupMenuItem(value: 'properties', child: Text(l10n.propertiesTitle)),
       if (canBookmark) PopupMenuItem(value: 'bookmark', child: Text(l10n.addBookmarkTooltip)),
+      if (allLocal)
+        PopupMenuItem(
+          value: 'reveal_in_file_manager',
+          child: Text(l10n.contextMenuRevealInFileManager),
+        ),
     ],
   );
 
@@ -784,6 +803,8 @@ Future<void> showRowContextMenu(
       await ref
           .read(bookmarksProvider.notifier)
           .toggle(locationToPathString(singleTarget!.location));
+    case 'reveal_in_file_manager':
+      await revealSelectedInFileManager(ref, side);
   }
 }
 

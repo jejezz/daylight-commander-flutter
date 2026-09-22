@@ -362,6 +362,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get contextMenuDelete => '삭제 (F8)';
 
   @override
+  String get contextMenuRevealInFileManager => '파일 관리자에서 보기';
+
+  @override
   String get normalView => '일반 보기';
 
   @override

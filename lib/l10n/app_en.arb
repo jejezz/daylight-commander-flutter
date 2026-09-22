@@ -172,6 +172,7 @@
   "contextMenuCopy": "Copy → Other Pane (F5)",
   "contextMenuMove": "Move → Other Pane (F6)",
   "contextMenuDelete": "Delete (F8)",
+  "contextMenuRevealInFileManager": "Show in File Manager",
 
   "normalView": "Normal View",
   "hexView": "View as Hex",

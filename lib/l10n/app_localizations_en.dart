@@ -368,6 +368,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get contextMenuDelete => 'Delete (F8)';
 
   @override
+  String get contextMenuRevealInFileManager => 'Show in File Manager';
+
+  @override
   String get normalView => 'Normal View';
 
   @override
