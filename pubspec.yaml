@@ -63,8 +63,8 @@ dependencies:
   # Windows 드라이브 목록을 네트워크 접근 없이 즉시 조회 (GetLogicalDrives)
   win32: ^5.5.0
 
-  # OS ↔ 앱 드래그앤드롭 (in/out 모두 네이티브 드래그 세션 기반)
-  super_drag_and_drop: ^0.9.1
+  # OS → 앱 드래그앤드롭
+  desktop_drop: ^0.6.0
 
   # 즐겨찾기 경로 저장 (경로 문자열만 — 자격증명 아님)
   shared_preferences: ^2.3.3
