@@ -764,6 +764,12 @@ abstract class AppLocalizations {
   /// **'삭제 (F8)'**
   String get contextMenuDelete;
 
+  /// No description provided for @contextMenuRevealInFileManager.
+  ///
+  /// In ko, this message translates to:
+  /// **'파일 관리자에서 보기'**
+  String get contextMenuRevealInFileManager;
+
   /// No description provided for @normalView.
   ///
   /// In ko, this message translates to:

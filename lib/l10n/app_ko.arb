@@ -172,6 +172,7 @@
   "contextMenuCopy": "복사 → 반대 패널 (F5)",
   "contextMenuMove": "이동 → 반대 패널 (F6)",
   "contextMenuDelete": "삭제 (F8)",
+  "contextMenuRevealInFileManager": "파일 관리자에서 보기",
 
   "normalView": "일반 보기",
   "hexView": "Hex로 보기",
