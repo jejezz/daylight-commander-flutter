@@ -1,7 +1,9 @@
-import 'package:desktop_drop/desktop_drop.dart';
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:super_drag_and_drop/super_drag_and_drop.dart';
 
 import '../../core/bytes_format.dart';
 import '../../core/date_format.dart';
@@ -63,7 +65,8 @@ class PaneView extends ConsumerWidget {
       );
     }
 
-    return _ExternalDropOverlay(
+    return _PaneDropRegion(
+      onInternalDrop: (payload) => handleDrop(payload, state.currentPath),
       onFilesDropped: (paths) => dropExternalFiles(context, ref, side, paths),
       child: DecoratedBox(
         decoration: BoxDecoration(
@@ -638,20 +641,104 @@ class _FileRow extends StatelessWidget {
     }
 
     Widget content = entry.isDirectory
-        ? DragTarget<DragPayload>(
-            onWillAcceptWithDetails: (details) =>
-                !details.data.entries.any((e) => e.location == entry.location),
-            onAcceptWithDetails: (details) => onFolderDrop(details.data),
-            builder: (context, candidateData, rejectedData) =>
-                tappable(dragHighlight: candidateData.isNotEmpty),
+        ? _FolderDropTarget(
+            location: entry.location,
+            onFolderDrop: onFolderDrop,
+            builder: (context, highlight) =>
+                tappable(dragHighlight: highlight),
           )
         : tappable();
+
+    // 로컬 파일을 단일 선택으로 끌 때만 OS 네이티브 드래그 세션을 띄워서
+    // Finder/탐색기 등 앱 밖으로도 끌어낼 수 있게 한다. 원격(FTP/SFTP/WebDAV/SMB)
+    // 항목은 실제 로컬 경로가 없어 대상이 될 수 없고, 다중 선택은
+    // super_drag_and_drop이 목록 가상화(ListView.builder)로 화면 밖에 있는
+    // 선택 항목까지 하나의 네이티브 세션으로 묶어주는 것을 지원하지 않아
+    // 이번 PoC 범위에서는 제외했다 — 앱 내부 이동(Draggable<DragPayload>)으로
+    // 계속 동작한다.
+    final canDragOut =
+        entry.source == FileSourceType.local && dragPayload.entries.length == 1;
+
+    if (canDragOut) {
+      return DragItemWidget(
+        dragItemProvider: (request) async {
+          final item = DragItem(localData: dragPayload, suggestedName: entry.name);
+          item.add(Formats.fileUri(entry.location));
+          return item;
+        },
+        allowedOperations: () => const [DropOperation.copy],
+        dragBuilder: (context, child) => _DragFeedback(payload: dragPayload),
+        child: DraggableWidget(child: content),
+      );
+    }
 
     return Draggable<DragPayload>(
       data: dragPayload,
       feedback: _DragFeedback(payload: dragPayload),
       childWhenDragging: Opacity(opacity: 0.35, child: _row(context)),
       child: content,
+    );
+  }
+}
+
+/// 폴더 행 하나를 드롭 타겟으로 만든다. 앱 내부 Flutter 드래그
+/// ([DragTarget]) 와 OS 네이티브 드래그 세션([DropRegion], 로컬 파일을
+/// [_FileRow]에서 [DragItemWidget]으로 끌 때 발생) 두 경로 모두 같은 폴더로의
+/// 이동을 받아준다. 서로 다른 이벤트 파이프라인이라 함께 달아둬도 간섭하지
+/// 않는다.
+class _FolderDropTarget extends StatefulWidget {
+  const _FolderDropTarget({
+    required this.location,
+    required this.onFolderDrop,
+    required this.builder,
+  });
+
+  final Uri location;
+  final ValueChanged<DragPayload> onFolderDrop;
+  final Widget Function(BuildContext context, bool highlight) builder;
+
+  @override
+  State<_FolderDropTarget> createState() => _FolderDropTargetState();
+}
+
+class _FolderDropTargetState extends State<_FolderDropTarget> {
+  bool _nativeHighlight = false;
+
+  bool _acceptsPayload(DragPayload payload) =>
+      !payload.entries.any((e) => e.location == widget.location);
+
+  @override
+  Widget build(BuildContext context) {
+    return DragTarget<DragPayload>(
+      onWillAcceptWithDetails: (details) => _acceptsPayload(details.data),
+      onAcceptWithDetails: (details) => widget.onFolderDrop(details.data),
+      builder: (context, candidateData, rejectedData) {
+        return DropRegion(
+          formats: const [Formats.fileUri],
+          onDropOver: (event) {
+            final items = event.session.items;
+            final localData = items.isEmpty ? null : items.first.localData;
+            if (localData is DragPayload && _acceptsPayload(localData)) {
+              return DropOperation.copy;
+            }
+            return DropOperation.none;
+          },
+          onDropEnter: (_) => setState(() => _nativeHighlight = true),
+          onDropLeave: (_) => setState(() => _nativeHighlight = false),
+          onPerformDrop: (event) async {
+            setState(() => _nativeHighlight = false);
+            final items = event.session.items;
+            final localData = items.isEmpty ? null : items.first.localData;
+            if (localData is DragPayload && _acceptsPayload(localData)) {
+              widget.onFolderDrop(localData);
+            }
+          },
+          child: widget.builder(
+            context,
+            candidateData.isNotEmpty || _nativeHighlight,
+          ),
+        );
+      },
     );
   }
 }
@@ -738,34 +825,79 @@ class _PaneStatusBar extends StatelessWidget {
   }
 }
 
-/// Finder/탐색기 등 OS에서 이 패널로 드래그해온 파일을 받는다. `desktop_drop`은
-/// 네이티브 OS 드래그 이벤트를 쓰므로, 패널 내부의 Flutter `Draggable`/
-/// `DragTarget`(패널 간 이동)과는 완전히 다른 경로라 서로 간섭하지 않는다.
-class _ExternalDropOverlay extends StatefulWidget {
-  const _ExternalDropOverlay({
+/// 이 패널이 받는 모든 드롭을 하나로 모은다 — Finder/탐색기 등 OS 밖에서
+/// 온 파일(외부 드롭)과, [_FileRow]가 [DragItemWidget]으로 띄운 네이티브
+/// 드래그 세션이 같은 앱 안의 다른 패널/폴더로 돌아온 경우(내부 이동)를
+/// `DropSession.items.first.localData`로 구분해 처리한다. 패널 배경의
+/// `DragTarget<DragPayload>`(순수 Flutter 드래그 — 다중 선택, 원격 항목)와는
+/// 완전히 다른 이벤트 경로라 함께 달아둬도 간섭하지 않는다.
+class _PaneDropRegion extends StatefulWidget {
+  const _PaneDropRegion({
+    required this.onInternalDrop,
     required this.onFilesDropped,
     required this.child,
   });
 
+  final Future<void> Function(DragPayload payload) onInternalDrop;
   final ValueChanged<List<String>> onFilesDropped;
   final Widget child;
 
   @override
-  State<_ExternalDropOverlay> createState() => _ExternalDropOverlayState();
+  State<_PaneDropRegion> createState() => _PaneDropRegionState();
 }
 
-class _ExternalDropOverlayState extends State<_ExternalDropOverlay> {
+class _PaneDropRegionState extends State<_PaneDropRegion> {
   bool _hovering = false;
+
+  /// 드롭된 아이템들에서 [Formats.fileUri] 값을 읽어 로컬 경로 목록으로
+  /// 만든다. `getValue`는 콜백 기반이라(플랫폼 스레드를 막지 않기 위해) 각
+  /// 아이템마다 Completer로 감싸 순서대로 기다린다.
+  Future<List<String>> _readDroppedPaths(List<DropItem> items) async {
+    final paths = <String>[];
+    for (final item in items) {
+      final reader = item.dataReader;
+      if (reader == null || !reader.canProvide(Formats.fileUri)) continue;
+      final completer = Completer<void>();
+      final progress = reader.getValue<Uri>(
+        Formats.fileUri,
+        (uri) {
+          if (uri != null) paths.add(uri.toFilePath());
+          if (!completer.isCompleted) completer.complete();
+        },
+        onError: (_) {
+          if (!completer.isCompleted) completer.complete();
+        },
+      );
+      if (progress == null) continue;
+      await completer.future;
+    }
+    return paths;
+  }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    return DropTarget(
-      onDragEntered: (_) => setState(() => _hovering = true),
-      onDragExited: (_) => setState(() => _hovering = false),
-      onDragDone: (details) {
+    return DropRegion(
+      formats: const [Formats.fileUri],
+      onDropOver: (event) {
+        final items = event.session.items;
+        final localData = items.isEmpty ? null : items.first.localData;
+        return localData is DragPayload ? DropOperation.move : DropOperation.copy;
+      },
+      onDropEnter: (_) => setState(() => _hovering = true),
+      onDropLeave: (_) => setState(() => _hovering = false),
+      onPerformDrop: (event) async {
         setState(() => _hovering = false);
-        widget.onFilesDropped(details.files.map((f) => f.path).toList());
+        final items = event.session.items;
+        final localData = items.isEmpty ? null : items.first.localData;
+        if (localData is DragPayload) {
+          await widget.onInternalDrop(localData);
+          return;
+        }
+        final paths = await _readDroppedPaths(items);
+        if (paths.isNotEmpty) {
+          widget.onFilesDropped(paths);
+        }
       },
       child: Stack(
         children: [
