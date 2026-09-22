@@ -13,6 +13,7 @@ import '../../application/sftp_transfer_service.dart';
 import '../../application/transfer_router.dart';
 import '../../application/usecases/connect_network_drive.dart';
 import '../../application/usecases/local_file_entry.dart';
+import '../../application/usecases/clipboard_files.dart';
 import '../../application/usecases/open_terminal.dart';
 import '../../application/usecases/open_with_default_app.dart';
 import '../../application/usecases/reveal_in_file_manager.dart';
@@ -43,6 +44,7 @@ const _connectNetworkDrive = ConnectNetworkDrive();
 const _openTerminal = OpenTerminal();
 const _openWithDefaultApp = OpenWithDefaultApp();
 const _revealInFileManager = RevealInFileManager();
+const _clipboardFiles = ClipboardFiles();
 
 Future<void> openTerminalHere(WidgetRef ref, PaneSide side) async {
   final path = ref.read(paneControllerProvider(side)).currentPath;
@@ -482,6 +484,59 @@ Future<void> revealSelectedInFileManager(WidgetRef ref, PaneSide side) async {
   final target = entries.first;
   if (target.location.scheme != 'file') return;
   await _revealInFileManager(target.location.toFilePath());
+}
+
+/// Ctrl+C. 선택한 로컬 항목들을 OS 클립보드에 "복사한 파일"로 올려서
+/// 탐색기/Finder에서 Ctrl+V로 실제 붙여넣기할 수 있게 한다 — 앱 안에서
+/// 밖으로 드래그 아웃하는 기능이 없는 동안의 우회 수단. 원격 항목은 실제
+/// 로컬 경로가 없어 건너뛴다.
+Future<void> copySelectionToOsClipboard(
+  BuildContext context,
+  WidgetRef ref,
+  PaneSide side,
+) async {
+  final entries = ref.read(paneControllerProvider(side)).selectedEntries;
+  final localPaths = entries
+      .where((e) => e.location.scheme == 'file')
+      .map((e) => e.location.toFilePath())
+      .toList();
+  if (localPaths.isEmpty) {
+    if (entries.isNotEmpty && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppLocalizations.of(context).networkClipboardUnsupported)),
+      );
+    }
+    return;
+  }
+  await _clipboardFiles.writeFiles(localPaths);
+}
+
+/// Ctrl+V. OS 클립보드에 탐색기/Finder에서 Ctrl+C로 복사해 둔 파일이 있으면
+/// 현재 패널 위치로 복사한다. 클립보드에 파일이 없으면(텍스트만 있거나
+/// 비어 있으면) 조용히 아무것도 하지 않는다.
+Future<void> pasteFromOsClipboard(BuildContext context, WidgetRef ref, PaneSide side) async {
+  final paths = await _clipboardFiles.readFiles();
+  if (paths.isEmpty || !context.mounted) return;
+
+  final entries = <FileEntry>[];
+  for (final path in paths) {
+    try {
+      entries.add(await localFileEntryFor(path));
+    } catch (_) {
+      // 접근할 수 없거나 이미 사라진 항목은 조용히 건너뛴다.
+    }
+  }
+  if (entries.isEmpty || !context.mounted) return;
+
+  final destinationDir = ref.read(paneControllerProvider(side)).currentPath;
+  await transferEntries(
+    context,
+    ref,
+    fromSide: side,
+    entries: entries,
+    destinationDir: destinationDir,
+    isMove: false,
+  );
 }
 
 Future<void> compressSelection(BuildContext context, WidgetRef ref, PaneSide side) async {

@@ -343,6 +343,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Compressing network items isn\'t supported yet.';
 
   @override
+  String get networkClipboardUnsupported =>
+      'Copying network items to the system clipboard isn\'t supported yet.';
+
+  @override
   String get networkPropertiesUnsupported =>
       'Viewing properties for network items isn\'t supported yet.';
 

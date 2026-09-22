@@ -164,6 +164,7 @@
   "cannotMoveFolderIntoItself": "Can't move a folder into itself.",
   "downloadFailed": "Failed to download the file.",
   "networkCompressUnsupported": "Compressing network items isn't supported yet.",
+  "networkClipboardUnsupported": "Copying network items to the system clipboard isn't supported yet.",
   "networkPropertiesUnsupported": "Viewing properties for network items isn't supported yet.",
   "contextMenuOpen": "Open",
   "contextMenuOpenWithDefault": "Open with Default App",

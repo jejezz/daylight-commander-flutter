@@ -716,6 +716,12 @@ abstract class AppLocalizations {
   /// **'네트워크 항목은 아직 압축을 지원하지 않습니다.'**
   String get networkCompressUnsupported;
 
+  /// No description provided for @networkClipboardUnsupported.
+  ///
+  /// In ko, this message translates to:
+  /// **'네트워크 항목은 아직 시스템 클립보드로 복사할 수 없습니다.'**
+  String get networkClipboardUnsupported;
+
   /// No description provided for @networkPropertiesUnsupported.
   ///
   /// In ko, this message translates to:
