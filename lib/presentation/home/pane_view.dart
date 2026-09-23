@@ -1,6 +1,7 @@
 import 'package:desktop_drop/desktop_drop.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_drag_out/flutter_drag_out.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/bytes_format.dart';
@@ -647,8 +648,20 @@ class _FileRow extends StatelessWidget {
           )
         : tappable();
 
+    final windowSize = MediaQuery.sizeOf(context);
     return Draggable<DragPayload>(
       data: dragPayload,
+      // 창 밖으로 나가면 OS 드래그로 넘겨 Finder/탐색기에 떨굴 수 있게 한다.
+      // 실제 로컬 경로가 있는 항목만(OS가 마운트한 네트워크 드라이브 포함) —
+      // FTP/SFTP/WebDAV 항목이 섞이면 앱 안 드래그로 남는다(로컬 패널로
+      // 끌어 내려받은 뒤 끌어내면 된다).
+      onDragUpdate: (details) => FlutterDragOut.maybeStartOnExit(
+        details.globalPosition,
+        viewSize: windowSize,
+        paths: () => dragPayload.entries.any((e) => e.location.scheme != 'file')
+            ? null
+            : [for (final e in dragPayload.entries) e.location.toFilePath()],
+      ),
       feedback: _DragFeedback(payload: dragPayload),
       childWhenDragging: Opacity(opacity: 0.35, child: _row(context)),
       child: content,
