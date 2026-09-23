@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_drag_out/flutter_drag_out.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 
@@ -873,7 +874,8 @@ Future<void> dropExternalFiles(
   PaneSide side,
   List<String> paths,
 ) async {
-  if (paths.isEmpty) return;
+  // 이 앱이 끌어낸 드래그가 창 안으로 되돌아온 것이면 외부 드롭이 아니다.
+  if (paths.isEmpty || FlutterDragOut.inProgress) return;
 
   final entries = <FileEntry>[];
   for (final path in paths) {

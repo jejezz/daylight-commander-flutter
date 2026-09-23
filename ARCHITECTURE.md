@@ -149,7 +149,7 @@ abstract class FileViewer {
 - FTP: `ftpconnect`
 - SFTP: `dartssh2` (`ftpconnect`가 이미 전이 의존성으로 물고 있던 패키지라 새 의존성 부담은 사실상 없음)
 - WebDAV: `webdav_client`
-- 드래그앤드롭(OS → 앱): `desktop_drop` — ✅ 구현 완료. `DropTarget`은 네이티브 OS 드래그 이벤트를 쓰고 패널 내부 이동에 쓰는 Flutter 기본 `Draggable`/`DragTarget`은 제스처 기반이라 서로 다른 경로 — 같은 위젯 트리에 겹쳐놔도 간섭 없음. 드롭은 항상 복사(원본 삭제 위험 방지), 목적지 스킴에 따라 로컬 복사/업로드로 자동 라우팅(`transferEntries` 재사용). **앱 → OS로 내보내는 반대 방향은 취소** — Flutter 기본 `Draggable`은 네이티브 드래그 세션을 만들지 못해 별도 패키지(`super_drag_and_drop` 계열)나 플랫폼 채널이 필요한데, 난이도 대비 실익이 낮다고 판단해 사용자가 진행하지 않기로 결정.
+- 드래그앤드롭(OS → 앱): `desktop_drop` — ✅ 구현 완료. `DropTarget`은 네이티브 OS 드래그 이벤트를 쓰고 패널 내부 이동에 쓰는 Flutter 기본 `Draggable`/`DragTarget`은 제스처 기반이라 서로 다른 경로 — 같은 위젯 트리에 겹쳐놔도 간섭 없음. 드롭은 항상 복사(원본 삭제 위험 방지), 목적지 스킴에 따라 로컬 복사/업로드로 자동 라우팅(`transferEntries` 재사용). 앱 → OS 드래그 아웃은 자체 플러그인 [`flutter_drag_out`](https://github.com/jejezz/flutter_drag_out)(git 의존성)으로 분리했다 — macOS ✅, Windows/Linux 예정. 앱 내부 드래그(`Draggable`)와 드래그 인(`desktop_drop`)은 그대로 두고, 포인터가 창 밖으로 나가는 순간에만 OS 드래그 세션으로 넘긴다(드롭 타겟을 등록하지 않으므로 `desktop_drop`과 충돌 없음). `file://` 항목(로컬 + OS 마운트 네트워크 드라이브)만 대상이며, FTP/SFTP/WebDAV 항목은 로컬 패널로 끌어 내려받은 뒤 끌어낸다. 앱 밖으로는 복사만 허용. `super_drag_and_drop`으로 드래그 전체를 교체했던 #20은 Windows에서 앱 내부 드래그까지 깨뜨려 롤백했다(#22) — 그래서 기존 경로를 건드리지 않는 방식을 택했다.
 - 커스텀 타이틀바/창 제어: `window_manager`
 - 경로 처리: `path`
 

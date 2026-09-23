@@ -65,6 +65,13 @@ dependencies:
 
   # OS → 앱 드래그앤드롭
   desktop_drop: ^0.6.0
+  # 앱 밖(Finder 등)으로 파일을 끌어내는 드래그 아웃. 이 앱의 PoC에서 분리한
+  # 자체 플러그인이다 — 드롭 타겟을 등록하지 않아 desktop_drop(드래그 인)과
+  # 앱 내부 Draggable을 그대로 둔 채 함께 쓸 수 있다.
+  flutter_drag_out:
+    git:
+      url: https://github.com/jejezz/flutter_drag_out.git
+      ref: v0.1.0
 
   # 즐겨찾기 경로 저장 (경로 문자열만 — 자격증명 아님)
   shared_preferences: ^2.3.3
