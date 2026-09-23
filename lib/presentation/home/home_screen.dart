@@ -18,7 +18,12 @@ import 'pane_view.dart';
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
-  KeyEventResult _handleQuickSearchKey(WidgetRef ref, PaneSide activeSide, KeyEvent event) {
+  KeyEventResult _handleQuickSearchKey(
+    BuildContext context,
+    WidgetRef ref,
+    PaneSide activeSide,
+    KeyEvent event,
+  ) {
     if (event is! KeyDownEvent) return KeyEventResult.ignored;
 
     // A TextField (e.g. the path bar) has focus: let it handle typing itself.
@@ -41,7 +46,27 @@ class HomeScreen extends ConsumerWidget {
       return KeyEventResult.handled;
     }
 
+    // Ctrl/Cmd+A/C/V live here rather than in CallbackShortcuts: this handler
+    // already bails out above when a TextField has focus, so those keys keep
+    // their normal select-all/copy/paste meaning inside the path bar.
     final keys = HardwareKeyboard.instance;
+    final shortcutModifier = (keys.isControlPressed || keys.isMetaPressed) &&
+        !keys.isAltPressed &&
+        !keys.isShiftPressed;
+    if (shortcutModifier) {
+      if (event.logicalKey == LogicalKeyboardKey.keyA) {
+        controller.selectAll();
+        return KeyEventResult.handled;
+      }
+      if (event.logicalKey == LogicalKeyboardKey.keyC) {
+        copySelectionToOsClipboard(context, ref, activeSide);
+        return KeyEventResult.handled;
+      }
+      if (event.logicalKey == LogicalKeyboardKey.keyV) {
+        pasteFromOsClipboard(context, ref, activeSide);
+        return KeyEventResult.handled;
+      }
+    }
     if (keys.isControlPressed || keys.isMetaPressed || keys.isAltPressed) {
       return KeyEventResult.ignored;
     }
@@ -156,24 +181,12 @@ class HomeScreen extends ConsumerWidget {
               deleteSelection(context, ref, activeSide),
           const SingleActivator(LogicalKeyboardKey.f2): () =>
               renameSelected(context, ref, activeSide),
-          const SingleActivator(LogicalKeyboardKey.keyA, control: true): () =>
-              ref.read(paneControllerProvider(activeSide).notifier).selectAll(),
-          const SingleActivator(LogicalKeyboardKey.keyA, meta: true): () =>
-              ref.read(paneControllerProvider(activeSide).notifier).selectAll(),
           const SingleActivator(LogicalKeyboardKey.tab): () =>
               ref.read(activePaneProvider.notifier).state = otherSide(activeSide),
           const SingleActivator(LogicalKeyboardKey.backquote, control: true): () =>
               openTerminalHere(ref, activeSide),
           const SingleActivator(LogicalKeyboardKey.backquote, meta: true): () =>
               openTerminalHere(ref, activeSide),
-          const SingleActivator(LogicalKeyboardKey.keyC, control: true): () =>
-              copySelectionToOsClipboard(context, ref, activeSide),
-          const SingleActivator(LogicalKeyboardKey.keyC, meta: true): () =>
-              copySelectionToOsClipboard(context, ref, activeSide),
-          const SingleActivator(LogicalKeyboardKey.keyV, control: true): () =>
-              pasteFromOsClipboard(context, ref, activeSide),
-          const SingleActivator(LogicalKeyboardKey.keyV, meta: true): () =>
-              pasteFromOsClipboard(context, ref, activeSide),
           const SingleActivator(LogicalKeyboardKey.arrowDown): () =>
               ref.read(paneControllerProvider(activeSide).notifier).moveCursor(1),
           const SingleActivator(LogicalKeyboardKey.arrowUp): () =>
@@ -183,7 +196,7 @@ class HomeScreen extends ConsumerWidget {
         },
         child: Focus(
           autofocus: true,
-          onKeyEvent: (node, event) => _handleQuickSearchKey(ref, activeSide, event),
+          onKeyEvent: (node, event) => _handleQuickSearchKey(context, ref, activeSide, event),
           child: Padding(
             padding: const EdgeInsets.all(10),
             child: Column(

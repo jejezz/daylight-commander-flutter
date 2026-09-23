@@ -67,30 +67,48 @@ if ($items) {
         .toList();
   }
 
-  // --- macOS: osascript(AppleScript)로 진짜 파일 참조(POSIX file)를
-  // 클립보드에 올린다. 읽기는 AppleScript의 한계로 한 개만 안정적으로
-  // 지원한다(Finder에서 여러 개를 복사해도 하나만 읽힐 수 있음). ---
+  // --- macOS: osascript의 JavaScript(JXA) ObjC 브리지로 NSPasteboard에
+  // 파일 URL을 직접 읽고 쓴다. AppleScript의 `set the clipboard to {...}`는
+  // 여러 개를 올리면 Finder가 붙여넣지 못하는 AppleScript list 형식이 되고,
+  // 읽기도 첫 항목만 돌려줘서 다중 파일이 깨졌다. 경로는 스크립트에 끼워
+  // 넣지 않고 argv로 넘겨 이스케이프 문제를 없앤다. ---
 
-  static String _appleScriptEscape(String path) =>
-      path.replaceAll(r'\', r'\\').replaceAll('"', r'\"');
+  static const _macWriteScript = r"""
+ObjC.import('AppKit');
+function run(argv) {
+  const pb = $.NSPasteboard.generalPasteboard;
+  pb.clearContents;
+  pb.writeObjects($(argv.map(p => $.NSURL.fileURLWithPath(p))));
+  // 바로 종료하면 pasteboard 서버에 마지막 항목이 전달되기 전에 연결이
+  // 끊겨 여러 개 중 끝의 하나가 빠지는 일이 재현됐다 — 잠깐 기다린다.
+  delay(0.2);
+}
+""";
+
+  static const _macReadScript = r"""
+ObjC.import('AppKit');
+function run() {
+  const options = $.NSDictionary.dictionaryWithObjectForKey(
+    $.NSNumber.numberWithBool(true), $.NSPasteboardURLReadingFileURLsOnlyKey);
+  const urls = $.NSPasteboard.generalPasteboard.readObjectsForClassesOptions(
+    $.NSArray.arrayWithObject($.NSURL), options);
+  if (!urls || urls.isNil()) return '';
+  const paths = [];
+  for (let i = 0; i < urls.count; i++) paths.push(urls.objectAtIndex(i).path.js);
+  return paths.join('\n');
+}
+""";
 
   Future<void> _writeMacOS(List<String> paths) async {
-    final script = paths.length == 1
-        ? 'set the clipboard to (POSIX file "${_appleScriptEscape(paths.first)}")'
-        : 'set the clipboard to {${paths.map((p) => 'POSIX file "${_appleScriptEscape(p)}"').join(', ')}}';
-    await Process.run('osascript', ['-e', script]);
+    await Process.run('osascript', ['-l', 'JavaScript', '-e', _macWriteScript, ...paths]);
   }
 
   Future<List<String>> _readMacOS() async {
-    final result = await Process.run(
-      'osascript',
-      ['-e', 'POSIX path of (the clipboard as «class furl»)'],
-    );
+    final result = await Process.run('osascript', ['-l', 'JavaScript', '-e', _macReadScript]);
     if (result.exitCode != 0) return const [];
     final out = result.stdout;
     if (out is! String) return const [];
-    final path = out.trim();
-    return path.isEmpty ? const [] : [path];
+    return out.split('\n').map((line) => line.trim()).where((line) => line.isNotEmpty).toList();
   }
 
   // --- Linux: 데스크톱 환경마다 클립보드 파일 규약이 달라(GNOME은
