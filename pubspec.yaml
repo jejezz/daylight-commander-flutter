@@ -71,7 +71,7 @@ dependencies:
   flutter_drag_out:
     git:
       url: https://github.com/jejezz/flutter_drag_out.git
-      ref: v0.1.0
+      ref: v0.5.0
 
   # 즐겨찾기 경로 저장 (경로 문자열만 — 자격증명 아님)
   shared_preferences: ^2.3.3

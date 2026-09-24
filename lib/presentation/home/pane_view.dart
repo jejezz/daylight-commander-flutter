@@ -169,6 +169,8 @@ class PaneView extends ConsumerWidget {
                                     selected: selected,
                                     isCursor: index == state.cursorIndex,
                                     dragPayload: payload,
+                                    dragOutItems: () =>
+                                        dragOutItemsFor(ref, payload.entries),
                                     diffStatus: diffMap[entry.location],
                                     onSelect: () {
                                       ref
@@ -534,6 +536,7 @@ class _FileRow extends StatelessWidget {
     required this.selected,
     required this.isCursor,
     required this.dragPayload,
+    required this.dragOutItems,
     required this.diffStatus,
     required this.onSelect,
     required this.onSecondaryTap,
@@ -547,6 +550,9 @@ class _FileRow extends StatelessWidget {
   /// 화살표만으로는 다중선택에 들어가지 않고(스페이스가 필요) 커서 표시만 된다.
   final bool isCursor;
   final DragPayload dragPayload;
+
+  /// 창 밖으로 끌어냈을 때 OS 드래그에 실을 항목([dragOutItemsFor]).
+  final List<DragOutItem>? Function() dragOutItems;
   final FileDiffStatus? diffStatus;
   final VoidCallback onSelect;
   final ValueChanged<Offset> onSecondaryTap;
@@ -652,15 +658,11 @@ class _FileRow extends StatelessWidget {
     return Draggable<DragPayload>(
       data: dragPayload,
       // 창 밖으로 나가면 OS 드래그로 넘겨 Finder/탐색기에 떨굴 수 있게 한다.
-      // 실제 로컬 경로가 있는 항목만(OS가 마운트한 네트워크 드라이브 포함) —
-      // FTP/SFTP/WebDAV 항목이 섞이면 앱 안 드래그로 남는다(로컬 패널로
-      // 끌어 내려받은 뒤 끌어내면 된다).
+      // 원격 항목은 드롭된 뒤 그 자리로 내려받는다(macOS 파일 프로미스).
       onDragUpdate: (details) => FlutterDragOut.maybeStartOnExit(
         details.globalPosition,
         viewSize: windowSize,
-        paths: () => dragPayload.entries.any((e) => e.location.scheme != 'file')
-            ? null
-            : [for (final e in dragPayload.entries) e.location.toFilePath()],
+        items: dragOutItems,
       ),
       feedback: _DragFeedback(payload: dragPayload),
       childWhenDragging: Opacity(opacity: 0.35, child: _row(context)),

@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 
 import '../../application/archive_service.dart';
+import '../../application/cancel_token.dart';
 import '../../application/file_operation_service.dart';
 import '../../application/ftp_session_manager.dart';
 import '../../application/ftp_transfer_service.dart';
@@ -864,6 +865,47 @@ Future<void> showRowContextMenu(
     case 'reveal_in_file_manager':
       await revealSelectedInFileManager(ref, side);
   }
+}
+
+/// 창 밖으로 끌어낸 [entries]를 OS 드래그에 실을 항목. 로컬 항목(OS가
+/// 마운트한 네트워크 드라이브 포함)은 경로 그대로, FTP/SFTP/WebDAV 항목은
+/// 드롭된 뒤에 그 자리로 내려받는 파일 프로미스로 싣는다. 프로미스를 못
+/// 쓰는 플랫폼(현재 Windows/Linux)에서 원격 항목이 섞이면 `null` — 앱 안
+/// 드래그로 남는다(로컬 패널로 끌어 내려받은 뒤 끌어내면 된다).
+List<DragOutItem>? dragOutItemsFor(WidgetRef ref, List<FileEntry> entries) {
+  final hasRemote = entries.any((e) => e.location.scheme != 'file');
+  if (hasRemote && !FlutterDragOut.supportsPromises) return null;
+  return [
+    for (final entry in entries)
+      if (entry.location.scheme == 'file')
+        DragOutItem.path(entry.location.toFilePath())
+      else
+        DragOutItem.promise(
+          name: entry.name,
+          isDirectory: entry.isDirectory,
+          write: (request) => _serializedPromiseWrite(() async {
+            // 드롭 뒤 차례를 기다리는 사이 사용자가 취소했을 수 있다.
+            if (request.isCancelled) throw const OperationCancelledException();
+            await downloadEntryTo(
+              entry: entry,
+              targetPath: request.targetPath,
+              ftpSessions: ref.read(ftpSessionManagerProvider.notifier),
+              sftpSessions: ref.read(sftpSessionManagerProvider.notifier),
+              webdavSessions: ref.read(webdavSessionManagerProvider.notifier),
+            );
+          }),
+        ),
+  ];
+}
+
+/// Finder는 프로미스 여러 개를 동시에 요청할 수 있지만 FTP 세션은 연결 하나를
+/// 작업 디렉터리째 공유하므로 한 번에 하나씩 내려받는다.
+Future<void> _promiseWriteQueue = Future.value();
+
+Future<void> _serializedPromiseWrite(Future<void> Function() write) {
+  final result = _promiseWriteQueue.then((_) => write());
+  _promiseWriteQueue = result.then((_) {}, onError: (_) {});
+  return result;
 }
 
 /// Finder/탐색기 등 OS에서 드래그해 패널에 드롭한 로컬 경로들을 그 패널의

@@ -4,6 +4,7 @@
 
 list(APPEND FLUTTER_PLUGIN_LIST
   desktop_drop
+  flutter_drag_out
   flutter_secure_storage_linux
   media_kit_libs_linux
   media_kit_video
