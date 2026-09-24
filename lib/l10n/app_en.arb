@@ -48,6 +48,8 @@
   "moveToTrash": "Move to Trash",
 
   "conflictTitle": "A file with the same name already exists",
+  "conflictFolderTitle": "A folder with the same name already exists",
+  "conflictFolderHint": "Overwrite replaces the existing folder entirely. Rename and Copy copies it as a new folder.",
   "sourceLabel": "Source: {size}",
   "@sourceLabel": {
     "placeholders": {

@@ -13,6 +13,7 @@ import '../../application/sftp_session_manager.dart';
 import '../../application/sftp_transfer_service.dart';
 import '../../application/transfer_router.dart';
 import '../../application/usecases/connect_network_drive.dart';
+import '../../application/usecases/drop_promise_cache.dart';
 import '../../application/usecases/local_file_entry.dart';
 import '../../application/usecases/clipboard_files.dart';
 import '../../application/usecases/open_terminal.dart';
@@ -46,6 +47,7 @@ const _openTerminal = OpenTerminal();
 const _openWithDefaultApp = OpenWithDefaultApp();
 const _revealInFileManager = RevealInFileManager();
 const _clipboardFiles = ClipboardFiles();
+const _dropPromiseCache = DropPromiseCache();
 
 Future<void> openTerminalHere(WidgetRef ref, PaneSide side) async {
   final path = ref.read(paneControllerProvider(side)).currentPath;
@@ -874,26 +876,36 @@ Future<void> dropExternalFiles(
   PaneSide side,
   List<String> paths,
 ) async {
+  if (paths.isEmpty) return;
   // 이 앱이 끌어낸 드래그가 창 안으로 되돌아온 것이면 외부 드롭이 아니다.
-  if (paths.isEmpty || FlutterDragOut.inProgress) return;
-
-  final entries = <FileEntry>[];
-  for (final path in paths) {
-    try {
-      entries.add(await localFileEntryFor(path));
-    } catch (_) {
-      // 접근할 수 없거나 이미 사라진 항목은 조용히 건너뛴다.
-    }
+  if (FlutterDragOut.inProgress) {
+    await _dropPromiseCache.discard(paths);
+    return;
   }
-  if (entries.isEmpty || !context.mounted) return;
 
-  final destinationDir = ref.read(paneControllerProvider(side)).currentPath;
-  await transferEntries(
-    context,
-    ref,
-    fromSide: side,
-    entries: entries,
-    destinationDir: destinationDir,
-    isMove: false,
-  );
+  try {
+    final entries = <FileEntry>[];
+    for (final path in paths) {
+      try {
+        entries.add(await localFileEntryFor(path));
+      } catch (_) {
+        // 접근할 수 없거나 이미 사라진 항목은 조용히 건너뛴다.
+      }
+    }
+    if (entries.isEmpty || !context.mounted) return;
+
+    final destinationDir = ref.read(paneControllerProvider(side)).currentPath;
+    await transferEntries(
+      context,
+      ref,
+      fromSide: side,
+      entries: entries,
+      destinationDir: destinationDir,
+      isMove: false,
+    );
+  } finally {
+    // Finder가 파일 프로미스로 넘긴 항목은 임시 사본이다. 남겨 두면 다음에
+    // 같은 이름을 드롭할 때 "이름 2"로 받게 되므로 복사/취소 후 바로 지운다.
+    await _dropPromiseCache.discard(paths);
+  }
 }

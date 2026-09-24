@@ -703,15 +703,19 @@ Future<ConflictAction> showConflictDialog(
     context: context,
     barrierDismissible: false,
     builder: (context) => AlertDialog(
-      title: Text(l10n.conflictTitle),
+      title: Text(conflict.isDirectory ? l10n.conflictFolderTitle : l10n.conflictTitle),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(conflict.destinationPath, style: Theme.of(context).textTheme.bodyMedium),
           const SizedBox(height: 12),
-          Text(l10n.sourceLabel(formatBytes(conflict.sourceSizeBytes))),
-          Text(l10n.destinationLabel(formatBytes(conflict.destinationSizeBytes))),
+          if (conflict.isDirectory)
+            Text(l10n.conflictFolderHint)
+          else ...[
+            Text(l10n.sourceLabel(formatBytes(conflict.sourceSizeBytes))),
+            Text(l10n.destinationLabel(formatBytes(conflict.destinationSizeBytes))),
+          ],
         ],
       ),
       actions: [

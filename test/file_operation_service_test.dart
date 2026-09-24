@@ -109,7 +109,7 @@ void main() {
     expect(File(p.join(destDir.path, 'a.txt')).readAsStringSync(), 'new content');
   });
 
-  test('conflict: rename을 선택하면 "(2)" 접미사로 별도 저장된다', () async {
+  test('conflict: rename을 선택하면 "2"(macOS)/"(2)" 접미사로 별도 저장된다', () async {
     final srcDir = Directory(p.join(tempDir.path, 'src'))..createSync();
     final destDir = Directory(p.join(tempDir.path, 'dest'))..createSync();
     File(p.join(srcDir.path, 'a.txt')).writeAsStringSync('new content');
@@ -122,7 +122,135 @@ void main() {
     );
 
     expect(File(p.join(destDir.path, 'a.txt')).readAsStringSync(), 'old content');
-    expect(File(p.join(destDir.path, 'a (2).txt')).readAsStringSync(), 'new content');
+    final renamed = Platform.isMacOS ? 'a 2.txt' : 'a (2).txt';
+    expect(File(p.join(destDir.path, renamed)).readAsStringSync(), 'new content');
+  });
+
+  group('폴더 충돌', () {
+    late Directory srcFolder;
+    late Directory destDir;
+
+    setUp(() {
+      // src/photos: a.txt(new), b.txt   /   dest/photos: a.txt(old), old.txt
+      srcFolder = Directory(p.join(tempDir.path, 'src', 'photos'))..createSync(recursive: true);
+      File(p.join(srcFolder.path, 'a.txt')).writeAsStringSync('new');
+      File(p.join(srcFolder.path, 'b.txt')).writeAsStringSync('b');
+      destDir = Directory(p.join(tempDir.path, 'dest'))..createSync();
+      final existing = Directory(p.join(destDir.path, 'photos'))..createSync();
+      File(p.join(existing.path, 'a.txt')).writeAsStringSync('old');
+      File(p.join(existing.path, 'old.txt')).writeAsStringSync('old');
+    });
+
+    test('폴더 단위로 한 번만 묻고 내용 파일마다 묻지 않는다', () async {
+      final conflicts = <FileConflict>[];
+      await service.copy(
+        sources: [_entryFor(srcFolder.path, isDirectory: true)],
+        destinationDir: destDir.path,
+        onConflict: (c) async {
+          conflicts.add(c);
+          return ConflictAction.overwrite;
+        },
+      );
+
+      expect(conflicts, hasLength(1));
+      expect(conflicts.single.isDirectory, isTrue);
+      expect(conflicts.single.destinationPath, p.join(destDir.path, 'photos'));
+    });
+
+    test('overwrite는 기존 폴더를 통째로 교체한다 (병합하지 않는다)', () async {
+      await service.copy(
+        sources: [_entryFor(srcFolder.path, isDirectory: true)],
+        destinationDir: destDir.path,
+        onConflict: (c) async => ConflictAction.overwrite,
+      );
+
+      final replaced = p.join(destDir.path, 'photos');
+      expect(File(p.join(replaced, 'a.txt')).readAsStringSync(), 'new');
+      expect(File(p.join(replaced, 'b.txt')).existsSync(), isTrue);
+      expect(File(p.join(replaced, 'old.txt')).existsSync(), isFalse);
+    });
+
+    test('rename은 기존 폴더를 두고 새 이름의 폴더로 복사한다', () async {
+      await service.copy(
+        sources: [_entryFor(srcFolder.path, isDirectory: true)],
+        destinationDir: destDir.path,
+        onConflict: (c) async => ConflictAction.rename,
+      );
+
+      final renamed = p.join(destDir.path, Platform.isMacOS ? 'photos 2' : 'photos (2)');
+      expect(File(p.join(destDir.path, 'photos', 'a.txt')).readAsStringSync(), 'old');
+      expect(File(p.join(destDir.path, 'photos', 'old.txt')).existsSync(), isTrue);
+      expect(File(p.join(renamed, 'a.txt')).readAsStringSync(), 'new');
+      expect(File(p.join(renamed, 'b.txt')).existsSync(), isTrue);
+    });
+
+    test('rename은 점이 든 폴더 이름을 확장자로 나누지 않는다', () async {
+      final dotted = Directory(p.join(tempDir.path, 'src', 'v1.2'))..createSync();
+      Directory(p.join(destDir.path, 'v1.2')).createSync();
+
+      await service.copy(
+        sources: [_entryFor(dotted.path, isDirectory: true)],
+        destinationDir: destDir.path,
+        onConflict: (c) async => ConflictAction.rename,
+      );
+
+      final renamed = Platform.isMacOS ? 'v1.2 2' : 'v1.2 (2)';
+      expect(Directory(p.join(destDir.path, renamed)).existsSync(), isTrue);
+    });
+
+    test('skip은 기존 폴더를 건드리지 않는다', () async {
+      await service.copy(
+        sources: [_entryFor(srcFolder.path, isDirectory: true)],
+        destinationDir: destDir.path,
+        onConflict: (c) async => ConflictAction.skip,
+      );
+
+      final existing = p.join(destDir.path, 'photos');
+      expect(File(p.join(existing, 'a.txt')).readAsStringSync(), 'old');
+      expect(File(p.join(existing, 'b.txt')).existsSync(), isFalse);
+    });
+
+    test('cancel하면 기존 폴더에 아무것도 복사하지 않는다', () async {
+      await expectLater(
+        service.copy(
+          sources: [_entryFor(srcFolder.path, isDirectory: true)],
+          destinationDir: destDir.path,
+          onConflict: (c) async => ConflictAction.cancel,
+        ),
+        throwsA(isA<OperationCancelledException>()),
+      );
+
+      expect(File(p.join(destDir.path, 'photos', 'b.txt')).existsSync(), isFalse);
+    });
+
+    test('move + overwrite는 기존 폴더를 교체하고 원본을 제거한다', () async {
+      await service.move(
+        sources: [_entryFor(srcFolder.path, isDirectory: true)],
+        destinationDir: destDir.path,
+        onConflict: (c) async => ConflictAction.overwrite,
+      );
+
+      final replaced = p.join(destDir.path, 'photos');
+      expect(File(p.join(replaced, 'a.txt')).readAsStringSync(), 'new');
+      expect(File(p.join(replaced, 'old.txt')).existsSync(), isFalse);
+      expect(srcFolder.existsSync(), isFalse);
+    });
+
+    test('원본이 들어 있는 폴더는 덮어쓰지 않는다', () async {
+      // dest/photos/photos 를 dest 로 복사 → 덮어쓰면 원본까지 지워진다.
+      final inner = Directory(p.join(destDir.path, 'photos', 'photos'))..createSync();
+      File(p.join(inner.path, 'x.txt')).writeAsStringSync('x');
+
+      await expectLater(
+        service.copy(
+          sources: [_entryFor(inner.path, isDirectory: true)],
+          destinationDir: destDir.path,
+          onConflict: (c) async => ConflictAction.overwrite,
+        ),
+        throwsA(isA<StateError>()),
+      );
+      expect(File(p.join(inner.path, 'x.txt')).existsSync(), isTrue);
+    });
   });
 
   test('conflict: skipAll을 선택하면 이후 충돌에도 다시 묻지 않고 건너뛴다', () async {
