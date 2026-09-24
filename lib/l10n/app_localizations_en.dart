@@ -117,6 +117,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get conflictTitle => 'A file with the same name already exists';
 
   @override
+  String get conflictFolderTitle =>
+      'A folder with the same name already exists';
+
+  @override
+  String get conflictFolderHint =>
+      'Overwrite replaces the existing folder entirely. Rename and Copy copies it as a new folder.';
+
+  @override
   String sourceLabel(String size) {
     return 'Source: $size';
   }

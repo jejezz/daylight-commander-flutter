@@ -7,6 +7,7 @@ class FileConflict {
     required this.destinationSizeBytes,
     required this.sourceModifiedAt,
     required this.destinationModifiedAt,
+    this.isDirectory = false,
   });
 
   final String sourcePath;
@@ -15,6 +16,10 @@ class FileConflict {
   final int? destinationSizeBytes;
   final DateTime? sourceModifiedAt;
   final DateTime? destinationModifiedAt;
+
+  /// 폴더끼리의 충돌이면 true. 이때 덮어쓰기는 대상 폴더를 통째로 교체하고,
+  /// 이름 바꿔서 복사는 폴더 이름 자체를 바꾼다 (내용을 병합하지 않는다).
+  final bool isDirectory;
 }
 
 enum ConflictAction { overwrite, overwriteAll, skip, skipAll, rename, cancel }

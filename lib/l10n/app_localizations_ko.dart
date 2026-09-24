@@ -115,6 +115,13 @@ class AppLocalizationsKo extends AppLocalizations {
   String get conflictTitle => '같은 이름의 파일이 있습니다';
 
   @override
+  String get conflictFolderTitle => '같은 이름의 폴더가 있습니다';
+
+  @override
+  String get conflictFolderHint =>
+      '덮어쓰기를 하면 기존 폴더를 통째로 교체합니다. 이름 바꿔서 복사는 새 이름의 폴더로 복사합니다.';
+
+  @override
   String sourceLabel(String size) {
     return '원본: $size';
   }

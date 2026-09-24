@@ -79,32 +79,48 @@ class FileOperationService {
       );
     }
 
+    /// 대상 경로에 이미 무언가 있으면 사용자에게 물어 최종 대상 경로를
+    /// 돌려준다. 건너뛰기면 null. 덮어쓰기면 대상 경로를 그대로 돌려주고,
+    /// 폴더를 덮어쓸 때 기존 항목을 지우는 건 호출부 몫이다.
+    Future<String?> resolveConflict(
+      FileSystemEntity src,
+      String destPath, {
+      required bool isDirectory,
+    }) async {
+      final destType = await FileSystemEntity.type(destPath, followLinks: false);
+      if (destType == FileSystemEntityType.notFound) return destPath;
+      final srcStat = await src.stat();
+      final destStat = await FileStat.stat(destPath);
+      final action = bulkAction ??
+          await onConflict(FileConflict(
+            sourcePath: src.path,
+            destinationPath: destPath,
+            sourceSizeBytes: isDirectory ? null : srcStat.size,
+            destinationSizeBytes:
+                destType == FileSystemEntityType.file ? destStat.size : null,
+            sourceModifiedAt: srcStat.modified,
+            destinationModifiedAt: destStat.modified,
+            isDirectory: isDirectory,
+          ));
+      if (action == ConflictAction.overwriteAll) bulkAction = ConflictAction.overwrite;
+      if (action == ConflictAction.skipAll) bulkAction = ConflictAction.skip;
+      if (action == ConflictAction.cancel) {
+        throw const OperationCancelledException();
+      }
+      final effective = bulkAction ?? action;
+      if (effective == ConflictAction.skip) return null;
+      if (effective == ConflictAction.rename) {
+        return _availableName(destPath, isDirectory: isDirectory);
+      }
+      return destPath;
+    }
+
     Future<void> handleFile(File srcFile, String destPath) async {
       cancelToken?.throwIfCancelled();
-      final destFile = File(destPath);
-      var finalDestPath = destPath;
-      if (await destFile.exists()) {
-        final action = bulkAction ??
-            await onConflict(FileConflict(
-              sourcePath: srcFile.path,
-              destinationPath: destPath,
-              sourceSizeBytes: await srcFile.length(),
-              destinationSizeBytes: await destFile.length(),
-              sourceModifiedAt: (await srcFile.stat()).modified,
-              destinationModifiedAt: (await destFile.stat()).modified,
-            ));
-        if (action == ConflictAction.overwriteAll) bulkAction = ConflictAction.overwrite;
-        if (action == ConflictAction.skipAll) bulkAction = ConflictAction.skip;
-        if (action == ConflictAction.cancel) {
-          throw const OperationCancelledException();
-        }
-        final effective = bulkAction ?? action;
-        if (effective == ConflictAction.skip) {
-          reportFile(p.basename(srcFile.path));
-          return;
-        } else if (effective == ConflictAction.rename) {
-          finalDestPath = await _availableName(destPath);
-        }
+      final finalDestPath = await resolveConflict(srcFile, destPath, isDirectory: false);
+      if (finalDestPath == null) {
+        reportFile(p.basename(srcFile.path));
+        return;
       }
       await srcFile.copy(finalDestPath);
       if (deleteSourceAfter) await srcFile.delete();
@@ -136,10 +152,29 @@ class FileOperationService {
     for (final entry in sources) {
       cancelToken?.throwIfCancelled();
       final srcPath = entry.location.toFilePath();
-      final destPath = p.join(destinationDir, entry.name);
+      var destPath = p.join(destinationDir, entry.name);
 
+      // 폴더는 최상위에서 한 번만 묻는다 — 덮어쓰기는 기존 폴더를 통째로
+      // 교체하고, 이름 바꾸기는 "폴더 2"로 새로 만든다. 기존 폴더 안에
+      // 내용을 병합하면서 파일마다 묻지 않는다.
+      if (entry.isDirectory) {
+        final resolved =
+            await resolveConflict(Directory(srcPath), destPath, isDirectory: true);
+        if (resolved == null) {
+          done += await _countFiles([entry]);
+          onProgress?.call(
+            FileOperationProgress(done: done, total: total, currentName: entry.name),
+          );
+          continue;
+        }
+        if (resolved == destPath) await _removeExisting(destPath, protect: srcPath);
+        destPath = resolved;
+      }
+
+      // 개수는 rename 전에 센다 — rename 후에는 원본 경로가 사라진다.
+      final entryFileCount = deleteSourceAfter ? await _countFiles([entry]) : 0;
       if (deleteSourceAfter && await _tryFastRename(srcPath, destPath)) {
-        done += await _countFiles([entry]);
+        done += entryFileCount;
         onProgress?.call(
           FileOperationProgress(done: done, total: total, currentName: entry.name),
         );
@@ -222,16 +257,37 @@ class FileOperationService {
     }
   }
 
-  Future<String> _availableName(String path) async {
+  /// 폴더 덮어쓰기 전에 대상에 있던 항목을 지운다. 복사할 원본이 그 안에
+  /// 들어 있으면 원본까지 지워지므로 거부한다.
+  Future<void> _removeExisting(String destPath, {required String protect}) async {
+    if (await FileSystemEntity.type(destPath, followLinks: false) ==
+        FileSystemEntityType.notFound) {
+      return;
+    }
+    if (p.equals(destPath, protect) || p.isWithin(destPath, protect)) {
+      throw StateError('원본이 들어 있는 폴더는 덮어쓸 수 없습니다.');
+    }
+    if (await FileSystemEntity.isDirectory(destPath)) {
+      await Directory(destPath).delete(recursive: true);
+    } else {
+      await File(destPath).delete();
+    }
+  }
+
+  /// 충돌 시 "이름 바꿔서 복사"에 쓸 빈 이름을 찾는다. macOS는 Finder와 같은
+  /// "이름 2.ext", 그 외는 "이름 (2).ext". 폴더는 확장자를 나누지 않는다.
+  Future<String> _availableName(String path, {required bool isDirectory}) async {
     final dir = p.dirname(path);
-    final ext = p.extension(path);
-    final base = p.basenameWithoutExtension(path);
+    final ext = isDirectory ? '' : p.extension(path);
+    final base = isDirectory ? p.basename(path) : p.basenameWithoutExtension(path);
     var i = 2;
     String candidate;
     do {
-      candidate = p.join(dir, '$base ($i)$ext');
+      final suffix = Platform.isMacOS ? ' $i' : ' ($i)';
+      candidate = p.join(dir, '$base$suffix$ext');
       i++;
-    } while (await FileSystemEntity.type(candidate) != FileSystemEntityType.notFound);
+    } while (await FileSystemEntity.type(candidate, followLinks: false) !=
+        FileSystemEntityType.notFound);
     return candidate;
   }
 

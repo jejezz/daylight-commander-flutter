@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:window_manager/window_manager.dart';
 
+import 'application/usecases/drop_promise_cache.dart';
 import 'l10n/app_localizations.dart';
 import 'presentation/home/home_screen.dart';
 import 'presentation/theme/app_theme.dart';
@@ -28,6 +29,9 @@ Future<void> main() async {
       await windowManager.focus();
     });
   }
+
+  // 이전 실행에서 남은 Finder 드롭 임시 사본 정리 (기다리지 않는다).
+  const DropPromiseCache().clear();
 
   runApp(const ProviderScope(child: DaylightCommanderApp()));
 }

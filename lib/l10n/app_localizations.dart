@@ -302,6 +302,18 @@ abstract class AppLocalizations {
   /// **'같은 이름의 파일이 있습니다'**
   String get conflictTitle;
 
+  /// No description provided for @conflictFolderTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'같은 이름의 폴더가 있습니다'**
+  String get conflictFolderTitle;
+
+  /// No description provided for @conflictFolderHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'덮어쓰기를 하면 기존 폴더를 통째로 교체합니다. 이름 바꿔서 복사는 새 이름의 폴더로 복사합니다.'**
+  String get conflictFolderHint;
+
   /// No description provided for @sourceLabel.
   ///
   /// In ko, this message translates to:
