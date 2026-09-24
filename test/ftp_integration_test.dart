@@ -6,6 +6,9 @@ import 'package:path/path.dart' as p;
 
 import 'package:daylight_commander/application/ftp_session_manager.dart';
 import 'package:daylight_commander/application/ftp_transfer_service.dart';
+import 'package:daylight_commander/application/sftp_session_manager.dart';
+import 'package:daylight_commander/application/transfer_router.dart';
+import 'package:daylight_commander/application/webdav_session_manager.dart';
 import 'package:daylight_commander/application/usecases/list_ftp_directory.dart';
 import 'package:daylight_commander/domain/entities/file_conflict.dart';
 import 'package:daylight_commander/domain/entities/file_entry.dart';
@@ -220,6 +223,66 @@ void main() {
       );
 
       expect(File(p.join(serverRoot.path, 'conflict.txt')).readAsStringSync(), 'new');
+    },
+    skip: !_pyftpdlibAvailable ? 'pyftpdlib 미설치 — 로컬 통합 테스트 스킵' : false,
+  );
+
+  test(
+    '드롭 프로미스: Finder가 고른 이름으로 받고 임시 폴더를 남기지 않는다',
+    () async {
+      File(p.join(serverRoot.path, 'promised.txt')).writeAsStringSync('프로미스');
+      Directory(p.join(serverRoot.path, 'promised_dir', 'sub')).createSync(recursive: true);
+      File(p.join(serverRoot.path, 'promised_dir', 'sub', 'a.txt')).writeAsStringSync('a');
+      final dropDir = await localTemp.createTemp('drop_');
+      File(p.join(dropDir.path, 'promised.txt')).writeAsStringSync('이미 있음');
+
+      Future<void> download(FileEntry entry, String targetPath) => downloadEntryTo(
+            entry: entry,
+            targetPath: targetPath,
+            ftpSessions: sessions,
+            sftpSessions: SftpSessionManager(),
+            webdavSessions: WebdavSessionManager(),
+          );
+
+      await download(
+        FileEntry(
+          location: rootUri.replace(path: '/promised.txt'),
+          name: 'promised.txt',
+          isDirectory: false,
+        ),
+        p.join(dropDir.path, 'promised 2.txt'),
+      );
+      await download(
+        FileEntry(
+          location: rootUri.replace(path: '/promised_dir'),
+          name: 'promised_dir',
+          isDirectory: true,
+        ),
+        p.join(dropDir.path, 'promised_dir'),
+      );
+      await expectLater(
+        download(
+          FileEntry(
+            location: rootUri.replace(path: '/promised.txt'),
+            name: 'promised.txt',
+            isDirectory: false,
+          ),
+          p.join(dropDir.path, 'promised.txt'),
+        ),
+        throwsA(isA<FileSystemException>()),
+        reason: '이미 있는 항목은 덮어쓰지 않는다',
+      );
+
+      expect(File(p.join(dropDir.path, 'promised 2.txt')).readAsStringSync(), '프로미스');
+      expect(File(p.join(dropDir.path, 'promised.txt')).readAsStringSync(), '이미 있음');
+      expect(
+        File(p.join(dropDir.path, 'promised_dir', 'sub', 'a.txt')).readAsStringSync(),
+        'a',
+      );
+      expect(
+        dropDir.listSync().map((e) => p.basename(e.path)).toSet(),
+        {'promised.txt', 'promised 2.txt', 'promised_dir'},
+      );
     },
     skip: !_pyftpdlibAvailable ? 'pyftpdlib 미설치 — 로컬 통합 테스트 스킵' : false,
   );

@@ -10,6 +10,7 @@ import 'sftp_session_manager.dart';
 import 'sftp_transfer_service.dart';
 import 'webdav_session_manager.dart';
 import 'webdav_transfer_service.dart';
+import '../domain/entities/file_conflict.dart';
 import '../domain/entities/file_entry.dart';
 
 const _localOps = FileOperationService();
@@ -322,5 +323,47 @@ Future<void> _crossProtocolTransfer({
     }
   } finally {
     await tempDir.delete(recursive: true);
+  }
+}
+
+/// 원격 항목(파일/폴더) 하나를 정확히 [targetPath]로 내려받는다 — 앱 밖으로
+/// 끌어낸 원격 항목의 파일 프로미스(드롭된 뒤에 파일을 만드는 방식)용.
+///
+/// [targetPath]의 이름은 Finder가 충돌을 피해 고른 것(`report 2.pdf`)일 수
+/// 있어 [FileEntry.name]과 다를 수 있다. 다운로드 서비스는 항목 이름 그대로
+/// 저장하므로 같은 폴더 안의 숨은 임시 폴더에 받은 뒤 [targetPath]로 이름만
+/// 바꾼다 — 같은 볼륨이라 복사 없이 옮겨지고, 받다가 실패해도 드롭한 자리에
+/// 반쯤 받은 파일이 남지 않는다.
+Future<void> downloadEntryTo({
+  required FileEntry entry,
+  required String targetPath,
+  required FtpSessionManager ftpSessions,
+  required SftpSessionManager sftpSessions,
+  required WebdavSessionManager webdavSessions,
+}) async {
+  if (await FileSystemEntity.type(targetPath, followLinks: false) !=
+      FileSystemEntityType.notFound) {
+    // Finder는 비어 있는 이름을 주지만 다른 앱은 아닐 수 있다 — 덮어쓰지 않는다.
+    throw FileSystemException('이미 있는 항목', targetPath);
+  }
+  final staging = await Directory(p.dirname(targetPath)).createTemp('.daylight_commander_dl_');
+  try {
+    await _downloadToLocal(
+      sources: [entry],
+      destinationDir: staging.path,
+      ftpTransfer: FtpTransferService(ftpSessions),
+      sftpTransfer: SftpTransferService(sftpSessions),
+      webdavTransfer: WebdavTransferService(webdavSessions),
+      // 방금 만든 빈 폴더라 충돌이 날 수 없다.
+      onConflict: (_) async => ConflictAction.cancel,
+    );
+    final downloaded = p.join(staging.path, entry.name);
+    if (entry.isDirectory) {
+      await Directory(downloaded).rename(targetPath);
+    } else {
+      await File(downloaded).rename(targetPath);
+    }
+  } finally {
+    await staging.delete(recursive: true);
   }
 }
