@@ -37,8 +37,26 @@ class HomeScreen extends ConsumerWidget {
 
     final controller = ref.read(paneControllerProvider(activeSide).notifier);
 
-    if (event.logicalKey == LogicalKeyboardKey.backspace) {
-      controller.backspaceQuickFilter();
+    final keys = HardwareKeyboard.instance;
+
+    // Delete / Backspace(macOS의 delete 키)는 삭제, Shift를 함께 누르면 영구
+    // 삭제를 기본으로 한 확인 다이얼로그를 띄운다. 퀵서치 입력 중이면
+    // Backspace는 필터 글자를 지우는 데 쓴다. 이 핸들러가 CallbackShortcuts보다
+    // 먼저 키를 받고, Delete는 event.character가 비어 있지 않아 퀵서치로
+    // 새어 들어가므로 여기서 처리해야 한다.
+    final isDelete = event.logicalKey == LogicalKeyboardKey.delete;
+    final isBackspace = event.logicalKey == LogicalKeyboardKey.backspace;
+    if (isDelete || isBackspace) {
+      if (keys.isControlPressed || keys.isMetaPressed || keys.isAltPressed) {
+        return KeyEventResult.ignored;
+      }
+      final shift = keys.isShiftPressed;
+      final filtering = ref.read(paneControllerProvider(activeSide)).quickFilter.isNotEmpty;
+      if (isBackspace && !shift && filtering) {
+        controller.backspaceQuickFilter();
+      } else {
+        deleteSelection(context, ref, activeSide, preferPermanent: shift);
+      }
       return KeyEventResult.handled;
     }
     if (event.logicalKey == LogicalKeyboardKey.escape) {
@@ -49,7 +67,6 @@ class HomeScreen extends ConsumerWidget {
     // Ctrl/Cmd+A/C/V live here rather than in CallbackShortcuts: this handler
     // already bails out above when a TextField has focus, so those keys keep
     // their normal select-all/copy/paste meaning inside the path bar.
-    final keys = HardwareKeyboard.instance;
     final shortcutModifier = (keys.isControlPressed || keys.isMetaPressed) &&
         !keys.isAltPressed &&
         !keys.isShiftPressed;
@@ -176,8 +193,6 @@ class HomeScreen extends ConsumerWidget {
           const SingleActivator(LogicalKeyboardKey.keyR, meta: true): () =>
               ref.read(paneControllerProvider(activeSide).notifier).refresh(),
           const SingleActivator(LogicalKeyboardKey.f8): () =>
-              deleteSelection(context, ref, activeSide),
-          const SingleActivator(LogicalKeyboardKey.delete): () =>
               deleteSelection(context, ref, activeSide),
           const SingleActivator(LogicalKeyboardKey.f2): () =>
               renameSelected(context, ref, activeSide),
