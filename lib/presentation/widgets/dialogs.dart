@@ -664,31 +664,57 @@ class _WebdavConnectDialogState extends ConsumerState<_WebdavConnectDialog> {
 
 enum DeleteChoice { trash, permanent, cancel }
 
+/// [preferPermanent]이면 영구 삭제가, 아니면 휴지통 이동이 기본(강조·포커스)
+/// 버튼이 된다. Delete/Backspace는 휴지통, Shift를 함께 누르면 영구 삭제를
+/// 기본으로 띄우므로 Enter 한 번으로 그 동작이 실행된다.
 Future<DeleteChoice> showDeleteConfirmDialog(
   BuildContext context, {
   required int count,
+  bool preferPermanent = false,
 }) async {
   final l10n = AppLocalizations.of(context);
   final choice = await showDialog<DeleteChoice>(
     context: context,
-    builder: (context) => AlertDialog(
-      title: Text(l10n.deleteTitle),
-      content: Text(l10n.deleteConfirmMessage(count)),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(DeleteChoice.cancel),
-          child: Text(l10n.cancel),
-        ),
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(DeleteChoice.permanent),
-          child: Text(l10n.permanentDelete),
-        ),
-        FilledButton(
-          onPressed: () => Navigator.of(context).pop(DeleteChoice.trash),
-          child: Text(l10n.moveToTrash),
-        ),
-      ],
-    ),
+    builder: (context) {
+      void pop(DeleteChoice c) => Navigator.of(context).pop(c);
+      final colors = Theme.of(context).colorScheme;
+      final permanent = preferPermanent
+          ? FilledButton(
+              autofocus: true,
+              style: FilledButton.styleFrom(
+                backgroundColor: colors.error,
+                foregroundColor: colors.onError,
+              ),
+              onPressed: () => pop(DeleteChoice.permanent),
+              child: Text(l10n.permanentDelete),
+            )
+          : TextButton(
+              onPressed: () => pop(DeleteChoice.permanent),
+              child: Text(l10n.permanentDelete),
+            );
+      final trash = preferPermanent
+          ? TextButton(
+              onPressed: () => pop(DeleteChoice.trash),
+              child: Text(l10n.moveToTrash),
+            )
+          : FilledButton(
+              autofocus: true,
+              onPressed: () => pop(DeleteChoice.trash),
+              child: Text(l10n.moveToTrash),
+            );
+      return AlertDialog(
+        title: Text(l10n.deleteTitle),
+        content: Text(l10n.deleteConfirmMessage(count)),
+        actions: [
+          TextButton(
+            onPressed: () => pop(DeleteChoice.cancel),
+            child: Text(l10n.cancel),
+          ),
+          // 기본 버튼을 항상 맨 오른쪽에 둔다.
+          if (preferPermanent) ...[trash, permanent] else ...[permanent, trash],
+        ],
+      );
+    },
   );
   return choice ?? DeleteChoice.cancel;
 }

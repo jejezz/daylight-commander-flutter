@@ -258,12 +258,23 @@ Future<void> transferEntries(
   await ref.read(paneControllerProvider(PaneSide.right).notifier).refresh();
 }
 
-Future<void> deleteSelection(BuildContext context, WidgetRef ref, PaneSide side) async {
+/// [preferPermanent]이면 확인 다이얼로그의 기본 버튼이 영구 삭제가 된다
+/// (Shift+Delete / Shift+Backspace).
+Future<void> deleteSelection(
+  BuildContext context,
+  WidgetRef ref,
+  PaneSide side, {
+  bool preferPermanent = false,
+}) async {
   final pane = ref.read(paneControllerProvider(side));
   final entries = pane.selectedEntries;
   if (entries.isEmpty) return;
 
-  final choice = await showDeleteConfirmDialog(context, count: entries.length);
+  final choice = await showDeleteConfirmDialog(
+    context,
+    count: entries.length,
+    preferPermanent: preferPermanent,
+  );
   if (choice == DeleteChoice.cancel) return;
 
   await ref.read(operationControllerProvider.notifier).runDelete(
