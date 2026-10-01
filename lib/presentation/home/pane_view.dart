@@ -312,6 +312,15 @@ class _PathBarState extends State<_PathBar> {
     }
   }
 
+  // 경로 입력창에 포커스가 남아 있으면 HomeScreen의 키 핸들러가 모든 키를
+  // 무시한다(Delete 등 단축키가 먹통). 입력이 끝나면 포커스를 상위 Focus로
+  // 돌려 단축키가 다시 동작하게 한다. 다이얼로그 등이 위에 떠 있으면 건드리지 않는다.
+  void _releaseFocus() {
+    if (!_focusNode.hasPrimaryFocus) return;
+    if (ModalRoute.of(context)?.isCurrent == false) return;
+    _focusNode.parent?.requestFocus();
+  }
+
   @override
   void dispose() {
     _controller.dispose();
@@ -464,7 +473,11 @@ class _PathBarState extends State<_PathBar> {
                 border: InputBorder.none,
                 contentPadding: EdgeInsets.symmetric(horizontal: 6),
               ),
-              onSubmitted: widget.onSubmitPath,
+              onSubmitted: (value) {
+                widget.onSubmitPath(value);
+                _releaseFocus();
+              },
+              onTapOutside: (_) => _releaseFocus(),
             ),
           ),
           IconButton(
