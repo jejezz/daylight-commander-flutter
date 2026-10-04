@@ -173,6 +173,7 @@
   "contextMenuView": "View (F3)",
   "contextMenuRename": "Rename (F2)",
   "contextMenuCopy": "Copy → Other Pane (F5)",
+  "contextMenuDuplicate": "Duplicate Here (Ctrl/⌘+D)",
   "contextMenuMove": "Move → Other Pane (F6)",
   "contextMenuDelete": "Delete (F8)",
   "contextMenuRevealInFileManager": "Show in File Manager",

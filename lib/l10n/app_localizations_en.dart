@@ -374,6 +374,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get contextMenuCopy => 'Copy → Other Pane (F5)';
 
   @override
+  String get contextMenuDuplicate => 'Duplicate Here (Ctrl/⌘+D)';
+
+  @override
   String get contextMenuMove => 'Move → Other Pane (F6)';
 
   @override

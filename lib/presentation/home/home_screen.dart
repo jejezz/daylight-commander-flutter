@@ -184,6 +184,10 @@ class HomeScreen extends ConsumerWidget {
               viewSelected(context, ref, activeSide),
           const SingleActivator(LogicalKeyboardKey.f5): () =>
               copySelectionToOtherPane(context, ref, activeSide),
+          const SingleActivator(LogicalKeyboardKey.keyD, control: true): () =>
+              duplicateSelection(context, ref, activeSide),
+          const SingleActivator(LogicalKeyboardKey.keyD, meta: true): () =>
+              duplicateSelection(context, ref, activeSide),
           const SingleActivator(LogicalKeyboardKey.f6): () =>
               moveSelectionToOtherPane(context, ref, activeSide),
           const SingleActivator(LogicalKeyboardKey.f7): () =>

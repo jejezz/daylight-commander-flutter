@@ -366,6 +366,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get contextMenuCopy => '복사 → 반대 패널 (F5)';
 
   @override
+  String get contextMenuDuplicate => '여기에 복제 (Ctrl/⌘+D)';
+
+  @override
   String get contextMenuMove => '이동 → 반대 패널 (F6)';
 
   @override
