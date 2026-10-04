@@ -167,6 +167,23 @@ Future<void> copySelectionToOtherPane(
   );
 }
 
+/// 반대 패널을 건드리지 않고 같은 폴더 안에 복제본("이름 2.ext")을 만든다.
+Future<void> duplicateSelection(
+  BuildContext context,
+  WidgetRef ref,
+  PaneSide side,
+) async {
+  final pane = ref.read(paneControllerProvider(side));
+  await transferEntries(
+    context,
+    ref,
+    fromSide: side,
+    entries: pane.selectedEntries,
+    destinationDir: pane.currentPath,
+    isMove: false,
+  );
+}
+
 Future<void> moveSelectionToOtherPane(
   BuildContext context,
   WidgetRef ref,
@@ -203,12 +220,16 @@ Future<void> transferEntries(
   final destUri = resolveLocationString(destinationDir);
   // entry.location.path는 로컬/FTP 모두 항상 posix 스타일(슬래시)이라
   // p.posix로 통일해서 검사할 수 있다.
+  // 복사를 같은 폴더로 하면 "이름 2.ext" 같은 복제본을 만든다 (충돌 대화상자 없이).
+  var duplicateInPlace = false;
   for (final entry in entries) {
     if (entry.location.scheme != destUri.scheme) continue;
     final srcPath = entry.location.path;
     final destPath = destUri.path;
     if (p.posix.equals(destPath, p.posix.dirname(srcPath))) {
-      return; // 이미 그 위치에 있음 — 아무 것도 하지 않는다.
+      if (isMove) return; // 이미 그 위치에 있음 — 아무 것도 하지 않는다.
+      duplicateInPlace = true;
+      continue;
     }
     if (entry.isDirectory &&
         (p.posix.equals(destPath, srcPath) || p.posix.isWithin(srcPath, destPath))) {
@@ -225,8 +246,9 @@ Future<void> transferEntries(
   final ftpSessions = ref.read(ftpSessionManagerProvider.notifier);
   final sftpSessions = ref.read(sftpSessionManagerProvider.notifier);
   final webdavSessions = ref.read(webdavSessionManagerProvider.notifier);
-  Future<ConflictAction> onConflict(FileConflict conflict) =>
-      showConflictDialog(context, conflict);
+  Future<ConflictAction> onConflict(FileConflict conflict) => duplicateInPlace
+      ? Future.value(ConflictAction.rename)
+      : showConflictDialog(context, conflict);
 
   try {
     if (isMove) {
@@ -832,6 +854,7 @@ Future<void> showRowContextMenu(
       if (singleTarget != null)
         PopupMenuItem(value: 'rename', child: Text(l10n.contextMenuRename)),
       PopupMenuItem(value: 'copy', child: Text(l10n.contextMenuCopy)),
+      PopupMenuItem(value: 'duplicate', child: Text(l10n.contextMenuDuplicate)),
       PopupMenuItem(value: 'move', child: Text(l10n.contextMenuMove)),
       PopupMenuItem(value: 'delete', child: Text(l10n.contextMenuDelete)),
       if (allLocal) PopupMenuItem(value: 'compress', child: Text(l10n.compressLabel)),
@@ -859,6 +882,8 @@ Future<void> showRowContextMenu(
       await renameSelected(context, ref, side);
     case 'copy':
       await copySelectionToOtherPane(context, ref, side);
+    case 'duplicate':
+      await duplicateSelection(context, ref, side);
     case 'move':
       await moveSelectionToOtherPane(context, ref, side);
     case 'delete':

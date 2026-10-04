@@ -173,6 +173,7 @@
   "contextMenuView": "보기 (F3)",
   "contextMenuRename": "이름변경 (F2)",
   "contextMenuCopy": "복사 → 반대 패널 (F5)",
+  "contextMenuDuplicate": "여기에 복제 (Ctrl/⌘+D)",
   "contextMenuMove": "이동 → 반대 패널 (F6)",
   "contextMenuDelete": "삭제 (F8)",
   "contextMenuRevealInFileManager": "파일 관리자에서 보기",

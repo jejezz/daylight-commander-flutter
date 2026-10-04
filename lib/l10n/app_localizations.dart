@@ -770,6 +770,12 @@ abstract class AppLocalizations {
   /// **'복사 → 반대 패널 (F5)'**
   String get contextMenuCopy;
 
+  /// No description provided for @contextMenuDuplicate.
+  ///
+  /// In ko, this message translates to:
+  /// **'여기에 복제 (Ctrl/⌘+D)'**
+  String get contextMenuDuplicate;
+
   /// No description provided for @contextMenuMove.
   ///
   /// In ko, this message translates to:
