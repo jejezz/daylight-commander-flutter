@@ -24,10 +24,13 @@ Writes, for each platform folder that exists:
                                   (radius 185) with a drop shadow in a 1024
                                   canvas, glyph 440px — a sticker's white
                                   outline needs gradient around it to read
-  Windows  app_icon.ico           full-bleed plate (12% radius), glyph 80% —
-                                  a macOS-sized glyph reads as too small in
-                                  the taskbar
-  Linux    app_icon.png 512px     same as Windows
+  Windows  app_icon.ico           NO plate: the glyph alone at 96% of the
+                                  canvas. A square plate hurts legibility on
+                                  the taskbar and Explorer. Each size
+                                  (256/128/64/48/40/32/24/20/16) is drawn
+                                  separately; 48px and below get a light sharpen
+  Linux    app_icon.png 512px     full-bleed plate (12% radius), glyph 80% —
+                                  a macOS-sized glyph reads as too small
   iOS      AppIcon.appiconset     square plate, glyph 76%, NO alpha channel
                                   (App Store Connect rejects one)
   Android  legacy mipmaps + adaptive icon (gradient background layer, glyph
@@ -35,7 +38,9 @@ Writes, for each platform folder that exists:
 """
 from __future__ import annotations
 
+import io
 import json
+import struct
 import subprocess
 import sys
 from pathlib import Path
@@ -61,9 +66,15 @@ MAC_SHADOW_BLUR = 14
 MAC_SHADOW_OFFSET = 10
 MAC_SHADOW_ALPHA = 90
 
-# Windows / Linux: nearly edge to edge.
+# Linux: nearly edge to edge.
 DESKTOP_RADIUS_FRACTION = 0.12
 DESKTOP_GLYPH_FRACTION = 0.80
+
+# Windows: no plate, glyph only. Each ICO size is rendered from the source
+# glyph (not downscaled from one master) so small sizes keep their edges.
+WINDOWS_GLYPH_FRACTION = 0.96
+WINDOWS_ICO_SIZES = (256, 128, 64, 48, 40, 32, 24, 20, 16)
+WINDOWS_SHARPEN_MAX = 48  # sharpen sizes up to this
 
 # iOS / Android legacy: the OS applies its own mask to a square plate.
 MOBILE_GLYPH_FRACTION = 0.76
@@ -155,13 +166,37 @@ def write_macos(icon: Image.Image) -> None:
     print(f'macOS    {out.relative_to(ROOT)}/app_icon_{{16..1024}}.png')
 
 
-def write_windows(icon: Image.Image) -> None:
+def windows_frame(glyph: Image.Image, size: int) -> Image.Image:
+    """One ICO frame: the glyph alone, scaled straight from the source."""
+    frame = centre(Image.new('RGBA', (size, size), (0, 0, 0, 0)),
+                   fit(glyph, round(size * WINDOWS_GLYPH_FRACTION)))
+    if size <= WINDOWS_SHARPEN_MAX:
+        # Sharpen colour only; unsharp-masking alpha would leave halos.
+        r, g, b, a = frame.split()
+        sharp = Image.merge('RGB', (r, g, b)).filter(
+            ImageFilter.UnsharpMask(radius=0.6, percent=60, threshold=0))
+        frame = Image.merge('RGBA', (*sharp.split(), a))
+    return frame
+
+
+def write_windows(glyph: Image.Image) -> None:
     out = ROOT / 'windows/runner/resources/app_icon.ico'
     if not out.parent.exists():
         return
-    sizes = [256, 128, 64, 48, 32, 16]
-    icon.save(out, format='ICO', sizes=[(s, s) for s in sizes])
-    print(f'Windows  {out.relative_to(ROOT)} ({"/".join(map(str, sizes))})')
+    # Written by hand: Pillow's ICO writer resizes one image to every size,
+    # which is exactly what we avoid. Entries are PNG-compressed (Vista+).
+    pngs = []
+    for size in WINDOWS_ICO_SIZES:
+        buf = io.BytesIO()
+        windows_frame(glyph, size).save(buf, format='PNG')
+        pngs.append((size, buf.getvalue()))
+    data = struct.pack('<HHH', 0, 1, len(pngs))
+    offset = 6 + 16 * len(pngs)
+    for size, png in pngs:
+        data += struct.pack('<BBBBHHII', size % 256, size % 256, 0, 0, 1, 32, len(png), offset)
+        offset += len(png)
+    out.write_bytes(data + b''.join(png for _, png in pngs))
+    print(f'Windows  {out.relative_to(ROOT)} ({"/".join(map(str, WINDOWS_ICO_SIZES))}, no plate)')
 
 
 def write_linux(icon: Image.Image) -> None:
@@ -256,9 +291,8 @@ def main() -> None:
     print(f'master   {(ICON_DIR / "app_icon_1024.png").relative_to(ROOT)}, app_icon.png (256)')
 
     write_macos(mac)
-    desktop = desktop_icon(glyph)
-    write_windows(desktop)
-    write_linux(desktop)
+    write_windows(glyph)
+    write_linux(desktop_icon(glyph))
     mobile = mobile_icon(glyph)
     write_ios(mobile)
     write_android(mobile, glyph)
