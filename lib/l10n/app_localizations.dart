@@ -692,6 +692,12 @@ abstract class AppLocalizations {
   /// **'숨김 파일 표시'**
   String get showHiddenTooltip;
 
+  /// No description provided for @directoryTreeTooltip.
+  ///
+  /// In ko, this message translates to:
+  /// **'디렉토리 트리'**
+  String get directoryTreeTooltip;
+
   /// No description provided for @itemCountLabel.
   ///
   /// In ko, this message translates to:

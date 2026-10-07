@@ -321,6 +321,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get showHiddenTooltip => '숨김 파일 표시';
 
   @override
+  String get directoryTreeTooltip => '디렉토리 트리';
+
+  @override
   String itemCountLabel(int count) {
     return '$count개 항목';
   }

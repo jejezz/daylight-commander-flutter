@@ -326,6 +326,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get showHiddenTooltip => 'Show Hidden Files';
 
   @override
+  String get directoryTreeTooltip => 'Directory tree';
+
+  @override
   String itemCountLabel(int count) {
     return '$count item(s)';
   }

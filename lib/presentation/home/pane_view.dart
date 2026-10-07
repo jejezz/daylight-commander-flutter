@@ -13,6 +13,7 @@ import '../theme/app_theme.dart';
 import '../widgets/file_icon.dart';
 import '../widgets/tool_icon.dart';
 import 'bookmarks_provider.dart';
+import 'directory_tree.dart';
 import 'drag_payload.dart';
 import 'drive_utils.dart';
 import 'drives_provider.dart';
@@ -85,6 +86,7 @@ class PaneView extends ConsumerWidget {
             child: Column(
               children: [
                 _PathBar(
+                  side: side,
                   path: state.currentPath,
                   canGoBack: state.backHistory.isNotEmpty,
                   canGoForward: state.forwardHistory.isNotEmpty,
@@ -243,6 +245,7 @@ class PaneView extends ConsumerWidget {
 
 class _PathBar extends StatefulWidget {
   const _PathBar({
+    required this.side,
     required this.path,
     required this.canGoBack,
     required this.canGoForward,
@@ -269,6 +272,7 @@ class _PathBar extends StatefulWidget {
     required this.isRemote,
   });
 
+  final PaneSide side;
   final String path;
   final bool canGoBack;
   final bool canGoForward;
@@ -485,6 +489,14 @@ class _PathBarState extends State<_PathBar> {
             icon: ToolIcon('icons8-hide-64.svg', size: 15, active: widget.showHidden),
             tooltip: l10n.showHiddenTooltip,
             onPressed: widget.onToggleHidden,
+          ),
+          Builder(
+            builder: (buttonContext) => IconButton(
+              visualDensity: VisualDensity.compact,
+              icon: const Icon(Icons.account_tree_outlined, size: 16),
+              tooltip: l10n.directoryTreeTooltip,
+              onPressed: () => showDirectoryTreePopup(buttonContext, widget.side),
+            ),
           ),
         ],
       ),

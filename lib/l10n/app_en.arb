@@ -142,6 +142,7 @@
   "addBookmarkTooltip": "Add Bookmark",
   "removeBookmarkTooltip": "Remove Bookmark",
   "showHiddenTooltip": "Show Hidden Files",
+  "directoryTreeTooltip": "Directory tree",
   "itemCountLabel": "{count} item(s)",
   "@itemCountLabel": {
     "placeholders": {
