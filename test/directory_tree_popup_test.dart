@@ -19,7 +19,7 @@ void main() {
 
     final container = ProviderContainer(overrides: [
       drivesProvider.overrideWith(
-        (ref) async => [DriveEntry(name: 'ROOT', path: root.path)],
+        (ref) => Stream.value([DriveEntry(name: 'ROOT', path: root.path)]),
       ),
     ]);
     addTearDown(container.dispose);
