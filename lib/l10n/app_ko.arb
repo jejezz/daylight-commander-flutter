@@ -142,6 +142,7 @@
   "addBookmarkTooltip": "즐겨찾기 추가",
   "removeBookmarkTooltip": "즐겨찾기 해제",
   "showHiddenTooltip": "숨김 파일 표시",
+  "directoryTreeTooltip": "디렉토리 트리",
   "itemCountLabel": "{count}개 항목",
   "@itemCountLabel": {
     "placeholders": {
