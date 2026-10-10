@@ -13,49 +13,64 @@ Release로 배포하는 방법. 두 가지 경로가 있다.
 
 ## 0. 버전 올리기
 
-`pubspec.yaml`의 `version:` 필드를 올린다 (`버전이름+빌드번호` 형식).
-
-```yaml
-version: 1.1.0+2
-```
-
-커밋하고 태그를 만든다. 태그는 반드시 `v`로 시작해야 아래 A 방식이 자동
-실행된다.
+`scripts/bump-version.sh`가 `pubspec.yaml`의 버전과 빌드 번호를 함께 올린다
+(빌드 번호는 릴리스마다 +1, 되돌리지 않는다 — conventions `versioning.md`).
 
 ```bash
-git add pubspec.yaml
-git commit -m "chore: 1.1.0으로 버전 올림"
-git tag v1.1.0
-git push origin main
-git push origin v1.1.0
+scripts/bump-version.sh patch        # 1.4.1+20 -> 1.4.2+21
+scripts/bump-version.sh minor        # 1.4.1+20 -> 1.5.0+21
+scripts/bump-version.sh 1.5.0-rc.1   # 프리릴리스
+git commit -am "chore(release): v1.4.2"
+```
+
+PR로 `main`에 병합한 뒤, **병합 커밋에** 태그를 만들어 push한다. 태그는 반드시
+`v`로 시작하고 `pubspec.yaml`의 버전과 같아야 한다 — 다르면 워크플로의 `check`
+잡이 멈춘다.
+
+```bash
+git switch main && git pull
+git tag v1.4.2
+git push origin v1.4.2
 ```
 
 ## A. GitHub Actions로 자동 빌드+릴리스 (추천)
 
 `.github/workflows/release.yml`가 `v*.*.*` 형태의 태그가 push되면 자동으로:
 
-1. `macos-latest`/`windows-latest`/`ubuntu-latest` 세 러너에서 각각
-   `flutter build <platform> --release` 실행
-2. macOS는 `.dmg`, Windows는 Inno Setup 설치 파일(`.exe`), Linux는
-   `.tar.gz`로 패키징
-3. 세 파일과 `SHA256SUMS.txt`(SHA-256 체크섬)를 전부 첨부해 GitHub Release 하나를 생성.
-   파일명에는 `pubspec.yaml`의 버전이 들어간다
-   (`DaylightCommander-1.4.0-macos.dmg` / `-Setup.exe` / `-linux.tar.gz`).
-   내려받은 뒤 `sha256sum -c SHA256SUMS.txt`(macOS는 `shasum -a 256 -c`)로 검증할 수 있다. 릴리스 노트는
-   `.github/release-notes-header.md`(플랫폼별 설치 방법 — macOS의
-   quarantine/`xattr -cr` 안내 포함)를 맨 앞에 붙이고, 그 뒤에
-   `--generate-notes`로 커밋 로그 기반 변경 이력을 자동으로 이어붙인다.
-   **설치 안내 문구를 바꾸려면 이 파일을 고치면 다음 릴리스부터 반영된다**
-   (과거 릴리스 노트는 소급 적용 안 됨 — 이미 나온 릴리스는
-   `gh release edit <태그> --notes-file ...`로 직접 고쳐야 함)
+1. **`check`** — 태그가 `pubspec.yaml` 버전과 같은지, `lib/app_identity.dart`의
+   표시 이름이 `PRODUCT_NAME`과 같은지, 번역이 빠지지 않았는지 확인한다.
+   하나라도 어긋나면 여기서 멈춘다.
+2. **`build-macos` / `build-windows` / `build-linux`** 를 병렬로 돌린다
+   (`macos-26` / `windows-latest` / `ubuntu-latest`).
+3. **`release`** — 셋 다 성공했을 때만 GitHub Release 하나를 만든다.
+   제목은 `Daylight Commander vX.Y.Z`. 하나라도 실패하면 릴리스가 만들어지지 않는다.
 
-위 "0. 버전 올리기"에서 태그를 push하면 그걸로 끝이다. GitHub 저장소의
-**Actions** 탭에서 진행 상황을 볼 수 있고, 완료되면 **Releases** 탭에 새
-릴리스가 올라와 있다.
+산출물 이름은 `<파일 이름>-<버전>-<os>-<arch>` 규칙이다
+(conventions `packaging.md`): `DaylightCommander-1.4.2-macos-universal.dmg`,
+`DaylightCommander-1.4.2-windows-x64-setup.exe`,
+`DaylightCommander-1.4.2-linux-x64.tar.gz`, 그리고 `SHA256SUMS.txt`.
+내려받은 뒤 `sha256sum -c SHA256SUMS.txt`(macOS는 `shasum -a 256 -c SHA256SUMS.txt
+--ignore-missing`)로 검증할 수 있다. 앱 안의 업데이트 확인이 이 파일 이름과
+`SHA256SUMS.txt`를 보고 내려받을 파일을 고르므로 **이름 규칙을 바꾸지 않는다.**
 
-태그 없이 지금 상태로 한 번 테스트해보고 싶다면 GitHub 웹 UI의 Actions →
-Release → **Run workflow** 버튼으로 수동 실행할 수도 있다(이 경우
-`manual-<타임스탬프>`라는 이름으로 릴리스가 만들어진다).
+릴리스 노트는 `.github/release-notes-header.md`(플랫폼별 설치 안내)를 맨 앞에
+붙이고, 그 뒤에 `--generate-notes`로 PR 목록을 자동으로 이어붙인다. 설치 안내를 바꾸려면
+이 파일을 고치면 다음 릴리스부터 반영된다 (이미 나온 릴리스는 `gh release edit
+<태그> --notes-file ...`로 직접 고쳐야 한다). 태그에 `-rc.N` 같은 접미사가 있으면
+프리릴리스로 만들어진다.
+
+각 설치 파일:
+
+- **macOS**: DMG를 열어 앱을 Applications로 끌어다 놓는다. 서명 + 공증을 거친다.
+- **Windows**: Inno Setup 설치 프로그램(서명 없음 — SmartScreen에서 "추가 정보 → 실행").
+  `installer/windows/app.iss`의 `AppId`는 **절대 바꾸지 않는다** (바꾸면 다음 버전을
+  다른 앱으로 인식해 업그레이드·제거가 깨진다). 설치 위치는 `Program Files\Daylight Commander`.
+- **Linux**: tar.gz를 풀고 `./install.sh`를 실행하면 `~/.local`에 설치되어 앱 메뉴에 나타난다
+  (`./install.sh --remove`로 제거).
+
+태그 없이 빌드만 확인하고 싶다면 GitHub 웹 UI의 Actions → Release → **Run workflow**
+버튼으로 수동 실행할 수 있다. 이 경우 `check`와 세 빌드까지만 돌고 **릴리스는 만들지
+않는다.**
 
 ### 처음 설정할 때 확인할 것
 

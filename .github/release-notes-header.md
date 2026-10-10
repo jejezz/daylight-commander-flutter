@@ -1,30 +1,14 @@
-## 설치 안내
+## 설치 / Install
 
-### macOS
+| OS | 받을 파일 / File |
+|---|---|
+| macOS (12.0 이상) | `*-macos-universal.dmg` — 열어서 앱을 Applications로 끌어다 놓으세요 |
+| Windows 10/11 (x64) | `*-windows-x64-setup.exe` |
+| Linux (x64) | `*-linux-x64.tar.gz` — 압축을 풀고 `./install.sh`를 실행하세요 (`--remove`로 제거) |
 
-`DaylightCommander-<버전>-macos.dmg`를 열고 `Daylight Commander.app`을 Applications
-폴더로 옮긴 뒤 실행하세요.
+**Windows**: 설치 프로그램에 아직 코드 서명이 없어서 SmartScreen이 "Windows의 PC 보호" 창을 띄웁니다. **추가 정보 → 실행**을 누르면 설치가 진행됩니다.
+The installer isn't code-signed yet, so SmartScreen shows "Windows protected your PC" — choose **More info → Run anyway**.
 
-**"손상되었습니다" 또는 "확인되지 않은 개발자" 경고가 뜨는 경우** — Apple
-공증(notarization)을 받지 않은 빌드라서 인터넷에서 받은 파일에 자동으로
-붙는 격리(quarantine) 속성 때문입니다. 터미널에서 아래 명령을 실행하면
-해결됩니다:
-
-```bash
-xattr -cr "/Applications/Daylight Commander.app"
-```
-
-실행 후 다시 더블클릭하면 정상적으로 열립니다.
-
-### Windows
-
-`DaylightCommander-<버전>-Setup.exe`를 실행해 설치하세요. 서명되지 않은 설치
-파일이라 SmartScreen 경고가 뜰 수 있습니다 — "추가 정보" → "실행"을
-클릭하면 됩니다. 설치 후 시작 메뉴에 바로가기가 생기고, "앱 및 기능"에서
-제거할 수 있습니다.
-
-### Linux
-
-`DaylightCommander-<버전>-linux.tar.gz` 압축을 풀고 안의 실행 파일을 실행하세요.
+받은 파일은 `SHA256SUMS.txt`로 확인할 수 있습니다: `shasum -a 256 -c SHA256SUMS.txt --ignore-missing`
 
 ---
