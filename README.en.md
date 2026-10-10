@@ -79,7 +79,7 @@ Prebuilt binaries are available on the
 
 ### macOS
 
-1. Open `DaylightCommander-macos.dmg` and drag `Daylight Commander.app` into
+1. Open `DaylightCommander-<version>-macos.dmg` and drag `Daylight Commander.app` into
    your Applications folder
 2. **If you see a "damaged" or "unidentified developer" warning on first
    launch** — this build isn't notarized by Apple, so macOS automatically
@@ -94,14 +94,14 @@ Prebuilt binaries are available on the
 
 ### Windows
 
-1. Run `DaylightCommander-Setup.exe` and follow the installer (creates a
+1. Run `DaylightCommander-<version>-Setup.exe` and follow the installer (creates a
    Start Menu shortcut; can be removed from "Apps & Features")
 2. Since the installer isn't signed, SmartScreen may warn you — click
    "More info" → "Run anyway"
 
 ### Linux
 
-1. Extract `DaylightCommander-linux.tar.gz` and run the executable inside
+1. Extract `DaylightCommander-<version>-linux.tar.gz` and run the executable inside
 
 ## Building from Source (for developers)
 

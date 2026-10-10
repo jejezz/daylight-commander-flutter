@@ -38,7 +38,10 @@ git push origin v1.1.0
    `flutter build <platform> --release` 실행
 2. macOS는 `.dmg`, Windows는 Inno Setup 설치 파일(`.exe`), Linux는
    `.tar.gz`로 패키징
-3. 세 파일을 전부 첨부해 GitHub Release 하나를 생성. 릴리스 노트는
+3. 세 파일과 `SHA256SUMS.txt`(SHA-256 체크섬)를 전부 첨부해 GitHub Release 하나를 생성.
+   파일명에는 `pubspec.yaml`의 버전이 들어간다
+   (`DaylightCommander-1.4.0-macos.dmg` / `-Setup.exe` / `-linux.tar.gz`).
+   내려받은 뒤 `sha256sum -c SHA256SUMS.txt`(macOS는 `shasum -a 256 -c`)로 검증할 수 있다. 릴리스 노트는
    `.github/release-notes-header.md`(플랫폼별 설치 방법 — macOS의
    quarantine/`xattr -cr` 안내 포함)를 맨 앞에 붙이고, 그 뒤에
    `--generate-notes`로 커밋 로그 기반 변경 이력을 자동으로 이어붙인다.
@@ -133,11 +136,11 @@ codesign --force --deep --sign - "$APP_PATH"
 mkdir -p dist
 hdiutil create -volname "Daylight Commander" \
   -srcfolder "$APP_PATH" \
-  -ov -format UDZO dist/DaylightCommander-macos.dmg
+  -ov -format UDZO dist/DaylightCommander-<버전>-macos.dmg
 ```
 
 `hdiutil`/`codesign` 둘 다 macOS에 기본 내장되어 있어 별도 설치가 필요
-없다. 결과물은 `dist/DaylightCommander-macos.dmg`.
+없다. 결과물은 `dist/DaylightCommander-<버전>-macos.dmg`.
 
 > **이 로컬 빌드는 애드혹 서명만 된다(다운받는 사람 배포용 아님)**: 위
 > 명령은 `codesign --sign -`로 애드혹 서명만 하므로, 이 산출물을 다른
@@ -163,7 +166,7 @@ flutter build windows --release
 ```
 
 `windows\installer.iss`가 `build\windows\x64\runner\Release` 폴더 전체를
-묶어 `dist\DaylightCommander-Setup.exe` 설치 마법사를 만든다 (시작 메뉴
+묶어 `dist\DaylightCommander-<버전>-Setup.exe` 설치 마법사를 만든다 (시작 메뉴
 바로가기, "앱 및 기능"에서 제거 가능). `/DMyAppVersion`은 설치 프로그램의
 버전 표시용이라 생략해도 빌드는 되지만(기본값 `0.0.0`), 릴리스 CI는
 `pubspec.yaml`의 버전을 읽어 자동으로 채운다.
@@ -179,7 +182,7 @@ flutter build windows --release
 ```bash
 flutter build linux --release
 mkdir -p dist
-tar -czf dist/DaylightCommander-linux.tar.gz \
+tar -czf dist/DaylightCommander-<버전>-linux.tar.gz \
   -C build/linux/x64/release/bundle .
 ```
 
@@ -201,9 +204,9 @@ Debian 패키지(`.deb`)로 만들 수도 있다 — 둘 다 이 프로젝트에
 
 ```bash
 gh release create v1.0.0 \
-  dist/DaylightCommander-macos.dmg \
-  dist/DaylightCommander-Setup.exe \
-  dist/DaylightCommander-linux.tar.gz \
+  dist/DaylightCommander-<버전>-macos.dmg \
+  dist/DaylightCommander-<버전>-Setup.exe \
+  dist/DaylightCommander-<버전>-linux.tar.gz \
   --title "v1.0.0" \
   --generate-notes
 ```

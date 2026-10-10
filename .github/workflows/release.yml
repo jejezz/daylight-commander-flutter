@@ -1,7 +1,7 @@
 name: Release
 
 # v1.2.3 형태의 태그를 push하면 macOS/Windows/Linux를 각각 빌드해서
-# 패키징하고, 하나의 GitHub Release에 세 파일을 모두 첨부한다.
+# 패키징하고, 하나의 GitHub Release에 세 파일(파일명에 버전 포함)과 SHA256SUMS.txt를 첨부한다.
 # 수동으로도 실행 가능(workflow_dispatch) — 이 경우 태그가 없으므로
 # GITHUB_SHA 기반 임시 이름으로 릴리스를 만든다.
 #
@@ -62,6 +62,9 @@ jobs:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
           mkdir -p dist
+          VERSION=$(sed -nE 's/^version:[[:space:]]*([0-9.]+).*/\1/p' pubspec.yaml)
+          DMG="dist/DaylightCommander-$VERSION-macos.dmg"
+          echo "DMG=$DMG" >> "$GITHUB_ENV"
           APP_PATH=$(find build/macos/Build/Products/Release -maxdepth 1 -name '*.app')
           APP_NAME=$(basename "$APP_PATH")
           IDENTITY=$(security find-identity -v -p codesigning build.keychain \
@@ -84,23 +87,23 @@ jobs:
             --icon "$APP_NAME" 160 190 \
             --hide-extension "$APP_NAME" \
             --app-drop-link 500 185 \
-            dist/DaylightCommander-macos.dmg \
+            "$DMG" \
             "$APP_PATH" || true
-          if [ ! -f dist/DaylightCommander-macos.dmg ]; then
+          if [ ! -f "$DMG" ]; then
             echo "::error::create-dmg가 dmg 파일을 만들지 못함"
             exit 1
           fi
-          xcrun notarytool submit dist/DaylightCommander-macos.dmg \
+          xcrun notarytool submit "$DMG" \
             --apple-id "$APPLE_ID" --team-id "$APPLE_TEAM_ID" --password "$APPLE_ID_PASSWORD" \
             --wait
-          xcrun stapler staple dist/DaylightCommander-macos.dmg
+          xcrun stapler staple "$DMG"
       - name: 임시 키체인 정리
         if: always()
         run: security delete-keychain build.keychain || true
       - uses: actions/upload-artifact@v4
         with:
           name: macos-dmg
-          path: dist/DaylightCommander-macos.dmg
+          path: dist/*.dmg
 
   build-windows:
     runs-on: windows-latest
@@ -128,14 +131,14 @@ jobs:
           New-Item -ItemType Directory -Force -Path dist | Out-Null
           $version = (Select-String -Path pubspec.yaml -Pattern '^version:\s*([0-9.]+)').Matches[0].Groups[1].Value
           & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" "/DMyAppVersion=$version" windows\installer.iss
-          if ($LASTEXITCODE -ne 0 -or -not (Test-Path dist\DaylightCommander-Setup.exe)) {
+          if ($LASTEXITCODE -ne 0 -or -not (Test-Path "dist\DaylightCommander-$version-Setup.exe")) {
             Write-Error "Inno Setup 컴파일 실패 또는 결과물 없음"
             exit 1
           }
       - uses: actions/upload-artifact@v4
         with:
           name: windows-installer
-          path: dist/DaylightCommander-Setup.exe
+          path: dist/*.exe
 
   build-linux:
     runs-on: ubuntu-latest
@@ -154,12 +157,13 @@ jobs:
       - name: tar.gz로 패키징
         run: |
           mkdir -p dist
+          VERSION=$(sed -nE 's/^version:[[:space:]]*([0-9.]+).*/\1/p' pubspec.yaml)
           BUNDLE_DIR=$(find build/linux -type d -name bundle | head -n1)
-          tar -czf dist/DaylightCommander-linux.tar.gz -C "$BUNDLE_DIR" .
+          tar -czf "dist/DaylightCommander-$VERSION-linux.tar.gz" -C "$BUNDLE_DIR" .
       - uses: actions/upload-artifact@v4
         with:
           name: linux-tarball
-          path: dist/DaylightCommander-linux.tar.gz
+          path: dist/*.tar.gz
 
   release:
     needs: [build-macos, build-windows, build-linux]
@@ -171,6 +175,14 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           path: artifacts
+      - name: SHA-256 체크섬 생성
+        run: |
+          mkdir -p release
+          cp artifacts/macos-dmg/*.dmg artifacts/windows-installer/*.exe \
+            artifacts/linux-tarball/*.tar.gz release/
+          cd release
+          sha256sum * > SHA256SUMS.txt
+          cat SHA256SUMS.txt
       - name: GitHub Release 생성
         env:
           GH_TOKEN: ${{ github.token }}
@@ -180,9 +192,7 @@ jobs:
             TAG="manual-$(date +%Y%m%d%H%M%S)"
           fi
           gh release create "$TAG" \
-            artifacts/macos-dmg/*.dmg \
-            artifacts/windows-installer/*.exe \
-            artifacts/linux-tarball/*.tar.gz \
+            release/* \
             --title "$TAG" \
             --notes-file .github/release-notes-header.md \
             --generate-notes
