@@ -137,8 +137,6 @@ flutter:
   fonts:
     - family: SeoulNamsan
       fonts:
-        - asset: assets/fonts/seoul_namsan_light.ttf
-          weight: 300
         - asset: assets/fonts/seoul_namsan_regular.ttf
           weight: 400
         - asset: assets/fonts/seoul_namsan_bold.ttf
