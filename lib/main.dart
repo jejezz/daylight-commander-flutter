@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:window_manager/window_manager.dart';
 
+import 'app_identity.dart';
 import 'application/usecases/drop_promise_cache.dart';
 import 'l10n/app_localizations.dart';
 import 'presentation/home/home_screen.dart';
@@ -22,7 +23,7 @@ Future<void> main() async {
     const windowOptions = WindowOptions(
       size: Size(1200, 720),
       minimumSize: Size(960, 600),
-      title: 'Daylight Commander',
+      title: AppIdentity.displayName,
     );
     windowManager.waitUntilReadyToShow(windowOptions, () async {
       await windowManager.show();
@@ -45,7 +46,7 @@ class DaylightCommanderApp extends ConsumerWidget {
     final locale = ref.watch(localeProvider);
     final fontScale = ref.watch(fontScaleProvider);
     return MaterialApp(
-      title: 'Daylight Commander',
+      title: AppIdentity.displayName,
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),

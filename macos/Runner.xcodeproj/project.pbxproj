@@ -492,7 +492,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = art.zoomon.daylightcommander.RunnerTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/daylight_commander.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/daylight_commander";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Daylight Commander.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Daylight Commander";
 			};
 			name = Debug;
 		};
@@ -507,7 +507,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = art.zoomon.daylightcommander.RunnerTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/daylight_commander.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/daylight_commander";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Daylight Commander.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Daylight Commander";
 			};
 			name = Release;
 		};
@@ -522,7 +522,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = art.zoomon.daylightcommander.RunnerTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/daylight_commander.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/daylight_commander";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Daylight Commander.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Daylight Commander";
 			};
 			name = Profile;
 		};
