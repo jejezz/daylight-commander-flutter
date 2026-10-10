@@ -476,65 +476,11 @@ abstract class AppLocalizations {
   /// **'폴더 비교 (좌우 패널)'**
   String get compareModeOnTooltip;
 
-  /// No description provided for @themeSystemTooltip.
-  ///
-  /// In ko, this message translates to:
-  /// **'테마: 시스템 설정 따름 (누르면 라이트로 고정)'**
-  String get themeSystemTooltip;
-
-  /// No description provided for @themeLightTooltip.
-  ///
-  /// In ko, this message translates to:
-  /// **'테마: 라이트로 고정 (누르면 다크로 고정)'**
-  String get themeLightTooltip;
-
-  /// No description provided for @themeDarkTooltip.
-  ///
-  /// In ko, this message translates to:
-  /// **'테마: 다크로 고정 (누르면 시스템 설정 따름)'**
-  String get themeDarkTooltip;
-
-  /// No description provided for @fontScaleNormalTooltip.
-  ///
-  /// In ko, this message translates to:
-  /// **'글자 크기: 보통 (누르면 크게)'**
-  String get fontScaleNormalTooltip;
-
-  /// No description provided for @fontScaleLargeTooltip.
-  ///
-  /// In ko, this message translates to:
-  /// **'글자 크기: 크게 (누르면 작게)'**
-  String get fontScaleLargeTooltip;
-
-  /// No description provided for @fontScaleSmallTooltip.
-  ///
-  /// In ko, this message translates to:
-  /// **'글자 크기: 작게 (누르면 보통)'**
-  String get fontScaleSmallTooltip;
-
-  /// No description provided for @languageTooltip.
-  ///
-  /// In ko, this message translates to:
-  /// **'언어: {current} (누르면 {next}로 전환)'**
-  String languageTooltip(String current, String next);
-
   /// No description provided for @languageSystem.
   ///
   /// In ko, this message translates to:
-  /// **'시스템 설정'**
+  /// **'시스템 설정 따르기 / System'**
   String get languageSystem;
-
-  /// No description provided for @languageKorean.
-  ///
-  /// In ko, this message translates to:
-  /// **'한국어'**
-  String get languageKorean;
-
-  /// No description provided for @languageEnglish.
-  ///
-  /// In ko, this message translates to:
-  /// **'English'**
-  String get languageEnglish;
 
   /// No description provided for @syncDiffToRight.
   ///
@@ -890,41 +836,17 @@ abstract class AppLocalizations {
   /// **'파일을 여는 데 실패했습니다: {error}'**
   String archiveEntryOpenFailed(String error);
 
-  /// No description provided for @aboutMenuTooltip.
-  ///
-  /// In ko, this message translates to:
-  /// **'정보'**
-  String get aboutMenuTooltip;
-
-  /// No description provided for @aboutDialogTitle.
-  ///
-  /// In ko, this message translates to:
-  /// **'Daylight Commander 정보'**
-  String get aboutDialogTitle;
-
   /// No description provided for @aboutTagline.
   ///
   /// In ko, this message translates to:
   /// **'Total Commander · Midnight Commander 스타일의 무료 2단 패널 데스크톱 파일 매니저'**
   String get aboutTagline;
 
-  /// No description provided for @aboutVersionLabel.
-  ///
-  /// In ko, this message translates to:
-  /// **'버전 {version}'**
-  String aboutVersionLabel(String version);
-
   /// No description provided for @aboutDescription.
   ///
   /// In ko, this message translates to:
   /// **'Windows·macOS·Linux를 모두 지원하며, 키보드 중심의 빠른 조작과 SMB/FTP/SFTP/WebDAV 네트워크 드라이브, 내장 뷰어, 폴더 비교·동기화까지 갖춘 클래식 파일 매니저를 목표로 만들었습니다.'**
   String get aboutDescription;
-
-  /// No description provided for @aboutFeaturesTitle.
-  ///
-  /// In ko, this message translates to:
-  /// **'주요 기능'**
-  String get aboutFeaturesTitle;
 
   /// No description provided for @aboutFeatureNavigation.
   ///
@@ -962,24 +884,6 @@ abstract class AppLocalizations {
   /// **'한국어·영어 다국어 지원, 라이트·다크 테마'**
   String get aboutFeatureLocaleTheme;
 
-  /// No description provided for @aboutTechStackLabel.
-  ///
-  /// In ko, this message translates to:
-  /// **'Flutter(Dart)로 제작'**
-  String get aboutTechStackLabel;
-
-  /// No description provided for @aboutLicenseLabel.
-  ///
-  /// In ko, this message translates to:
-  /// **'라이선스: MIT'**
-  String get aboutLicenseLabel;
-
-  /// No description provided for @aboutGithubButton.
-  ///
-  /// In ko, this message translates to:
-  /// **'GitHub 저장소 열기'**
-  String get aboutGithubButton;
-
   /// No description provided for @compressFailed.
   ///
   /// In ko, this message translates to:
@@ -991,6 +895,102 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'압축 풀기 실패: {error}'**
   String extractFailed(String error);
+
+  /// No description provided for @aboutTooltip.
+  ///
+  /// In ko, this message translates to:
+  /// **'정보'**
+  String get aboutTooltip;
+
+  /// No description provided for @aboutVersion.
+  ///
+  /// In ko, this message translates to:
+  /// **'버전 {version} (빌드 {build})'**
+  String aboutVersion(String version, String build);
+
+  /// No description provided for @aboutOpenSourceLicenses.
+  ///
+  /// In ko, this message translates to:
+  /// **'오픈소스 라이선스'**
+  String get aboutOpenSourceLicenses;
+
+  /// No description provided for @aboutRepository.
+  ///
+  /// In ko, this message translates to:
+  /// **'GitHub'**
+  String get aboutRepository;
+
+  /// No description provided for @commonClose.
+  ///
+  /// In ko, this message translates to:
+  /// **'닫기'**
+  String get commonClose;
+
+  /// No description provided for @aboutMenuItem.
+  ///
+  /// In ko, this message translates to:
+  /// **'{appName} 정보'**
+  String aboutMenuItem(String appName);
+
+  /// No description provided for @themeMenuTooltip.
+  ///
+  /// In ko, this message translates to:
+  /// **'테마'**
+  String get themeMenuTooltip;
+
+  /// No description provided for @themeSystem.
+  ///
+  /// In ko, this message translates to:
+  /// **'시스템 설정 따르기'**
+  String get themeSystem;
+
+  /// No description provided for @themeLight.
+  ///
+  /// In ko, this message translates to:
+  /// **'라이트'**
+  String get themeLight;
+
+  /// No description provided for @themeDark.
+  ///
+  /// In ko, this message translates to:
+  /// **'다크'**
+  String get themeDark;
+
+  /// No description provided for @languageMenuTooltip.
+  ///
+  /// In ko, this message translates to:
+  /// **'언어'**
+  String get languageMenuTooltip;
+
+  /// No description provided for @languageSystemShort.
+  ///
+  /// In ko, this message translates to:
+  /// **'시스템'**
+  String get languageSystemShort;
+
+  /// No description provided for @fontScaleMenuTooltip.
+  ///
+  /// In ko, this message translates to:
+  /// **'글자 크기'**
+  String get fontScaleMenuTooltip;
+
+  /// No description provided for @fontScaleSmall.
+  ///
+  /// In ko, this message translates to:
+  /// **'작게'**
+  String get fontScaleSmall;
+
+  /// No description provided for @fontScaleNormal.
+  ///
+  /// In ko, this message translates to:
+  /// **'보통'**
+  String get fontScaleNormal;
+
+  /// No description provided for @fontScaleLarge.
+  ///
+  /// In ko, this message translates to:
+  /// **'크게'**
+  String get fontScaleLarge;
 }
 
 class _AppLocalizationsDelegate

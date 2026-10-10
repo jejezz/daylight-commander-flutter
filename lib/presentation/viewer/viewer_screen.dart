@@ -9,6 +9,7 @@ import 'package:pdfrx/pdfrx.dart';
 
 import '../../application/usecases/open_with_default_app.dart';
 import '../../l10n/app_localizations.dart';
+import '../theme/app_theme.dart';
 
 const _openWithDefaultApp = OpenWithDefaultApp();
 
@@ -297,7 +298,7 @@ class _TextViewerState extends State<_TextViewer> {
       padding: const EdgeInsets.all(16),
       child: SelectableText(
         _content!,
-        style: const TextStyle(fontFamily: 'monospace', fontSize: 13),
+        style: AppFonts.mono.copyWith(fontSize: 13),
       ),
     );
   }
@@ -383,7 +384,7 @@ class _HexViewerState extends State<_HexViewer> {
               );
               return Text(
                 '$offset  $hex  $ascii',
-                style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
+                style: AppFonts.mono.copyWith(fontSize: 12),
               );
             },
           ),

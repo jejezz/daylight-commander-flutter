@@ -2,12 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../about/daylight_about.dart';
 import '../../l10n/app_localizations.dart';
+import '../../settings/settings_menus.dart';
+import '../widgets/font_scale_menu.dart';
 import '../theme/app_theme.dart';
-import '../theme/font_scale_provider.dart';
-import '../theme/locale_provider.dart';
-import '../theme/theme_mode_provider.dart';
-import '../widgets/about_dialog.dart';
 import '../widgets/operation_banner.dart';
 import '../widgets/tool_icon.dart';
 import 'folder_comparison_provider.dart';
@@ -101,9 +100,6 @@ class HomeScreen extends ConsumerWidget {
     final activeSide = ref.watch(activePaneProvider);
     final compareMode = ref.watch(compareModeProvider);
     final activeIsRemote = isRemotePath(ref.watch(paneControllerProvider(activeSide)).currentPath);
-    final themeMode = ref.watch(themeModeProvider);
-    final locale = ref.watch(localeProvider);
-    final fontScale = ref.watch(fontScaleProvider);
     final l10n = AppLocalizations.of(context);
 
     return Scaffold(
@@ -132,48 +128,13 @@ class HomeScreen extends ConsumerWidget {
             onPressed: () =>
                 ref.read(compareModeProvider.notifier).state = !compareMode,
           ),
-          IconButton(
-            icon: ToolIcon(switch (themeMode) {
-              ThemeMode.system => 'icons8-automatic-contrast-64.svg',
-              ThemeMode.light => 'icons8-sun-64.svg',
-              ThemeMode.dark => 'icons8-moon-symbol-64.svg',
-            }),
-            tooltip: switch (themeMode) {
-              ThemeMode.system => l10n.themeSystemTooltip,
-              ThemeMode.light => l10n.themeLightTooltip,
-              ThemeMode.dark => l10n.themeDarkTooltip,
-            },
-            onPressed: () => ref.read(themeModeProvider.notifier).cycle(),
-          ),
-          IconButton(
-            icon: const ToolIcon('icons8-ocr.svg'),
-            tooltip: switch (fontScale) {
-              1.15 => l10n.fontScaleLargeTooltip,
-              0.9 => l10n.fontScaleSmallTooltip,
-              _ => l10n.fontScaleNormalTooltip,
-            },
-            onPressed: () => ref.read(fontScaleProvider.notifier).cycle(),
-          ),
-          IconButton(
-            icon: const ToolIcon('icons8-language-64.svg'),
-            tooltip: l10n.languageTooltip(
-              switch (locale?.languageCode) {
-                'ko' => l10n.languageKorean,
-                'en' => l10n.languageEnglish,
-                _ => l10n.languageSystem,
-              },
-              switch (locale?.languageCode) {
-                'ko' => l10n.languageEnglish,
-                'en' => l10n.languageSystem,
-                _ => l10n.languageKorean,
-              },
-            ),
-            onPressed: () => ref.read(localeProvider.notifier).cycle(),
-          ),
+          const FontScaleMenuButton(),
+          const ThemeMenuButton(),
+          const LanguageMenuButton(),
           IconButton(
             icon: const ToolIcon('icons8-information.svg'),
-            tooltip: l10n.aboutMenuTooltip,
-            onPressed: () => showAboutInfoDialog(context),
+            tooltip: l10n.aboutTooltip,
+            onPressed: () => showDaylightAbout(context),
           ),
           const SizedBox(width: 8),
         ],

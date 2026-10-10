@@ -64,10 +64,24 @@ class AppRadius {
   static const sheet = 32.0;
 }
 
+/// 글꼴 전략 (conventions/fonts.md).
+abstract final class AppFonts {
+  static const family = 'SeoulNamsan';
+
+  /// SeoulNamsan에 없는 글자(일부 한자·기호·다른 언어)를 OS 한글 글꼴로 넘긴다 (fonts.md §2).
+  static const fallback = ['Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans CJK KR', 'Noto Sans KR'];
+
+  /// 로그·16진수·텍스트 뷰어 (fonts.md §4). 'monospace'는 데스크톱에서 해석되지 않는다.
+  static const mono = TextStyle(fontFamily: 'Menlo', fontFamilyFallback: [
+    'SF Mono', 'Consolas', 'Cascadia Mono', 'DejaVu Sans Mono', 'Noto Sans Mono', 'Courier New',
+  ]);
+}
+
 class AppTheme {
   const AppTheme._();
 
-  static const _fontFamily = 'SeoulNamsan';
+  static const _fontFamily = AppFonts.family;
+  static const _fontFallback = AppFonts.fallback;
 
   static ThemeData dark() {
     const scheme = ColorScheme.dark(
@@ -109,6 +123,7 @@ class AppTheme {
       useMaterial3: true,
       colorScheme: scheme,
       fontFamily: _fontFamily,
+      fontFamilyFallback: _fontFallback,
       scaffoldBackgroundColor: background,
       canvasColor: background,
       splashFactory: InkSparkle.splashFactory,
@@ -120,6 +135,7 @@ class AppTheme {
         foregroundColor: textHi,
         titleTextStyle: TextStyle(
           fontFamily: _fontFamily,
+          fontFamilyFallback: _fontFallback,
           fontSize: 16,
           fontWeight: FontWeight.w700,
           color: textHi,
@@ -151,7 +167,7 @@ class AppTheme {
             borderRadius: BorderRadius.all(Radius.circular(10)),
           ),
           textStyle: const TextStyle(
-              fontFamily: _fontFamily, fontSize: 13, fontWeight: FontWeight.w700),
+              fontFamily: _fontFamily, fontFamilyFallback: _fontFallback, fontSize: 13, fontWeight: FontWeight.w700),
         ),
       ),
       // Material 3 기본값은 팝업 메뉴 배경을 colorScheme.surface에서 자동

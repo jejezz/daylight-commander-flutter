@@ -211,37 +211,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get compareModeOnTooltip => 'Compare Folders (left/right panes)';
 
   @override
-  String get themeSystemTooltip =>
-      'Theme: Following system (tap to switch to Light)';
-
-  @override
-  String get themeLightTooltip => 'Theme: Light (tap to switch to Dark)';
-
-  @override
-  String get themeDarkTooltip => 'Theme: Dark (tap to follow system)';
-
-  @override
-  String get fontScaleNormalTooltip => 'Font size: Normal (tap for Large)';
-
-  @override
-  String get fontScaleLargeTooltip => 'Font size: Large (tap for Small)';
-
-  @override
-  String get fontScaleSmallTooltip => 'Font size: Small (tap for Normal)';
-
-  @override
-  String languageTooltip(String current, String next) {
-    return 'Language: $current (tap to switch to $next)';
-  }
-
-  @override
-  String get languageSystem => 'System';
-
-  @override
-  String get languageKorean => '한국어';
-
-  @override
-  String get languageEnglish => 'English';
+  String get languageSystem => 'System / 시스템 설정 따르기';
 
   @override
   String syncDiffToRight(int count) {
@@ -447,26 +417,12 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get aboutMenuTooltip => 'About';
-
-  @override
-  String get aboutDialogTitle => 'About Daylight Commander';
-
-  @override
   String get aboutTagline =>
       'A free, dual-pane desktop file manager inspired by Total Commander and Midnight Commander';
 
   @override
-  String aboutVersionLabel(String version) {
-    return 'Version $version';
-  }
-
-  @override
   String get aboutDescription =>
       'Built for Windows, macOS, and Linux, it aims to be a classic file manager with fast keyboard-driven navigation, SMB/FTP/SFTP/WebDAV network drives, built-in viewers, and folder comparison and sync.';
-
-  @override
-  String get aboutFeaturesTitle => 'Key Features';
 
   @override
   String get aboutFeatureNavigation =>
@@ -493,15 +449,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'Korean and English localization, light and dark themes';
 
   @override
-  String get aboutTechStackLabel => 'Built with Flutter (Dart)';
-
-  @override
-  String get aboutLicenseLabel => 'License: MIT';
-
-  @override
-  String get aboutGithubButton => 'Open GitHub Repository';
-
-  @override
   String compressFailed(String error) {
     return 'Compression failed: $error';
   }
@@ -510,4 +457,56 @@ class AppLocalizationsEn extends AppLocalizations {
   String extractFailed(String error) {
     return 'Extraction failed: $error';
   }
+
+  @override
+  String get aboutTooltip => 'About';
+
+  @override
+  String aboutVersion(String version, String build) {
+    return 'Version $version (build $build)';
+  }
+
+  @override
+  String get aboutOpenSourceLicenses => 'Open Source Licenses';
+
+  @override
+  String get aboutRepository => 'GitHub';
+
+  @override
+  String get commonClose => 'Close';
+
+  @override
+  String aboutMenuItem(String appName) {
+    return 'About $appName';
+  }
+
+  @override
+  String get themeMenuTooltip => 'Theme';
+
+  @override
+  String get themeSystem => 'Follow System';
+
+  @override
+  String get themeLight => 'Light';
+
+  @override
+  String get themeDark => 'Dark';
+
+  @override
+  String get languageMenuTooltip => 'Language';
+
+  @override
+  String get languageSystemShort => 'System';
+
+  @override
+  String get fontScaleMenuTooltip => 'Font size';
+
+  @override
+  String get fontScaleSmall => 'Small';
+
+  @override
+  String get fontScaleNormal => 'Normal';
+
+  @override
+  String get fontScaleLarge => 'Large';
 }

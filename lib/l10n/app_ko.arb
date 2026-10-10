@@ -89,22 +89,7 @@
   "openTerminalTooltip": "터미널 열기 (활성 패널 경로)",
   "compareModeOffTooltip": "폴더 비교 끄기",
   "compareModeOnTooltip": "폴더 비교 (좌우 패널)",
-  "themeSystemTooltip": "테마: 시스템 설정 따름 (누르면 라이트로 고정)",
-  "themeLightTooltip": "테마: 라이트로 고정 (누르면 다크로 고정)",
-  "themeDarkTooltip": "테마: 다크로 고정 (누르면 시스템 설정 따름)",
-  "fontScaleNormalTooltip": "글자 크기: 보통 (누르면 크게)",
-  "fontScaleLargeTooltip": "글자 크기: 크게 (누르면 작게)",
-  "fontScaleSmallTooltip": "글자 크기: 작게 (누르면 보통)",
-  "languageTooltip": "언어: {current} (누르면 {next}로 전환)",
-  "@languageTooltip": {
-    "placeholders": {
-      "current": { "type": "String" },
-      "next": { "type": "String" }
-    }
-  },
-  "languageSystem": "시스템 설정",
-  "languageKorean": "한국어",
-  "languageEnglish": "English",
+  "languageSystem": "시스템 설정 따르기 / System",
   "syncDiffToRight": "차이 {count}개 → 복사",
   "@syncDiffToRight": {
     "placeholders": {
@@ -229,26 +214,14 @@
     }
   },
 
-  "aboutMenuTooltip": "정보",
-  "aboutDialogTitle": "Daylight Commander 정보",
   "aboutTagline": "Total Commander · Midnight Commander 스타일의 무료 2단 패널 데스크톱 파일 매니저",
-  "aboutVersionLabel": "버전 {version}",
-  "@aboutVersionLabel": {
-    "placeholders": {
-      "version": { "type": "String" }
-    }
-  },
   "aboutDescription": "Windows·macOS·Linux를 모두 지원하며, 키보드 중심의 빠른 조작과 SMB/FTP/SFTP/WebDAV 네트워크 드라이브, 내장 뷰어, 폴더 비교·동기화까지 갖춘 클래식 파일 매니저를 목표로 만들었습니다.",
-  "aboutFeaturesTitle": "주요 기능",
   "aboutFeatureNavigation": "2단 패널 탐색, 마우스·키보드 다중 선택, 패턴 기반 선택",
   "aboutFeatureFileOps": "복사·이동·삭제·압축, 진행률 표시와 충돌 시 스킵/덮어쓰기/이름변경",
   "aboutFeatureNetwork": "SMB·FTP·SFTP·WebDAV 네트워크 드라이브 (비밀번호는 절대 저장하지 않음)",
   "aboutFeatureViewer": "텍스트·이미지·PDF·오디오·비디오 내장 뷰어, 압축파일 내부 미리보기",
   "aboutFeatureSync": "폴더 비교와 단방향·양방향 동기화",
   "aboutFeatureLocaleTheme": "한국어·영어 다국어 지원, 라이트·다크 테마",
-  "aboutTechStackLabel": "Flutter(Dart)로 제작",
-  "aboutLicenseLabel": "라이선스: MIT",
-  "aboutGithubButton": "GitHub 저장소 열기",
 
   "compressFailed": "압축 실패: {error}",
   "@compressFailed": {
@@ -261,5 +234,38 @@
     "placeholders": {
       "error": { "type": "String" }
     }
-  }
+  },
+  "aboutTooltip": "정보",
+  "aboutVersion": "버전 {version} (빌드 {build})",
+  "@aboutVersion": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      },
+      "build": {
+        "type": "String"
+      }
+    }
+  },
+  "aboutOpenSourceLicenses": "오픈소스 라이선스",
+  "aboutRepository": "GitHub",
+  "commonClose": "닫기",
+  "aboutMenuItem": "{appName} 정보",
+  "@aboutMenuItem": {
+    "placeholders": {
+      "appName": {
+        "type": "String"
+      }
+    }
+  },
+  "themeMenuTooltip": "테마",
+  "themeSystem": "시스템 설정 따르기",
+  "themeLight": "라이트",
+  "themeDark": "다크",
+  "languageMenuTooltip": "언어",
+  "languageSystemShort": "시스템",
+  "fontScaleMenuTooltip": "글자 크기",
+  "fontScaleSmall": "작게",
+  "fontScaleNormal": "보통",
+  "fontScaleLarge": "크게"
 }
