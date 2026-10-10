@@ -2,7 +2,7 @@
 
 ### macOS
 
-`DaylightCommander-macos.dmg`를 열고 `Daylight Commander.app`을 Applications
+`DaylightCommander-<버전>-macos.dmg`를 열고 `Daylight Commander.app`을 Applications
 폴더로 옮긴 뒤 실행하세요.
 
 **"손상되었습니다" 또는 "확인되지 않은 개발자" 경고가 뜨는 경우** — Apple
@@ -18,13 +18,13 @@ xattr -cr "/Applications/Daylight Commander.app"
 
 ### Windows
 
-`DaylightCommander-Setup.exe`를 실행해 설치하세요. 서명되지 않은 설치
+`DaylightCommander-<버전>-Setup.exe`를 실행해 설치하세요. 서명되지 않은 설치
 파일이라 SmartScreen 경고가 뜰 수 있습니다 — "추가 정보" → "실행"을
 클릭하면 됩니다. 설치 후 시작 메뉴에 바로가기가 생기고, "앱 및 기능"에서
 제거할 수 있습니다.
 
 ### Linux
 
-`DaylightCommander-linux.tar.gz` 압축을 풀고 안의 실행 파일을 실행하세요.
+`DaylightCommander-<버전>-linux.tar.gz` 압축을 풀고 안의 실행 파일을 실행하세요.
 
 ---
