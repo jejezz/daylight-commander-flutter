@@ -101,6 +101,11 @@ dependencies:
   # 표시하기 위함 (이미 다른 패키지의 전이 의존성으로 들어와 있던 버전)
   package_info_plus: ^9.0.1
   url_launcher: ^6.3.3
+  app_updater:
+    git:
+      url: https://github.com/jejezz/application-release-templates
+      ref: updater-v0.1.0
+      path: updater
 
 dev_dependencies:
   flutter_test:

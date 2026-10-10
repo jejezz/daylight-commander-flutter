@@ -12,9 +12,12 @@ import 'app_identity.dart';
 import 'application/usecases/drop_promise_cache.dart';
 import 'l10n/app_localizations.dart';
 import 'presentation/home/home_screen.dart';
+import 'presentation/home/operation_controller.dart';
 import 'presentation/theme/app_theme.dart';
 import 'presentation/theme/font_scale_provider.dart';
 import 'settings/app_settings.dart';
+import 'update/update_scope.dart';
+import 'update/update_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -38,14 +41,30 @@ Future<void> main() async {
   const DropPromiseCache().clear();
 
   final settings = await AppSettings.load();
-  runApp(ProviderScope(child: DaylightCommanderApp(settings: settings)));
+
+  // 업데이트 서비스가 "복사·이동 중인가"를 알아야 해서 컨테이너를 직접 만든다.
+  final container = ProviderContainer();
+  // 데스크톱이 아니거나 UPDATE_SERVER 가 비어 있으면 null — 업데이트 확인 없음. 파일 작업 중에는
+  // 알리지도 설치하지도 않는다 (설치는 앱을 종료시킨다).
+  final updates = await UpdateService.create(isBusy: () => isFileOperationRunning(container));
+  // UpdateScope 는 MaterialApp 위 — 정보 창이 이것을 읽어 "업데이트 확인" 버튼을 붙인다.
+  runApp(UpdateScope(
+    service: updates,
+    child: UncontrolledProviderScope(
+      container: container,
+      child: DaylightCommanderApp(settings: settings, updates: updates),
+    ),
+  ));
 }
 
 class DaylightCommanderApp extends ConsumerStatefulWidget {
-  const DaylightCommanderApp({super.key, required this.settings});
+  const DaylightCommanderApp({super.key, required this.settings, this.updates});
 
   /// 테마 모드·언어 (theme_mode / app_locale).
   final AppSettings settings;
+
+  /// 시작할 때 새 버전을 확인한다. null 이면 업데이트 확인을 쓰지 않는다.
+  final UpdateService? updates;
 
   @override
   ConsumerState<DaylightCommanderApp> createState() => _DaylightCommanderAppState();
@@ -62,6 +81,7 @@ class _DaylightCommanderAppState extends ConsumerState<DaylightCommanderApp> wit
     WidgetsBinding.instance.addObserver(this);
     widget.settings.addListener(_syncWindowBrightness);
     _syncWindowBrightness();
+    widget.updates?.startAutomaticCheck(_navigatorKey);
   }
 
   @override
@@ -91,6 +111,11 @@ class _DaylightCommanderAppState extends ConsumerState<DaylightCommanderApp> wit
     if (context != null) showDaylightAbout(context);
   }
 
+  void _checkForUpdates() {
+    final context = _navigatorKey.currentContext;
+    if (context != null) widget.updates?.checkManually(context);
+  }
+
   @override
   Widget build(BuildContext context) {
     final fontScale = ref.watch(fontScaleProvider);
@@ -111,6 +136,7 @@ class _DaylightCommanderAppState extends ConsumerState<DaylightCommanderApp> wit
           localeResolutionCallback: AppSettings.resolveLocale,
           builder: (context, child) => AppMenuBar(
             onAbout: _showAbout,
+            onCheckForUpdates: widget.updates == null ? null : _checkForUpdates,
             child: MediaQuery(
               data: MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(fontScale)),
               child: child!,

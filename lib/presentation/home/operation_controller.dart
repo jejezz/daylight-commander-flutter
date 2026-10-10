@@ -36,6 +36,13 @@ class OperationState {
 /// ARCHITECTURE.md 5장의 정책대로 큐는 순차 실행(동시 1개)만 지원한다.
 /// 로컬-로컬은 [FileOperationService]로, FTP가 관여하면 [performTransfer]가
 /// 업로드/다운로드/세션간 전송으로 라우팅한다 (transfer_router.dart).
+/// 복사·이동·삭제가 진행 중인가 (오류로 멈춘 채 배너에 남아 있는 것은 진행 중이 아니다).
+/// 업데이트 확인이 이 동안에는 알리지도 설치하지도 않는다 — 설치는 앱을 종료시킨다.
+bool isFileOperationRunning(ProviderContainer container) {
+  final operation = container.read(operationControllerProvider);
+  return operation != null && operation.error == null;
+}
+
 class OperationController extends StateNotifier<OperationState?> {
   OperationController() : super(null);
 
