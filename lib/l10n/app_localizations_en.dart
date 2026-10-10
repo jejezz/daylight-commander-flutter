@@ -447,26 +447,12 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get aboutMenuTooltip => 'About';
-
-  @override
-  String get aboutDialogTitle => 'About Daylight Commander';
-
-  @override
   String get aboutTagline =>
       'A free, dual-pane desktop file manager inspired by Total Commander and Midnight Commander';
 
   @override
-  String aboutVersionLabel(String version) {
-    return 'Version $version';
-  }
-
-  @override
   String get aboutDescription =>
       'Built for Windows, macOS, and Linux, it aims to be a classic file manager with fast keyboard-driven navigation, SMB/FTP/SFTP/WebDAV network drives, built-in viewers, and folder comparison and sync.';
-
-  @override
-  String get aboutFeaturesTitle => 'Key Features';
 
   @override
   String get aboutFeatureNavigation =>
@@ -493,15 +479,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'Korean and English localization, light and dark themes';
 
   @override
-  String get aboutTechStackLabel => 'Built with Flutter (Dart)';
-
-  @override
-  String get aboutLicenseLabel => 'License: MIT';
-
-  @override
-  String get aboutGithubButton => 'Open GitHub Repository';
-
-  @override
   String compressFailed(String error) {
     return 'Compression failed: $error';
   }
@@ -509,5 +486,27 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String extractFailed(String error) {
     return 'Extraction failed: $error';
+  }
+
+  @override
+  String get aboutTooltip => 'About';
+
+  @override
+  String aboutVersion(String version, String build) {
+    return 'Version $version (build $build)';
+  }
+
+  @override
+  String get aboutOpenSourceLicenses => 'Open Source Licenses';
+
+  @override
+  String get aboutRepository => 'GitHub';
+
+  @override
+  String get commonClose => 'Close';
+
+  @override
+  String aboutMenuItem(String appName) {
+    return 'About $appName';
   }
 }

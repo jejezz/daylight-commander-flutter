@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../about/daylight_about.dart';
 import '../../l10n/app_localizations.dart';
 import '../theme/app_theme.dart';
 import '../theme/font_scale_provider.dart';
 import '../theme/locale_provider.dart';
 import '../theme/theme_mode_provider.dart';
-import '../widgets/about_dialog.dart';
 import '../widgets/operation_banner.dart';
 import '../widgets/tool_icon.dart';
 import 'folder_comparison_provider.dart';
@@ -172,8 +172,8 @@ class HomeScreen extends ConsumerWidget {
           ),
           IconButton(
             icon: const ToolIcon('icons8-information.svg'),
-            tooltip: l10n.aboutMenuTooltip,
-            onPressed: () => showAboutInfoDialog(context),
+            tooltip: l10n.aboutTooltip,
+            onPressed: () => showDaylightAbout(context),
           ),
           const SizedBox(width: 8),
         ],
