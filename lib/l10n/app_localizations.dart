@@ -476,65 +476,11 @@ abstract class AppLocalizations {
   /// **'폴더 비교 (좌우 패널)'**
   String get compareModeOnTooltip;
 
-  /// No description provided for @themeSystemTooltip.
-  ///
-  /// In ko, this message translates to:
-  /// **'테마: 시스템 설정 따름 (누르면 라이트로 고정)'**
-  String get themeSystemTooltip;
-
-  /// No description provided for @themeLightTooltip.
-  ///
-  /// In ko, this message translates to:
-  /// **'테마: 라이트로 고정 (누르면 다크로 고정)'**
-  String get themeLightTooltip;
-
-  /// No description provided for @themeDarkTooltip.
-  ///
-  /// In ko, this message translates to:
-  /// **'테마: 다크로 고정 (누르면 시스템 설정 따름)'**
-  String get themeDarkTooltip;
-
-  /// No description provided for @fontScaleNormalTooltip.
-  ///
-  /// In ko, this message translates to:
-  /// **'글자 크기: 보통 (누르면 크게)'**
-  String get fontScaleNormalTooltip;
-
-  /// No description provided for @fontScaleLargeTooltip.
-  ///
-  /// In ko, this message translates to:
-  /// **'글자 크기: 크게 (누르면 작게)'**
-  String get fontScaleLargeTooltip;
-
-  /// No description provided for @fontScaleSmallTooltip.
-  ///
-  /// In ko, this message translates to:
-  /// **'글자 크기: 작게 (누르면 보통)'**
-  String get fontScaleSmallTooltip;
-
-  /// No description provided for @languageTooltip.
-  ///
-  /// In ko, this message translates to:
-  /// **'언어: {current} (누르면 {next}로 전환)'**
-  String languageTooltip(String current, String next);
-
   /// No description provided for @languageSystem.
   ///
   /// In ko, this message translates to:
-  /// **'시스템 설정'**
+  /// **'시스템 설정 따르기 / System'**
   String get languageSystem;
-
-  /// No description provided for @languageKorean.
-  ///
-  /// In ko, this message translates to:
-  /// **'한국어'**
-  String get languageKorean;
-
-  /// No description provided for @languageEnglish.
-  ///
-  /// In ko, this message translates to:
-  /// **'English'**
-  String get languageEnglish;
 
   /// No description provided for @syncDiffToRight.
   ///
@@ -985,6 +931,66 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'{appName} 정보'**
   String aboutMenuItem(String appName);
+
+  /// No description provided for @themeMenuTooltip.
+  ///
+  /// In ko, this message translates to:
+  /// **'테마'**
+  String get themeMenuTooltip;
+
+  /// No description provided for @themeSystem.
+  ///
+  /// In ko, this message translates to:
+  /// **'시스템 설정 따르기'**
+  String get themeSystem;
+
+  /// No description provided for @themeLight.
+  ///
+  /// In ko, this message translates to:
+  /// **'라이트'**
+  String get themeLight;
+
+  /// No description provided for @themeDark.
+  ///
+  /// In ko, this message translates to:
+  /// **'다크'**
+  String get themeDark;
+
+  /// No description provided for @languageMenuTooltip.
+  ///
+  /// In ko, this message translates to:
+  /// **'언어'**
+  String get languageMenuTooltip;
+
+  /// No description provided for @languageSystemShort.
+  ///
+  /// In ko, this message translates to:
+  /// **'시스템'**
+  String get languageSystemShort;
+
+  /// No description provided for @fontScaleMenuTooltip.
+  ///
+  /// In ko, this message translates to:
+  /// **'글자 크기'**
+  String get fontScaleMenuTooltip;
+
+  /// No description provided for @fontScaleSmall.
+  ///
+  /// In ko, this message translates to:
+  /// **'작게'**
+  String get fontScaleSmall;
+
+  /// No description provided for @fontScaleNormal.
+  ///
+  /// In ko, this message translates to:
+  /// **'보통'**
+  String get fontScaleNormal;
+
+  /// No description provided for @fontScaleLarge.
+  ///
+  /// In ko, this message translates to:
+  /// **'크게'**
+  String get fontScaleLarge;
 }
 
 class _AppLocalizationsDelegate

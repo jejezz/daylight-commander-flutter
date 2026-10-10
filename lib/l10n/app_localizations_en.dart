@@ -211,37 +211,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get compareModeOnTooltip => 'Compare Folders (left/right panes)';
 
   @override
-  String get themeSystemTooltip =>
-      'Theme: Following system (tap to switch to Light)';
-
-  @override
-  String get themeLightTooltip => 'Theme: Light (tap to switch to Dark)';
-
-  @override
-  String get themeDarkTooltip => 'Theme: Dark (tap to follow system)';
-
-  @override
-  String get fontScaleNormalTooltip => 'Font size: Normal (tap for Large)';
-
-  @override
-  String get fontScaleLargeTooltip => 'Font size: Large (tap for Small)';
-
-  @override
-  String get fontScaleSmallTooltip => 'Font size: Small (tap for Normal)';
-
-  @override
-  String languageTooltip(String current, String next) {
-    return 'Language: $current (tap to switch to $next)';
-  }
-
-  @override
-  String get languageSystem => 'System';
-
-  @override
-  String get languageKorean => '한국어';
-
-  @override
-  String get languageEnglish => 'English';
+  String get languageSystem => 'System / 시스템 설정 따르기';
 
   @override
   String syncDiffToRight(int count) {
@@ -509,4 +479,34 @@ class AppLocalizationsEn extends AppLocalizations {
   String aboutMenuItem(String appName) {
     return 'About $appName';
   }
+
+  @override
+  String get themeMenuTooltip => 'Theme';
+
+  @override
+  String get themeSystem => 'Follow System';
+
+  @override
+  String get themeLight => 'Light';
+
+  @override
+  String get themeDark => 'Dark';
+
+  @override
+  String get languageMenuTooltip => 'Language';
+
+  @override
+  String get languageSystemShort => 'System';
+
+  @override
+  String get fontScaleMenuTooltip => 'Font size';
+
+  @override
+  String get fontScaleSmall => 'Small';
+
+  @override
+  String get fontScaleNormal => 'Normal';
+
+  @override
+  String get fontScaleLarge => 'Large';
 }

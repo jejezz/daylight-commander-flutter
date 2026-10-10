@@ -207,36 +207,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get compareModeOnTooltip => '폴더 비교 (좌우 패널)';
 
   @override
-  String get themeSystemTooltip => '테마: 시스템 설정 따름 (누르면 라이트로 고정)';
-
-  @override
-  String get themeLightTooltip => '테마: 라이트로 고정 (누르면 다크로 고정)';
-
-  @override
-  String get themeDarkTooltip => '테마: 다크로 고정 (누르면 시스템 설정 따름)';
-
-  @override
-  String get fontScaleNormalTooltip => '글자 크기: 보통 (누르면 크게)';
-
-  @override
-  String get fontScaleLargeTooltip => '글자 크기: 크게 (누르면 작게)';
-
-  @override
-  String get fontScaleSmallTooltip => '글자 크기: 작게 (누르면 보통)';
-
-  @override
-  String languageTooltip(String current, String next) {
-    return '언어: $current (누르면 $next로 전환)';
-  }
-
-  @override
-  String get languageSystem => '시스템 설정';
-
-  @override
-  String get languageKorean => '한국어';
-
-  @override
-  String get languageEnglish => 'English';
+  String get languageSystem => '시스템 설정 따르기 / System';
 
   @override
   String syncDiffToRight(int count) {
@@ -495,4 +466,34 @@ class AppLocalizationsKo extends AppLocalizations {
   String aboutMenuItem(String appName) {
     return '$appName 정보';
   }
+
+  @override
+  String get themeMenuTooltip => '테마';
+
+  @override
+  String get themeSystem => '시스템 설정 따르기';
+
+  @override
+  String get themeLight => '라이트';
+
+  @override
+  String get themeDark => '다크';
+
+  @override
+  String get languageMenuTooltip => '언어';
+
+  @override
+  String get languageSystemShort => '시스템';
+
+  @override
+  String get fontScaleMenuTooltip => '글자 크기';
+
+  @override
+  String get fontScaleSmall => '작게';
+
+  @override
+  String get fontScaleNormal => '보통';
+
+  @override
+  String get fontScaleLarge => '크게';
 }

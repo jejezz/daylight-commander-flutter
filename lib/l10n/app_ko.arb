@@ -89,22 +89,7 @@
   "openTerminalTooltip": "터미널 열기 (활성 패널 경로)",
   "compareModeOffTooltip": "폴더 비교 끄기",
   "compareModeOnTooltip": "폴더 비교 (좌우 패널)",
-  "themeSystemTooltip": "테마: 시스템 설정 따름 (누르면 라이트로 고정)",
-  "themeLightTooltip": "테마: 라이트로 고정 (누르면 다크로 고정)",
-  "themeDarkTooltip": "테마: 다크로 고정 (누르면 시스템 설정 따름)",
-  "fontScaleNormalTooltip": "글자 크기: 보통 (누르면 크게)",
-  "fontScaleLargeTooltip": "글자 크기: 크게 (누르면 작게)",
-  "fontScaleSmallTooltip": "글자 크기: 작게 (누르면 보통)",
-  "languageTooltip": "언어: {current} (누르면 {next}로 전환)",
-  "@languageTooltip": {
-    "placeholders": {
-      "current": { "type": "String" },
-      "next": { "type": "String" }
-    }
-  },
-  "languageSystem": "시스템 설정",
-  "languageKorean": "한국어",
-  "languageEnglish": "English",
+  "languageSystem": "시스템 설정 따르기 / System",
   "syncDiffToRight": "차이 {count}개 → 복사",
   "@syncDiffToRight": {
     "placeholders": {
@@ -272,5 +257,15 @@
         "type": "String"
       }
     }
-  }
+  },
+  "themeMenuTooltip": "테마",
+  "themeSystem": "시스템 설정 따르기",
+  "themeLight": "라이트",
+  "themeDark": "다크",
+  "languageMenuTooltip": "언어",
+  "languageSystemShort": "시스템",
+  "fontScaleMenuTooltip": "글자 크기",
+  "fontScaleSmall": "작게",
+  "fontScaleNormal": "보통",
+  "fontScaleLarge": "크게"
 }

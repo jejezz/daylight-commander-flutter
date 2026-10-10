@@ -3,9 +3,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 const _prefsKey = 'font_scale';
 
-/// 앱바의 글자 크기 토글 버튼이 순환시키는 순서: 보통(1.0) → 크게(1.15) →
-/// 작게(0.9) → (다시) 보통. [ThemeModeController]와 같은 패턴.
-const _cycleOrder = [1.0, 1.15, 0.9];
+/// 고를 수 있는 글자 크기 배율: 작게 · 보통 · 크게. 앱 바의 체크 팝업 메뉴가 쓴다.
+const fontScaleChoices = [0.9, 1.0, 1.15];
 
 class FontScaleController extends StateNotifier<double> {
   FontScaleController() : super(1.0) {
@@ -15,7 +14,7 @@ class FontScaleController extends StateNotifier<double> {
   Future<void> _load() async {
     final prefs = await SharedPreferences.getInstance();
     final saved = prefs.getDouble(_prefsKey);
-    if (saved != null && _cycleOrder.contains(saved)) {
+    if (saved != null && fontScaleChoices.contains(saved)) {
       state = saved;
     }
   }
@@ -25,9 +24,9 @@ class FontScaleController extends StateNotifier<double> {
     await prefs.setDouble(_prefsKey, state);
   }
 
-  Future<void> cycle() async {
-    final next = _cycleOrder[(_cycleOrder.indexOf(state) + 1) % _cycleOrder.length];
-    state = next;
+  Future<void> setScale(double scale) async {
+    if (!fontScaleChoices.contains(scale)) return;
+    state = scale;
     await _persist();
   }
 }
