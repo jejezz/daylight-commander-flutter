@@ -118,7 +118,7 @@ class _ArchiveViewerScreenState extends State<ArchiveViewerScreen> {
         _currentPath.isEmpty ? widget.archiveName : '${widget.archiveName} / ${_currentPath.join('/')}';
 
     return Scaffold(
-      appBar: AppBar(title: Text(title), toolbarHeight: 44),
+      appBar: AppBar(title: Text(title)),
       body: FutureBuilder<List<ArchiveEntry>>(
         future: _entriesFuture,
         builder: (context, snapshot) {

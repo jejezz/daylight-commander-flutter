@@ -115,7 +115,6 @@ class HomeScreen extends ConsumerWidget {
             const Text('Daylight Commander'),
           ],
         ),
-        toolbarHeight: 44,
         actions: [
           IconButton(
             icon: const ToolIcon('icons8-terminal.svg'),
