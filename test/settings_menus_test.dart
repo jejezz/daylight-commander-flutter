@@ -48,14 +48,14 @@ void main() {
 
   testWidgets('언어 메뉴: 영어를 고르면 바뀌고 저장된다, 시스템을 고르면 저장값이 지워진다', (tester) async {
     final settings = await pump(tester, {});
-    await tester.tap(find.byIcon(Icons.translate_rounded));
+    await tester.tap(find.byIcon(Icons.language_rounded));
     await tester.pumpAndSettle();
     await tester.tap(find.widgetWithText(CheckedPopupMenuItem<String>, 'English'));
     await tester.pumpAndSettle();
     expect(settings.locale, const Locale('en'));
     expect((await SharedPreferences.getInstance()).getString('app_locale'), 'en');
 
-    await tester.tap(find.byIcon(Icons.translate_rounded));
+    await tester.tap(find.byIcon(Icons.language_rounded));
     await tester.pumpAndSettle();
     await tester.tap(find.byWidgetPredicate((w) => w is CheckedPopupMenuItem<String> && w.value == ''));
     await tester.pumpAndSettle();
