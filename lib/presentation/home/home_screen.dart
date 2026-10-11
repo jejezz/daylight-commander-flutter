@@ -13,6 +13,7 @@ import 'folder_comparison_provider.dart';
 import 'pane_actions.dart';
 import 'pane_controller.dart';
 import 'pane_view.dart';
+import '../../window/focus_tint.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -104,6 +105,7 @@ class HomeScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
+        flexibleSpace: const FocusTint(),
         title: Row(
           children: [
             Icon(
