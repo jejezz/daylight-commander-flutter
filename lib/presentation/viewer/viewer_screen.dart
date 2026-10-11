@@ -66,7 +66,6 @@ class _ViewerScreenState extends State<ViewerScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.name),
-        toolbarHeight: 44,
         actions: [
           IconButton(
             icon: Icon(_showHex ? Icons.description_outlined : Icons.memory),
