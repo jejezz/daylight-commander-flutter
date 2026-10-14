@@ -219,6 +219,21 @@ RegExp _globToRegExp(String pattern) {
   return RegExp(buffer.toString(), caseSensitive: false);
 }
 
+bool _sameEntries(List<FileEntry> a, List<FileEntry> b) {
+  if (a.length != b.length) return false;
+  for (var i = 0; i < a.length; i++) {
+    final x = a[i], y = b[i];
+    if (x.location != y.location ||
+        x.isDirectory != y.isDirectory ||
+        x.sizeBytes != y.sizeBytes ||
+        x.modifiedAt != y.modifiedAt ||
+        x.isHidden != y.isHidden) {
+      return false;
+    }
+  }
+  return true;
+}
+
 class PaneController extends StateNotifier<PaneState> {
   PaneController(String initialPath, this._ftpSessions, this._sftpSessions, this._webdavSessions)
       : super(PaneState(currentPath: initialPath)) {
@@ -317,9 +332,9 @@ class PaneController extends StateNotifier<PaneState> {
     );
   }
 
-  Future<void> refresh() async {
-    final path = state.currentPath;
-    final entries = await _listEntries(path);
+  Future<void> refresh() async => _applyEntries(await _listEntries(state.currentPath));
+
+  void _applyEntries(List<FileEntry> entries) {
     final validPaths = entries.map((e) => e.location).toSet();
     final sorted = _sorted(entries, state.sortField, state.sortAscending);
     final visibleCount =
@@ -332,6 +347,27 @@ class PaneController extends StateNotifier<PaneState> {
       // 있어 안전하게 clamp하거나, 목록이 비면 아예 커서를 없앤다.
       cursorIndex: visibleCount == 0 ? null : cursor?.clamp(0, visibleCount - 1),
     );
+  }
+
+  bool _quietRefreshing = false;
+
+  /// 자동 새로 고침: 로컬·네트워크 드라이브 폴더만 조용히 다시 읽는다 (FTP/SFTP/WebDAV는 하지 않는다).
+  /// 로딩 표시나 오류 없이, 목록이 달라졌을 때만 상태를 바꾼다. 읽는 동안 폴더를 옮겼으면 결과를 버린다.
+  Future<void> refreshQuietly() async {
+    final path = state.currentPath;
+    if (isRemotePath(path) || state.loading || _quietRefreshing) return;
+    _quietRefreshing = true;
+    try {
+      final entries = await _listEntries(path);
+      if (!mounted || state.loading || state.currentPath != path) return;
+      final sorted = _sorted(entries, state.sortField, state.sortAscending);
+      if (_sameEntries(sorted, state.entries)) return;
+      _applyEntries(sorted);
+    } catch (_) {
+      // 일시적인 오류는 다음 주기에 다시 시도한다.
+    } finally {
+      _quietRefreshing = false;
+    }
   }
 
   void openEntry(FileEntry entry) {
