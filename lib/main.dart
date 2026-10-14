@@ -11,6 +11,7 @@ import 'about/extra_licenses.dart';
 import 'app_identity.dart';
 import 'application/usecases/drop_promise_cache.dart';
 import 'l10n/app_localizations.dart';
+import 'presentation/home/folder_auto_refresh.dart';
 import 'presentation/home/home_screen.dart';
 import 'presentation/home/operation_controller.dart';
 import 'presentation/theme/app_theme.dart';
@@ -142,7 +143,7 @@ class _DaylightCommanderAppState extends ConsumerState<DaylightCommanderApp> wit
               child: child!,
             ),
           ),
-          home: const HomeScreen(),
+          home: const FolderAutoRefresh(child: HomeScreen()),
         ),
       ),
     );

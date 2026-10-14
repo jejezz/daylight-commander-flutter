@@ -278,4 +278,36 @@ void main() {
 
     expect(controller.state.cursorIndex, isNull);
   });
+
+  test('refreshQuietly: 바뀐 내용을 반영하고, 선택은 유지하며, 로딩 표시는 하지 않는다', () async {
+    final controller = _newController(tempDir.path);
+    await _waitLoaded(controller);
+    controller.moveCursor(1); // zz_folder
+    controller.moveCursor(1); // a.txt
+    controller.toggleCursorSelection();
+    final selected = controller.state.selection;
+    expect(selected, hasLength(1));
+
+    var sawLoading = false;
+    controller.addListener((s) => sawLoading |= s.loading);
+
+    File(p.join(tempDir.path, 'c.txt')).writeAsStringSync('new');
+    await controller.refreshQuietly();
+
+    expect(controller.state.visibleEntries.map((e) => e.name), contains('c.txt'));
+    expect(controller.state.selection, selected);
+    expect(sawLoading, isFalse);
+  });
+
+  test('refreshQuietly: 읽는 동안 폴더를 옮기면 결과를 버린다', () async {
+    final controller = _newController(tempDir.path);
+    await _waitLoaded(controller);
+
+    final quiet = controller.refreshQuietly();
+    await controller.navigateTo(p.join(tempDir.path, 'zz_folder'));
+    await quiet;
+
+    expect(controller.state.currentPath, p.join(tempDir.path, 'zz_folder'));
+    expect(controller.state.entries, isEmpty);
+  });
 }
