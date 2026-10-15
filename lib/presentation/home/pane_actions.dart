@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_drag_out/flutter_drag_out.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
@@ -20,6 +21,7 @@ import '../../application/usecases/clipboard_files.dart';
 import '../../application/usecases/open_terminal.dart';
 import '../../application/usecases/open_with_default_app.dart';
 import '../../application/usecases/reveal_in_file_manager.dart';
+import '../../application/usecases/show_os_context_menu.dart';
 import '../../application/webdav_session_manager.dart';
 import '../../application/webdav_transfer_service.dart';
 import '../../domain/entities/file_conflict.dart';
@@ -47,6 +49,7 @@ const _connectNetworkDrive = ConnectNetworkDrive();
 const _openTerminal = OpenTerminal();
 const _openWithDefaultApp = OpenWithDefaultApp();
 const _revealInFileManager = RevealInFileManager();
+const _showOsContextMenu = ShowOsContextMenu();
 const _clipboardFiles = ClipboardFiles();
 const _dropPromiseCache = DropPromiseCache();
 
@@ -827,6 +830,7 @@ Future<void> showRowContextMenu(
   if (targets.isEmpty || !context.mounted) return;
 
   final allLocal = targets.every((e) => e.location.scheme == 'file');
+
   final singleTarget = targets.length == 1 ? targets.first : null;
   final canView = singleTarget != null && !singleTarget.isDirectory;
   final canOpen = singleTarget != null && singleTarget.isDirectory;
@@ -842,6 +846,16 @@ Future<void> showRowContextMenu(
     Offset.zero & overlay.size,
   );
   final l10n = AppLocalizations.of(context);
+
+  // Shift+우클릭: 앱 메뉴 대신 OS 기본 컨텍스트 메뉴. 띄우지 못하면(원격 항목,
+  // 미지원 플랫폼 등) 아래 앱 메뉴로 넘어간다.
+  if (allLocal && HardwareKeyboard.instance.isShiftPressed) {
+    final shown = await _showOsContextMenu(
+      targets.map((e) => e.location.toFilePath()).toList(),
+    );
+    if (shown) return;
+  }
+  if (!context.mounted) return;
 
   final action = await showMenu<String>(
     context: context,

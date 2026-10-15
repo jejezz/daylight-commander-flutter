@@ -2,7 +2,24 @@
 
 #include <optional>
 
+#include <flutter/standard_method_codec.h>
+
 #include "flutter/generated_plugin_registrant.h"
+#include "shell_context_menu.h"
+
+namespace {
+
+std::wstring Utf8ToWide(const std::string& s) {
+  if (s.empty()) return std::wstring();
+  const int n = MultiByteToWideChar(CP_UTF8, 0, s.data(),
+                                    static_cast<int>(s.size()), nullptr, 0);
+  std::wstring out(n, L'\0');
+  MultiByteToWideChar(CP_UTF8, 0, s.data(), static_cast<int>(s.size()),
+                      out.data(), n);
+  return out;
+}
+
+}  // namespace
 
 FlutterWindow::FlutterWindow(const flutter::DartProject& project)
     : project_(project) {}
@@ -27,6 +44,34 @@ bool FlutterWindow::OnCreate() {
   RegisterPlugins(flutter_controller_->engine());
   SetChildContent(flutter_controller_->view()->GetNativeWindow());
 
+  shell_menu_channel_ =
+      std::make_unique<flutter::MethodChannel<flutter::EncodableValue>>(
+          flutter_controller_->engine()->messenger(),
+          "art.zoomon.daylightcommander/shell_menu",
+          &flutter::StandardMethodCodec::GetInstance());
+  shell_menu_channel_->SetMethodCallHandler(
+      [this](const flutter::MethodCall<flutter::EncodableValue>& call,
+             std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>>
+                 result) {
+        if (call.method_name() != "show") {
+          result->NotImplemented();
+          return;
+        }
+        const auto* args = std::get_if<flutter::EncodableList>(call.arguments());
+        if (!args) {
+          result->Error("bad_args", "paths list expected");
+          return;
+        }
+        std::vector<std::wstring> paths;
+        for (const auto& v : *args) {
+          if (const auto* s = std::get_if<std::string>(&v)) {
+            paths.push_back(Utf8ToWide(*s));
+          }
+        }
+        result->Success(flutter::EncodableValue(
+            ShowShellContextMenu(GetHandle(), paths)));
+      });
+
   flutter_controller_->engine()->SetNextFrameCallback([&]() {
     this->Show();
   });
@@ -40,6 +85,7 @@ bool FlutterWindow::OnCreate() {
 }
 
 void FlutterWindow::OnDestroy() {
+  shell_menu_channel_ = nullptr;
   if (flutter_controller_) {
     flutter_controller_ = nullptr;
   }
@@ -52,6 +98,11 @@ FlutterWindow::MessageHandler(HWND hwnd, UINT const message,
                               WPARAM const wparam,
                               LPARAM const lparam) noexcept {
   // Give Flutter, including plugins, an opportunity to handle window messages.
+  LRESULT menu_result = 0;
+  if (HandleShellMenuMessage(hwnd, message, wparam, lparam, &menu_result)) {
+    return menu_result;
+  }
+
   if (flutter_controller_) {
     std::optional<LRESULT> result =
         flutter_controller_->HandleTopLevelWindowProc(hwnd, message, wparam,
