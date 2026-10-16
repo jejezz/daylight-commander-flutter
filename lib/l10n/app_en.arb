@@ -89,6 +89,15 @@
   "openTerminalTooltip": "Open Terminal (active pane's path)",
   "compareModeOffTooltip": "Turn off folder comparison",
   "compareModeOnTooltip": "Compare Folders (left/right panes)",
+  "swapPanesTooltip": "Swap left/right panes (Ctrl+U)",
+  "singlePaneTooltip": "Single-pane mode (Ctrl+\\)",
+  "dualPaneTooltip": "Dual-pane mode (Ctrl+\\)",
+  "dockedPaneTooltip": "Docked pane: {path}\nClick to switch to it, drop files to copy/move",
+  "@dockedPaneTooltip": {
+    "placeholders": {
+      "path": { "type": "String" }
+    }
+  },
   "languageSystem": "System / 시스템 설정 따르기",
   "syncDiffToRight": "{count} diff(s) → Copy",
   "@syncDiffToRight": {

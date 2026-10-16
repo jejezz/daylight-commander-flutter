@@ -207,6 +207,20 @@ class AppLocalizationsKo extends AppLocalizations {
   String get compareModeOnTooltip => '폴더 비교 (좌우 패널)';
 
   @override
+  String get swapPanesTooltip => '좌우 패널 교환 (Ctrl+U)';
+
+  @override
+  String get singlePaneTooltip => '1패널 모드 (Ctrl+\\)';
+
+  @override
+  String get dualPaneTooltip => '2패널 모드 (Ctrl+\\)';
+
+  @override
+  String dockedPaneTooltip(String path) {
+    return '도킹된 패널: $path\n클릭하면 이 패널로 전환, 파일을 놓으면 복사/이동';
+  }
+
+  @override
   String get languageSystem => '시스템 설정 따르기 / System';
 
   @override
