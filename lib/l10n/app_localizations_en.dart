@@ -211,6 +211,20 @@ class AppLocalizationsEn extends AppLocalizations {
   String get compareModeOnTooltip => 'Compare Folders (left/right panes)';
 
   @override
+  String get swapPanesTooltip => 'Swap left/right panes (Ctrl+U)';
+
+  @override
+  String get singlePaneTooltip => 'Single-pane mode (Ctrl+\\)';
+
+  @override
+  String get dualPaneTooltip => 'Dual-pane mode (Ctrl+\\)';
+
+  @override
+  String dockedPaneTooltip(String path) {
+    return 'Docked pane: $path\nClick to switch to it, drop files to copy/move';
+  }
+
+  @override
   String get languageSystem => 'System / 시스템 설정 따르기';
 
   @override

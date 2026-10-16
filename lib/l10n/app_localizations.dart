@@ -476,6 +476,30 @@ abstract class AppLocalizations {
   /// **'폴더 비교 (좌우 패널)'**
   String get compareModeOnTooltip;
 
+  /// No description provided for @swapPanesTooltip.
+  ///
+  /// In ko, this message translates to:
+  /// **'좌우 패널 교환 (Ctrl+U)'**
+  String get swapPanesTooltip;
+
+  /// No description provided for @singlePaneTooltip.
+  ///
+  /// In ko, this message translates to:
+  /// **'1패널 모드 (Ctrl+\\)'**
+  String get singlePaneTooltip;
+
+  /// No description provided for @dualPaneTooltip.
+  ///
+  /// In ko, this message translates to:
+  /// **'2패널 모드 (Ctrl+\\)'**
+  String get dualPaneTooltip;
+
+  /// No description provided for @dockedPaneTooltip.
+  ///
+  /// In ko, this message translates to:
+  /// **'도킹된 패널: {path}\n클릭하면 이 패널로 전환, 파일을 놓으면 복사/이동'**
+  String dockedPaneTooltip(String path);
+
   /// No description provided for @languageSystem.
   ///
   /// In ko, this message translates to:

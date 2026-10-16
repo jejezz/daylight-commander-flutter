@@ -9,9 +9,14 @@ import '../widgets/font_scale_menu.dart';
 import '../theme/app_theme.dart';
 import '../widgets/operation_banner.dart';
 import '../widgets/tool_icon.dart';
+import '../../domain/entities/drive_entry.dart';
+import 'drag_payload.dart';
+import 'drive_utils.dart';
+import 'drives_provider.dart';
 import 'folder_comparison_provider.dart';
 import 'pane_actions.dart';
 import 'pane_controller.dart';
+import 'pane_layout_provider.dart';
 import 'pane_view.dart';
 import '../../window/focus_tint.dart';
 
@@ -100,6 +105,7 @@ class HomeScreen extends ConsumerWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final activeSide = ref.watch(activePaneProvider);
     final compareMode = ref.watch(compareModeProvider);
+    final layout = ref.watch(paneLayoutProvider);
     final activeIsRemote = isRemotePath(ref.watch(paneControllerProvider(activeSide)).currentPath);
     final l10n = AppLocalizations.of(context);
 
@@ -128,6 +134,16 @@ class HomeScreen extends ConsumerWidget {
             tooltip: compareMode ? l10n.compareModeOffTooltip : l10n.compareModeOnTooltip,
             onPressed: () =>
                 ref.read(compareModeProvider.notifier).state = !compareMode,
+          ),
+          IconButton(
+            icon: const Icon(Icons.swap_horiz),
+            tooltip: l10n.swapPanesTooltip,
+            onPressed: () => ref.read(paneLayoutProvider.notifier).swap(),
+          ),
+          IconButton(
+            icon: Icon(layout.singlePane ? Icons.vertical_split : Icons.crop_portrait),
+            tooltip: layout.singlePane ? l10n.dualPaneTooltip : l10n.singlePaneTooltip,
+            onPressed: () => ref.read(paneLayoutProvider.notifier).toggleSinglePane(),
           ),
           const FontScaleMenuButton(),
           const ThemeMenuButton(),
@@ -164,6 +180,14 @@ class HomeScreen extends ConsumerWidget {
               renameSelected(context, ref, activeSide),
           const SingleActivator(LogicalKeyboardKey.tab): () =>
               ref.read(activePaneProvider.notifier).state = otherSide(activeSide),
+          const SingleActivator(LogicalKeyboardKey.keyU, control: true): () =>
+              ref.read(paneLayoutProvider.notifier).swap(),
+          const SingleActivator(LogicalKeyboardKey.keyU, meta: true): () =>
+              ref.read(paneLayoutProvider.notifier).swap(),
+          const SingleActivator(LogicalKeyboardKey.backslash, control: true): () =>
+              ref.read(paneLayoutProvider.notifier).toggleSinglePane(),
+          const SingleActivator(LogicalKeyboardKey.backslash, meta: true): () =>
+              ref.read(paneLayoutProvider.notifier).toggleSinglePane(),
           const SingleActivator(LogicalKeyboardKey.backquote, control: true): () =>
               openTerminalHere(ref, activeSide),
           const SingleActivator(LogicalKeyboardKey.backquote, meta: true): () =>
@@ -183,13 +207,7 @@ class HomeScreen extends ConsumerWidget {
             child: Column(
               children: [
                 Expanded(
-                  child: Row(
-                    children: const [
-                      Expanded(child: PaneView(side: PaneSide.left)),
-                      SizedBox(width: 10),
-                      Expanded(child: PaneView(side: PaneSide.right)),
-                    ],
-                  ),
+                  child: _PaneArea(layout: layout, activeSide: activeSide),
                 ),
                 if (compareMode) ...[
                   const SizedBox(height: 8),
@@ -199,6 +217,114 @@ class HomeScreen extends ConsumerWidget {
                 const SizedBox(height: 8),
                 _FunctionBar(activeSide: activeSide),
               ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// 패널 영역. 2패널 모드는 [PaneLayout.leftmost] 순서로 나란히 놓고, 1패널
+/// 모드는 활성 패널만 펼치고 나머지는 원래 놓일 가장자리에 [_DockedRail]로 도킹한다.
+class _PaneArea extends StatelessWidget {
+  const _PaneArea({required this.layout, required this.activeSide});
+
+  final PaneLayout layout;
+  final PaneSide activeSide;
+
+  @override
+  Widget build(BuildContext context) {
+    final first = layout.leftmost;
+    final second = otherSide(first);
+    if (!layout.singlePane) {
+      return Row(
+        children: [
+          Expanded(child: PaneView(key: ValueKey(first), side: first)),
+          const SizedBox(width: 10),
+          Expanded(child: PaneView(key: ValueKey(second), side: second)),
+        ],
+      );
+    }
+    final docked = otherSide(activeSide);
+    final dockedFirst = docked == first;
+    final rail = _DockedRail(side: docked);
+    return Row(
+      children: [
+        if (dockedFirst) ...[rail, const SizedBox(width: 10)],
+        Expanded(child: PaneView(key: ValueKey(activeSide), side: activeSide)),
+        if (!dockedFirst) ...[const SizedBox(width: 10), rail],
+      ],
+    );
+  }
+}
+
+/// 1패널 모드에서 숨겨진 패널을 가장자리에 접어 둔 좁은 막대. 누르면 그 패널이
+/// 펼쳐지고, 파일을 끌어다 놓으면 그 패널의 현재 폴더로 복사/이동한다.
+class _DockedRail extends ConsumerWidget {
+  const _DockedRail({required this.side});
+
+  final PaneSide side;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final path = ref.watch(paneControllerProvider(side).select((s) => s.currentPath));
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final accent = isDark ? AppColors.primary : AppColors.primaryDeep;
+    final l10n = AppLocalizations.of(context);
+    final name = path.split(RegExp(r'[\\/]')).where((p) => p.isNotEmpty).lastOrNull ?? path;
+
+    return DragTarget<DragPayload>(
+      onAcceptWithDetails: (details) {
+        final drives = ref.read(drivesProvider).valueOrNull ?? const <DriveEntry>[];
+        final payload = details.data;
+        final srcPath = locationToPathString(payload.entries.first.location);
+        transferEntries(
+          context,
+          ref,
+          fromSide: payload.fromSide,
+          entries: payload.entries,
+          destinationDir: path,
+          isMove: isSameDrive(srcPath, path, drives),
+        );
+      },
+      builder: (context, candidate, rejected) => Tooltip(
+        message: l10n.dockedPaneTooltip(path),
+        child: Material(
+          color: candidate.isNotEmpty
+              ? accent.withValues(alpha: 0.18)
+              : (isDark ? AppColors.surface : AppColors.surfaceLight),
+          borderRadius: BorderRadius.circular(AppRadius.tile),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: () => ref.read(activePaneProvider.notifier).state = side,
+            child: Container(
+              width: 36,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(AppRadius.tile),
+                border: Border.all(
+                  color: candidate.isNotEmpty
+                      ? accent
+                      : (isDark ? AppColors.stroke : AppColors.strokeLight),
+                ),
+              ),
+              child: Column(
+                children: [
+                  const SizedBox(height: 10),
+                  Icon(Icons.folder_open, size: 18, color: accent),
+                  const SizedBox(height: 8),
+                  Expanded(
+                    child: RotatedBox(
+                      quarterTurns: 1,
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(name, maxLines: 1, overflow: TextOverflow.ellipsis),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
