@@ -25,12 +25,24 @@ void closeDirectoryTreePopup() {
 /// 팝업을 띄운다. 트리에서 폴더를 누르면 그 패널이 이동하고 팝업은 유지되며,
 /// 팝업 바깥(패널 등)을 누르면 팝업이 닫힌다 — 그 클릭은 아래 위젯에도 그대로
 /// 전달된다(barrier가 translucent라서).
-void showDirectoryTreePopup(BuildContext anchorContext, PaneSide side) {
+///
+/// 이미 열려 있으면 닫는다(토글). 같은 버튼을 다시 누르면 닫히고, 다른 패널의 버튼을
+/// 누르면 그 패널용으로 다시 열린다.
+void toggleDirectoryTreePopup(BuildContext anchorContext, PaneSide side) {
+  final reopen = !isDirectoryTreePopupOpen || _treeSide != side;
   closeDirectoryTreePopup();
+  if (reopen) _showDirectoryTreePopup(anchorContext, side);
+}
+
+PaneSide? _treeSide;
+
+void _showDirectoryTreePopup(BuildContext anchorContext, PaneSide side) {
+  _treeSide = side;
   final overlay = Overlay.of(anchorContext);
   final button = anchorContext.findRenderObject() as RenderBox;
   final overlayBox = overlay.context.findRenderObject() as RenderBox;
   final anchor = button.localToGlobal(Offset.zero, ancestor: overlayBox);
+  final buttonRect = button.localToGlobal(Offset.zero) & button.size;
   final screen = overlayBox.size;
 
   const width = 300.0;
@@ -42,7 +54,10 @@ void showDirectoryTreePopup(BuildContext anchorContext, PaneSide side) {
     builder: (_) => Positioned.fill(
       child: Listener(
         behavior: HitTestBehavior.translucent,
-        onPointerDown: (_) => closeDirectoryTreePopup(),
+        // 트리 버튼 위의 클릭은 버튼(토글)이 처리하게 둔다.
+        onPointerDown: (e) {
+          if (!buttonRect.contains(e.position)) closeDirectoryTreePopup();
+        },
       ),
     ),
   );

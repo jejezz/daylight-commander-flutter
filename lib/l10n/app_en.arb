@@ -98,6 +98,10 @@
       "path": { "type": "String" }
     }
   },
+  "windowDockTooltip": "Dock window",
+  "windowDockLeft": "Dock to left edge",
+  "windowDockRight": "Dock to right edge",
+  "windowUndock": "Undock",
   "languageSystem": "System / 시스템 설정 따르기",
   "syncDiffToRight": "{count} diff(s) → Copy",
   "@syncDiffToRight": {

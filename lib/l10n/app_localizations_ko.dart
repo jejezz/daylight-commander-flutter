@@ -221,6 +221,18 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
+  String get windowDockTooltip => '창 도킹';
+
+  @override
+  String get windowDockLeft => '화면 왼쪽에 도킹';
+
+  @override
+  String get windowDockRight => '화면 오른쪽에 도킹';
+
+  @override
+  String get windowUndock => '도킹 해제';
+
+  @override
   String get languageSystem => '시스템 설정 따르기 / System';
 
   @override

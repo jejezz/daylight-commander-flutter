@@ -500,6 +500,30 @@ abstract class AppLocalizations {
   /// **'도킹된 패널: {path}\n클릭하면 이 패널로 전환, 파일을 놓으면 복사/이동'**
   String dockedPaneTooltip(String path);
 
+  /// No description provided for @windowDockTooltip.
+  ///
+  /// In ko, this message translates to:
+  /// **'창 도킹'**
+  String get windowDockTooltip;
+
+  /// No description provided for @windowDockLeft.
+  ///
+  /// In ko, this message translates to:
+  /// **'화면 왼쪽에 도킹'**
+  String get windowDockLeft;
+
+  /// No description provided for @windowDockRight.
+  ///
+  /// In ko, this message translates to:
+  /// **'화면 오른쪽에 도킹'**
+  String get windowDockRight;
+
+  /// No description provided for @windowUndock.
+  ///
+  /// In ko, this message translates to:
+  /// **'도킹 해제'**
+  String get windowUndock;
+
   /// No description provided for @languageSystem.
   ///
   /// In ko, this message translates to:
