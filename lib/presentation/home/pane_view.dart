@@ -495,7 +495,7 @@ class _PathBarState extends State<_PathBar> {
               visualDensity: VisualDensity.compact,
               icon: const Icon(Icons.account_tree_outlined, size: 16),
               tooltip: l10n.directoryTreeTooltip,
-              onPressed: () => showDirectoryTreePopup(buttonContext, widget.side),
+              onPressed: () => toggleDirectoryTreePopup(buttonContext, widget.side),
             ),
           ),
         ],

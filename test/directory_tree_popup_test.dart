@@ -37,7 +37,7 @@ void main() {
                 builder: (ctx) => IconButton(
                   key: const Key('open'),
                   icon: const Icon(Icons.account_tree_outlined),
-                  onPressed: () => showDirectoryTreePopup(ctx, PaneSide.right),
+                  onPressed: () => toggleDirectoryTreePopup(ctx, PaneSide.right),
                 ),
               ),
             ),

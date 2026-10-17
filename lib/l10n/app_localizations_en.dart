@@ -225,6 +225,18 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get windowDockTooltip => 'Dock window';
+
+  @override
+  String get windowDockLeft => 'Dock to left edge';
+
+  @override
+  String get windowDockRight => 'Dock to right edge';
+
+  @override
+  String get windowUndock => 'Undock';
+
+  @override
   String get languageSystem => 'System / 시스템 설정 따르기';
 
   @override

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../about/daylight_about.dart';
 import '../../l10n/app_localizations.dart';
+import '../../window/window_dock.dart';
 import '../../settings/settings_menus.dart';
 import '../widgets/font_scale_menu.dart';
 import '../theme/app_theme.dart';
@@ -106,8 +107,16 @@ class HomeScreen extends ConsumerWidget {
     final activeSide = ref.watch(activePaneProvider);
     final compareMode = ref.watch(compareModeProvider);
     final layout = ref.watch(paneLayoutProvider);
+    final dockEdge = ref.watch(windowDockProvider);
     final activeIsRemote = isRemotePath(ref.watch(paneControllerProvider(activeSide)).currentPath);
     final l10n = AppLocalizations.of(context);
+
+    // 2패널 모드로 돌아가면 창 도킹도 풀어 원래 크기로 되돌린다.
+    ref.listen<PaneLayout>(paneLayoutProvider, (previous, next) {
+      if (!next.singlePane && ref.read(windowDockProvider) != null) {
+        ref.read(windowDockProvider.notifier).undock();
+      }
+    });
 
     return Scaffold(
       appBar: AppBar(
@@ -120,7 +129,7 @@ class HomeScreen extends ConsumerWidget {
               color: isDark ? AppColors.primary : AppColors.primaryDeep,
             ),
             const SizedBox(width: 8),
-            const Text('Daylight Commander'),
+            const Flexible(child: Text('Daylight Commander', overflow: TextOverflow.ellipsis)),
           ],
         ),
         actions: [
@@ -145,6 +154,29 @@ class HomeScreen extends ConsumerWidget {
             tooltip: layout.singlePane ? l10n.dualPaneTooltip : l10n.singlePaneTooltip,
             onPressed: () => ref.read(paneLayoutProvider.notifier).toggleSinglePane(),
           ),
+          if (layout.singlePane && windowDockSupported)
+            PopupMenuButton<DockEdge>(
+              icon: Icon(dockEdge == null ? Icons.dock_outlined : Icons.dock),
+              tooltip: l10n.windowDockTooltip,
+              onSelected: (edge) => ref.read(windowDockProvider.notifier).dock(edge),
+              itemBuilder: (_) => [
+                CheckedPopupMenuItem(
+                  value: DockEdge.left,
+                  checked: dockEdge == DockEdge.left,
+                  child: Text(l10n.windowDockLeft),
+                ),
+                CheckedPopupMenuItem(
+                  value: DockEdge.right,
+                  checked: dockEdge == DockEdge.right,
+                  child: Text(l10n.windowDockRight),
+                ),
+                if (dockEdge != null)
+                  PopupMenuItem<DockEdge>(
+                    onTap: () => ref.read(windowDockProvider.notifier).undock(),
+                    child: Text(l10n.windowUndock),
+                  ),
+              ],
+            ),
           const FontScaleMenuButton(),
           const ThemeMenuButton(),
           const LanguageMenuButton(),

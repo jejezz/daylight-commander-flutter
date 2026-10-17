@@ -60,6 +60,9 @@ dependencies:
   # 데스크톱 창 제어 (커스텀 타이틀바 등)
   window_manager: ^0.4.3
 
+  # 창을 놓을 모니터의 작업 영역(도킹 위치 계산)
+  screen_retriever: ^0.2.2
+
   # Windows 드라이브 목록을 네트워크 접근 없이 즉시 조회 (GetLogicalDrives)
   win32: ^5.5.0
 

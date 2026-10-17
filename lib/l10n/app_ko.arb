@@ -98,6 +98,10 @@
       "path": { "type": "String" }
     }
   },
+  "windowDockTooltip": "창 도킹",
+  "windowDockLeft": "화면 왼쪽에 도킹",
+  "windowDockRight": "화면 오른쪽에 도킹",
+  "windowUndock": "도킹 해제",
   "languageSystem": "시스템 설정 따르기 / System",
   "syncDiffToRight": "차이 {count}개 → 복사",
   "@syncDiffToRight": {
