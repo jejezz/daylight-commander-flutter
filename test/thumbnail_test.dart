@@ -1,6 +1,7 @@
 import 'package:daylight_commander/application/thumbnail_policy.dart';
 import 'package:daylight_commander/domain/entities/file_entry.dart';
 import 'package:daylight_commander/presentation/home/pane_controller.dart';
+import 'package:daylight_commander/presentation/home/pane_view.dart' show breakableName;
 import 'package:daylight_commander/presentation/home/pane_view_mode_provider.dart';
 import 'package:daylight_commander/presentation/widgets/thumbnail_image.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -152,5 +153,11 @@ nas:/export on /Volumes/nfs (nfs, nodev)
       expect(prefs.getString('pane_view_mode_left'), 'thumbnails');
       expect(prefs.getString('pane_thumb_size_left'), 'large');
     });
+  });
+
+  test('긴 이름은 구분 문자 뒤에 줄바꿈 후보를 넣는다', () {
+    expect(breakableName('dart_defines.local.example.json'),
+        'dart_\u200Bdefines.\u200Blocal.\u200Bexample.\u200Bjson');
+    expect(breakableName('plain'), 'plain');
   });
 }
