@@ -17,6 +17,7 @@ import 'drives_provider.dart';
 import 'folder_comparison_provider.dart';
 import 'pane_actions.dart';
 import 'pane_controller.dart';
+import 'pane_view_mode_provider.dart';
 import 'pane_layout_provider.dart';
 import 'pane_view.dart';
 import '../../window/focus_tint.dart';
@@ -111,8 +112,10 @@ class HomeScreen extends ConsumerWidget {
     final activeIsRemote = isRemotePath(ref.watch(paneControllerProvider(activeSide)).currentPath);
     final l10n = AppLocalizations.of(context);
 
-    // 2패널 모드로 돌아가면 창 도킹도 풀어 원래 크기로 되돌린다.
+    // 1패널 모드에서는 창을 자유롭게 줄일 수 있게 최소 크기를 낮추고, 2패널 모드로
+    // 돌아가면 창 도킹도 풀어 원래 크기로 되돌린다.
     ref.listen<PaneLayout>(paneLayoutProvider, (previous, next) {
+      ref.read(windowDockProvider.notifier).setSinglePane(next.singlePane);
       if (!next.singlePane && ref.read(windowDockProvider) != null) {
         ref.read(windowDockProvider.notifier).undock();
       }
@@ -225,9 +228,25 @@ class HomeScreen extends ConsumerWidget {
           const SingleActivator(LogicalKeyboardKey.backquote, meta: true): () =>
               openTerminalHere(ref, activeSide),
           const SingleActivator(LogicalKeyboardKey.arrowDown): () =>
-              ref.read(paneControllerProvider(activeSide).notifier).moveCursor(1),
+              _moveCursor(ref, activeSide, _CursorMove.down),
           const SingleActivator(LogicalKeyboardKey.arrowUp): () =>
-              ref.read(paneControllerProvider(activeSide).notifier).moveCursor(-1),
+              _moveCursor(ref, activeSide, _CursorMove.up),
+          const SingleActivator(LogicalKeyboardKey.arrowRight): () =>
+              _moveCursor(ref, activeSide, _CursorMove.right),
+          const SingleActivator(LogicalKeyboardKey.arrowLeft): () =>
+              _moveCursor(ref, activeSide, _CursorMove.left),
+          const SingleActivator(LogicalKeyboardKey.home): () =>
+              _moveCursor(ref, activeSide, _CursorMove.home),
+          const SingleActivator(LogicalKeyboardKey.end): () =>
+              _moveCursor(ref, activeSide, _CursorMove.end),
+          const SingleActivator(LogicalKeyboardKey.pageUp): () =>
+              _moveCursor(ref, activeSide, _CursorMove.pageUp),
+          const SingleActivator(LogicalKeyboardKey.pageDown): () =>
+              _moveCursor(ref, activeSide, _CursorMove.pageDown),
+          const SingleActivator(LogicalKeyboardKey.enter): () =>
+              _openCursorEntry(context, ref, activeSide),
+          const SingleActivator(LogicalKeyboardKey.numpadEnter): () =>
+              _openCursorEntry(context, ref, activeSide),
           const SingleActivator(LogicalKeyboardKey.space): () =>
               ref.read(paneControllerProvider(activeSide).notifier).toggleCursorSelection(),
         },
@@ -527,5 +546,54 @@ class _FnButton extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+enum _CursorMove { up, down, left, right, home, end, pageUp, pageDown }
+
+/// 방향키 등으로 커서를 옮긴다. 자세히 보기는 위/아래 한 줄씩만 쓰고(기존
+/// 동작 유지), 썸네일 보기는 좌/우 한 칸, 위/아래 한 행(열 수), PageUp/Down은
+/// 열 수 x 보이는 행 수 대신 대략 5행씩 움직인다.
+void _moveCursor(WidgetRef ref, PaneSide side, _CursorMove move) {
+  final controller = ref.read(paneControllerProvider(side).notifier);
+  final thumbnails = ref.read(paneViewSettingsProvider(side)).isThumbnails;
+  final columns = thumbnails ? ref.read(paneGridColumnsProvider(side)) : 1;
+  switch (move) {
+    case _CursorMove.down:
+      controller.moveCursor(columns);
+    case _CursorMove.up:
+      controller.moveCursor(-columns);
+    case _CursorMove.right:
+      if (thumbnails) controller.moveCursor(1);
+    case _CursorMove.left:
+      if (thumbnails) controller.moveCursor(-1);
+    case _CursorMove.home:
+      if (thumbnails) controller.moveCursorTo(0);
+    case _CursorMove.end:
+      if (thumbnails) controller.moveCursorTo(1 << 30);
+    case _CursorMove.pageUp:
+      if (thumbnails) controller.moveCursor(-columns * 5);
+    case _CursorMove.pageDown:
+      if (thumbnails) controller.moveCursor(columns * 5);
+  }
+}
+
+/// Enter. 커서가 가리키는 항목을 연다(폴더는 들어가고, 파일은 기본 앱으로).
+/// 경로 입력창처럼 텍스트 입력 중일 때는 입력창이 Enter를 쓰도록 건드리지 않는다.
+void _openCursorEntry(BuildContext context, WidgetRef ref, PaneSide side) {
+  final focused = FocusManager.instance.primaryFocus?.context;
+  if (focused != null &&
+      (focused.widget is EditableText ||
+          focused.findAncestorWidgetOfExactType<EditableText>() != null)) {
+    return;
+  }
+  final state = ref.read(paneControllerProvider(side));
+  final index = state.cursorIndex;
+  if (index == null || index >= state.visibleEntries.length) return;
+  final entry = state.visibleEntries[index];
+  if (entry.isDirectory) {
+    ref.read(paneControllerProvider(side).notifier).openEntry(entry);
+  } else {
+    openEntryWithDefaultApp(context, ref, entry);
   }
 }

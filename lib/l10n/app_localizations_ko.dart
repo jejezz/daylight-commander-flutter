@@ -315,6 +315,15 @@ class AppLocalizationsKo extends AppLocalizations {
   String get removeBookmarkTooltip => '즐겨찾기 해제';
 
   @override
+  String get viewModeDetailsTooltip => '자세히 보기로 전환';
+
+  @override
+  String get viewModeThumbnailsTooltip => '썸네일 보기로 전환';
+
+  @override
+  String get thumbnailSizeTooltip => '썸네일 크기 변경';
+
+  @override
   String get showHiddenTooltip => '숨김 파일 표시';
 
   @override

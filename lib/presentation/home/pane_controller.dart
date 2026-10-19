@@ -437,9 +437,16 @@ class PaneController extends StateNotifier<PaneState> {
     if (count == 0) return;
     // 커서가 아직 없으면 방향에 상관없이 첫 항목(index 0)에서 시작한다 —
     // Up을 먼저 눌렀을 때 마지막 항목으로 점프하면 오히려 예측하기 어렵다.
-    final current = state.cursorIndex ?? -1;
-    final next = (current + delta).clamp(0, count - 1);
+    final current = state.cursorIndex;
+    final next = current == null ? 0 : (current + delta).clamp(0, count - 1);
     state = state.copyWith(cursorIndex: next);
+  }
+
+  /// 커서를 [index]로 바로 옮긴다(Home/End 등). 범위를 벗어나면 끝으로 맞춘다.
+  void moveCursorTo(int index) {
+    final count = state.visibleEntries.length;
+    if (count == 0) return;
+    state = state.copyWith(cursorIndex: index.clamp(0, count - 1));
   }
 
   /// 스페이스바. 커서가 가리키는 항목을 다중선택 집합에 넣거나 뺀다(토글).

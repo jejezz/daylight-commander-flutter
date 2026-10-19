@@ -319,6 +319,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get removeBookmarkTooltip => 'Remove Bookmark';
 
   @override
+  String get viewModeDetailsTooltip => 'Switch to details view';
+
+  @override
+  String get viewModeThumbnailsTooltip => 'Switch to thumbnail view';
+
+  @override
+  String get thumbnailSizeTooltip => 'Change thumbnail size';
+
+  @override
   String get showHiddenTooltip => 'Show Hidden Files';
 
   @override
