@@ -553,11 +553,12 @@ enum _CursorMove { up, down, left, right, home, end, pageUp, pageDown }
 
 /// 방향키 등으로 커서를 옮긴다. 자세히 보기는 위/아래 한 줄씩만 쓰고(기존
 /// 동작 유지), 썸네일 보기는 좌/우 한 칸, 위/아래 한 행(열 수), PageUp/Down은
-/// 열 수 x 보이는 행 수 대신 대략 5행씩 움직인다.
+/// 한 화면에 보이는 행 수만큼 움직인다.
 void _moveCursor(WidgetRef ref, PaneSide side, _CursorMove move) {
   final controller = ref.read(paneControllerProvider(side).notifier);
   final thumbnails = ref.read(paneViewSettingsProvider(side)).isThumbnails;
   final columns = thumbnails ? ref.read(paneGridColumnsProvider(side)) : 1;
+  final pageRows = thumbnails ? ref.read(paneGridPageRowsProvider(side)) : 1;
   switch (move) {
     case _CursorMove.down:
       controller.moveCursor(columns);
@@ -572,9 +573,9 @@ void _moveCursor(WidgetRef ref, PaneSide side, _CursorMove move) {
     case _CursorMove.end:
       if (thumbnails) controller.moveCursorTo(1 << 30);
     case _CursorMove.pageUp:
-      if (thumbnails) controller.moveCursor(-columns * 5);
+      if (thumbnails) controller.moveCursor(-columns * pageRows);
     case _CursorMove.pageDown:
-      if (thumbnails) controller.moveCursor(columns * 5);
+      if (thumbnails) controller.moveCursor(columns * pageRows);
   }
 }
 

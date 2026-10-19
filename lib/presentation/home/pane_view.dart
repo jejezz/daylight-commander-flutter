@@ -724,7 +724,7 @@ class _FileRow extends StatelessWidget {
           child: Align(
             alignment: Alignment.bottomCenter,
             child: Text(
-              entry.name,
+              breakableName(entry.name),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               textAlign: TextAlign.center,
@@ -948,8 +948,15 @@ class _ExternalDropOverlayState extends State<_ExternalDropOverlay> {
 }
 
 /// 썸네일 보기 그리드. 패널 폭에 맞춰 열 수를 정하고(셀은 정사각형), 키보드
-/// 상하 이동이 쓸 수 있게 열 수를 [paneGridColumnsProvider]에 기록한다.
+/// 상하 이동이 쓸 수 있게 열 수([paneGridColumnsProvider])와 한 화면에 보이는 행 수
+/// ([paneGridPageRowsProvider])를 기록한다.
 /// 커서가 화면 밖으로 나가면 스크롤해서 보이게 한다.
+/// 긴 이름이 글자 단위로 끊기지 않도록 `.`, `_`, `-`, 공백 뒤에 줄바꿈 후보
+/// (zero-width space)를 넣는다. 화면 표시용이라 실제 이름은 바뀌지 않는다.
+@visibleForTesting
+String breakableName(String name) =>
+    name.replaceAllMapped(RegExp(r'[._\-]'), (m) => '${m[0]}\u200B');
+
 class _ThumbnailGrid extends ConsumerStatefulWidget {
   const _ThumbnailGrid({
     required this.side,
@@ -1033,9 +1040,17 @@ class _ThumbnailGridState extends ConsumerState<_ThumbnailGrid> {
         // 남는 폭은 오른쪽 안쪽 여백으로 비운다.
         final leftover = usable - (columns * cell + (columns - 1) * _spacing);
         final side = widget.side;
+        final pageRows = math
+            .max(1, ((constraints.maxHeight - _padding * 2 + _spacing) /
+                    (_cellHeight + _spacing))
+                .floor());
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted && ref.read(paneGridColumnsProvider(side)) != columns) {
+          if (!mounted) return;
+          if (ref.read(paneGridColumnsProvider(side)) != columns) {
             ref.read(paneGridColumnsProvider(side).notifier).state = columns;
+          }
+          if (ref.read(paneGridPageRowsProvider(side)) != pageRows) {
+            ref.read(paneGridPageRowsProvider(side).notifier).state = pageRows;
           }
         });
         return GridView.builder(

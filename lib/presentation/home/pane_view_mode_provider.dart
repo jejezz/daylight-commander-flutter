@@ -90,6 +90,11 @@ final paneViewSettingsProvider =
 
 /// 썸네일 그리드가 현재 배치한 열 수. 그리드가 레이아웃 후 기록하고, 키보드
 /// 상하 이동(열 수만큼 건너뛰기)이 읽는다.
+/// 썸네일 그리드가 한 화면에 보여 주는 행 수. PageUp/PageDown 이동량에 쓴다.
+final paneGridPageRowsProvider = StateProvider.family<int, PaneSide>(
+  (ref, side) => 5,
+);
+
 final paneGridColumnsProvider = StateProvider.family<int, PaneSide>(
   (ref, side) => 1,
 );
