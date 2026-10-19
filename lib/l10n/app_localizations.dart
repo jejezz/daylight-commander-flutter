@@ -680,6 +680,24 @@ abstract class AppLocalizations {
   /// **'즐겨찾기 해제'**
   String get removeBookmarkTooltip;
 
+  /// No description provided for @viewModeDetailsTooltip.
+  ///
+  /// In ko, this message translates to:
+  /// **'자세히 보기로 전환'**
+  String get viewModeDetailsTooltip;
+
+  /// No description provided for @viewModeThumbnailsTooltip.
+  ///
+  /// In ko, this message translates to:
+  /// **'썸네일 보기로 전환'**
+  String get viewModeThumbnailsTooltip;
+
+  /// No description provided for @thumbnailSizeTooltip.
+  ///
+  /// In ko, this message translates to:
+  /// **'썸네일 크기 변경'**
+  String get thumbnailSizeTooltip;
+
   /// No description provided for @showHiddenTooltip.
   ///
   /// In ko, this message translates to:

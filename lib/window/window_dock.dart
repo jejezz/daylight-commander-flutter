@@ -12,6 +12,10 @@ const dockedWindowWidth = 520.0;
 const _normalMinimumSize = Size(960, 600);
 const _dockedMinimumWidth = 480.0;
 
+/// 1패널 모드에서 도킹하지 않았을 때의 최소 창 크기. 도킹 창과 같아서, 창을 좁게
+/// 줄인 상태로 도킹/해제를 오가도 크기가 갑자기 바뀌지 않는다.
+const _singlePaneMinimumSize = Size(_dockedMinimumWidth, 480);
+
 bool get windowDockSupported => Platform.isWindows || Platform.isMacOS || Platform.isLinux;
 
 /// 앱 창을 화면(작업 영역) 왼쪽/오른쪽 가장자리에 세로로 꽉 차게 붙인다.
@@ -20,6 +24,20 @@ class WindowDockController extends StateNotifier<DockEdge?> {
   WindowDockController() : super(null);
 
   Rect? _restoreBounds;
+  bool _singlePane = false;
+
+  Size get _idleMinimum => _singlePane ? _singlePaneMinimumSize : _normalMinimumSize;
+
+  /// 1패널 모드 여부가 바뀌면 최소 창 크기를 맞춘다. 1패널에서는 도킹 폭까지
+  /// 자유롭게 줄일 수 있고, 2패널로 돌아가면 원래 최소 크기(창이 더 작으면
+  /// OS가 그 크기까지 키운다)로 되돌린다. 도킹 중에는 도킹 최소 크기를 유지한다.
+  Future<void> setSinglePane(bool singlePane) async {
+    _singlePane = singlePane;
+    if (state != null || !windowDockSupported) return;
+    try {
+      await windowManager.setMinimumSize(_idleMinimum);
+    } catch (_) {}
+  }
 
   Future<void> dock(DockEdge edge) async {
     if (!windowDockSupported) return;
@@ -58,7 +76,7 @@ class WindowDockController extends StateNotifier<DockEdge?> {
     state = null;
     if (!windowDockSupported) return;
     try {
-      await windowManager.setMinimumSize(_normalMinimumSize);
+      await windowManager.setMinimumSize(_idleMinimum);
       if (restore != null) await windowManager.setBounds(restore);
     } catch (_) {}
   }

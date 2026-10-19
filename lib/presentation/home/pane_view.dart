@@ -1,9 +1,13 @@
+import 'dart:math' as math;
+
 import 'package:desktop_drop/desktop_drop.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_drag_out/flutter_drag_out.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../application/thumbnail_policy.dart';
+import '../../application/thumbnail_providers.dart';
 import '../../core/bytes_format.dart';
 import '../../core/date_format.dart';
 import '../../domain/entities/drive_entry.dart';
@@ -11,6 +15,7 @@ import '../../domain/entities/file_entry.dart';
 import '../../l10n/app_localizations.dart';
 import '../theme/app_theme.dart';
 import '../widgets/file_icon.dart';
+import '../widgets/thumbnail_image.dart';
 import '../widgets/tool_icon.dart';
 import 'bookmarks_provider.dart';
 import 'directory_tree.dart';
@@ -20,6 +25,7 @@ import 'drives_provider.dart';
 import 'folder_comparison_provider.dart';
 import 'pane_actions.dart';
 import 'pane_controller.dart';
+import 'pane_view_mode_provider.dart';
 import 'recent_folders_provider.dart';
 
 class PaneView extends ConsumerWidget {
@@ -37,6 +43,8 @@ class PaneView extends ConsumerWidget {
     final bookmarks = ref.watch(bookmarksProvider);
     final recentFolders = ref.watch(recentFoldersProvider);
     final comparison = ref.watch(folderComparisonProvider);
+    final viewSettings = ref.watch(paneViewSettingsProvider(side));
+    final thumbnailPolicy = ref.read(thumbnailPolicyProvider);
     final diffMap = comparison == null
         ? const <Uri, FileDiffStatus>{}
         : (side == PaneSide.left ? comparison.left : comparison.right);
@@ -62,6 +70,64 @@ class PaneView extends ConsumerWidget {
         entries: payload.entries,
         destinationDir: destinationDir,
         isMove: isMove,
+      );
+    }
+
+    Widget buildItem(
+      BuildContext context,
+      int index, {
+      required bool grid,
+      double thumbExtent = 0,
+    }) {
+      final entry = visibleEntries[index];
+      final selected = state.selection.contains(entry.location);
+      final payload = (selected && state.selection.length > 1)
+          ? DragPayload(fromSide: side, entries: state.selectedEntries)
+          : DragPayload(fromSide: side, entries: [entry]);
+      return _FileRow(
+        entry: entry,
+        gridMode: grid,
+        thumbExtent: thumbExtent,
+        thumbKind: grid ? thumbnailPolicy.kindFor(entry) : null,
+        selected: selected,
+        isCursor: index == state.cursorIndex,
+        dragPayload: payload,
+        dragOutItems: () => dragOutItemsFor(ref, payload.entries),
+        diffStatus: diffMap[entry.location],
+        onSelect: () {
+          ref.read(activePaneProvider.notifier).state = side;
+          final keys = HardwareKeyboard.instance;
+          final hasModifier =
+              keys.isShiftPressed ||
+              keys.isControlPressed ||
+              keys.isMetaPressed;
+          final isDoubleClick = controller.consumeDoubleClick(entry.location);
+          if (isDoubleClick && !hasModifier) {
+            if (entry.isDirectory) {
+              controller.openEntry(entry);
+            } else {
+              openEntryWithDefaultApp(context, ref, entry);
+            }
+            return;
+          }
+          if (keys.isShiftPressed) {
+            controller.selectRange(index);
+          } else if (keys.isControlPressed || keys.isMetaPressed) {
+            controller.toggleSelection(index);
+          } else {
+            controller.selectOnly(index);
+          }
+        },
+        onSecondaryTap: (globalPosition) => showRowContextMenu(
+          context,
+          ref,
+          side: side,
+          entry: entry,
+          index: index,
+          globalPosition: globalPosition,
+        ),
+        onFolderDrop: (payload) =>
+            handleDrop(payload, locationToPathString(entry.location)),
       );
     }
 
@@ -146,83 +212,32 @@ class PaneView extends ConsumerWidget {
                                             ))
                                     : null,
                               ),
-                              child: ListView.builder(
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 4,
-                                ),
-                                itemCount: visibleEntries.length,
-                                itemBuilder: (context, index) {
-                                  final entry = visibleEntries[index];
-                                  final selected = state.selection.contains(
-                                    entry.location,
-                                  );
-                                  final payload =
-                                      (selected && state.selection.length > 1)
-                                      ? DragPayload(
-                                          fromSide: side,
-                                          entries: state.selectedEntries,
-                                        )
-                                      : DragPayload(
-                                          fromSide: side,
-                                          entries: [entry],
-                                        );
-                                  return _FileRow(
-                                    entry: entry,
-                                    selected: selected,
-                                    isCursor: index == state.cursorIndex,
-                                    dragPayload: payload,
-                                    dragOutItems: () =>
-                                        dragOutItemsFor(ref, payload.entries),
-                                    diffStatus: diffMap[entry.location],
-                                    onSelect: () {
-                                      ref
-                                              .read(activePaneProvider.notifier)
-                                              .state =
-                                          side;
-                                      final keys = HardwareKeyboard.instance;
-                                      final hasModifier =
-                                          keys.isShiftPressed ||
-                                          keys.isControlPressed ||
-                                          keys.isMetaPressed;
-                                      final isDoubleClick = controller
-                                          .consumeDoubleClick(entry.location);
-                                      if (isDoubleClick && !hasModifier) {
-                                        if (entry.isDirectory) {
-                                          controller.openEntry(entry);
-                                        } else {
-                                          openEntryWithDefaultApp(
+                              child: viewSettings.isThumbnails
+                                  ? _ThumbnailGrid(
+                                      side: side,
+                                      itemCount: visibleEntries.length,
+                                      extent: viewSettings.thumbnailSize.extent,
+                                      cursorIndex: state.cursorIndex,
+                                      itemBuilder: (context, index, extent) =>
+                                          buildItem(
                                             context,
-                                            ref,
-                                            entry,
-                                          );
-                                        }
-                                        return;
-                                      }
-                                      if (keys.isShiftPressed) {
-                                        controller.selectRange(index);
-                                      } else if (keys.isControlPressed ||
-                                          keys.isMetaPressed) {
-                                        controller.toggleSelection(index);
-                                      } else {
-                                        controller.selectOnly(index);
-                                      }
-                                    },
-                                    onSecondaryTap: (globalPosition) =>
-                                        showRowContextMenu(
-                                          context,
-                                          ref,
-                                          side: side,
-                                          entry: entry,
-                                          index: index,
-                                          globalPosition: globalPosition,
-                                        ),
-                                    onFolderDrop: (payload) => handleDrop(
-                                      payload,
-                                      locationToPathString(entry.location),
+                                            index,
+                                            grid: true,
+                                            thumbExtent: extent,
+                                          ),
+                                    )
+                                  : ListView.builder(
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 4,
+                                      ),
+                                      itemCount: visibleEntries.length,
+                                      itemBuilder: (context, index) =>
+                                          buildItem(
+                                            context,
+                                            index,
+                                            grid: false,
+                                          ),
                                     ),
-                                  );
-                                },
-                              ),
                             );
                           },
                         ),
@@ -233,6 +248,11 @@ class PaneView extends ConsumerWidget {
                   selectedCount: state.selection.length,
                   selectedBytes: state.selectedTotalBytes,
                   quickFilter: state.quickFilter,
+                  viewSettings: viewSettings,
+                  onToggleViewMode: () =>
+                      ref.read(paneViewSettingsProvider(side).notifier).toggleMode(),
+                  onCycleThumbnailSize: () =>
+                      ref.read(paneViewSettingsProvider(side).notifier).cycleThumbnailSize(),
                 ),
               ],
             ),
@@ -566,8 +586,14 @@ class _FileRow extends StatelessWidget {
     required this.onSelect,
     required this.onSecondaryTap,
     required this.onFolderDrop,
+    this.gridMode = false,
+    this.thumbExtent = 0,
+    this.thumbKind,
   });
 
+  final bool gridMode;
+  final double thumbExtent;
+  final ThumbnailKind? thumbKind;
   final FileEntry entry;
   final bool selected;
 
@@ -607,44 +633,106 @@ class _FileRow extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: bgColor,
+        borderRadius: gridMode ? BorderRadius.circular(8) : null,
         border: isCursor
             ? Border.all(
                 color: isDark ? AppColors.primary : AppColors.primaryDeep,
+                width: gridMode ? 1.5 : 1,
+              )
+            : (gridMode && selected)
+            ? Border.all(
+                color: (isDark ? AppColors.primary : AppColors.primaryDeep)
+                    .withValues(alpha: 0.5),
               )
             : null,
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      child: Row(
-        children: [
-          FileIcon(name: entry.name, isDirectory: entry.isDirectory),
-          const SizedBox(width: 8),
-          Expanded(
+      padding: gridMode
+          ? const EdgeInsets.all(4)
+          : const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      child: gridMode
+          ? _cell(theme)
+          : Row(
+              children: [
+                FileIcon(name: entry.name, isDirectory: entry.isDirectory),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    entry.name,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.bodyLarge,
+                  ),
+                ),
+                SizedBox(
+                  width: 60,
+                  child: Text(
+                    entry.isDirectory ? '--' : formatBytes(entry.sizeBytes),
+                    style: theme.textTheme.labelSmall,
+                    textAlign: TextAlign.right,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                SizedBox(
+                  width: 105,
+                  child: Text(
+                    formatModified(entry.modifiedAt),
+                    style: theme.textTheme.labelSmall,
+                    textAlign: TextAlign.right,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+    );
+  }
+
+  Widget _cell(ThemeData theme) {
+    final iconExtent = thumbExtent - 8;
+    return Column(
+      children: [
+        Expanded(
+          child: entry.isDirectory || thumbKind == null
+              ? Center(
+                  child: FileIcon(
+                    name: entry.name,
+                    isDirectory: entry.isDirectory,
+                    size: iconExtent * 0.7,
+                  ),
+                )
+              : DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: theme.brightness == Brightness.dark
+                        ? Colors.white10
+                        : Colors.black12,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(6),
+                    child: ThumbnailImage(
+                      path: locationToPathString(entry.location),
+                      name: entry.name,
+                      kind: thumbKind,
+                      extent: iconExtent,
+                    ),
+                  ),
+                ),
+        ),
+        const SizedBox(height: 4),
+        // 이름 칸 높이를 2줄로 고정하고 아래쪽에 붙인다 — 이름이 길든 짧든 아이콘
+        // 위치가 같고, 이름의 마지막 줄은 모든 셀에서 같은 높이에 놓인다.
+        SizedBox(
+          height: 34,
+          child: Align(
+            alignment: Alignment.bottomCenter,
             child: Text(
               entry.name,
+              maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: theme.textTheme.bodyLarge,
+              textAlign: TextAlign.center,
+              style: theme.textTheme.labelMedium,
             ),
           ),
-          SizedBox(
-            width: 60,
-            child: Text(
-              entry.isDirectory ? '--' : formatBytes(entry.sizeBytes),
-              style: theme.textTheme.labelSmall,
-              textAlign: TextAlign.right,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          SizedBox(
-            width: 105,
-            child: Text(
-              formatModified(entry.modifiedAt),
-              style: theme.textTheme.labelSmall,
-              textAlign: TextAlign.right,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -757,8 +845,14 @@ class _PaneStatusBar extends StatelessWidget {
     required this.selectedCount,
     required this.selectedBytes,
     required this.quickFilter,
+    required this.viewSettings,
+    required this.onToggleViewMode,
+    required this.onCycleThumbnailSize,
   });
 
+  final PaneViewSettings viewSettings;
+  final VoidCallback onToggleViewMode;
+  final VoidCallback onCycleThumbnailSize;
   final int count;
   final int selectedCount;
   final int selectedBytes;
@@ -771,9 +865,30 @@ class _PaneStatusBar extends StatelessWidget {
         ? l10n.selectedCountLabel(selectedCount, formatBytes(selectedBytes))
         : l10n.itemCountLabel(count);
     final label = quickFilter.isEmpty ? base : l10n.searchStatusLabel(quickFilter, base);
+    Widget viewButton(IconData icon, String tooltip, VoidCallback onPressed) => InkWell(
+      onTap: onPressed,
+      splashFactory: NoSplash.splashFactory,
+      child: Tooltip(
+        message: tooltip,
+        child: Padding(padding: const EdgeInsets.symmetric(horizontal: 6), child: Icon(icon, size: 16)),
+      ),
+    );
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      child: Text(label, style: Theme.of(context).textTheme.labelSmall),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(label, style: Theme.of(context).textTheme.labelSmall, overflow: TextOverflow.ellipsis),
+          ),
+          if (viewSettings.isThumbnails)
+            viewButton(Icons.photo_size_select_large, l10n.thumbnailSizeTooltip, onCycleThumbnailSize),
+          viewButton(
+            viewSettings.isThumbnails ? Icons.view_list : Icons.grid_view,
+            viewSettings.isThumbnails ? l10n.viewModeDetailsTooltip : l10n.viewModeThumbnailsTooltip,
+            onToggleViewMode,
+          ),
+        ],
+      ),
     );
   }
 }
@@ -828,6 +943,120 @@ class _ExternalDropOverlayState extends State<_ExternalDropOverlay> {
             ),
         ],
       ),
+    );
+  }
+}
+
+/// 썸네일 보기 그리드. 패널 폭에 맞춰 열 수를 정하고(셀은 정사각형), 키보드
+/// 상하 이동이 쓸 수 있게 열 수를 [paneGridColumnsProvider]에 기록한다.
+/// 커서가 화면 밖으로 나가면 스크롤해서 보이게 한다.
+class _ThumbnailGrid extends ConsumerStatefulWidget {
+  const _ThumbnailGrid({
+    required this.side,
+    required this.itemCount,
+    required this.extent,
+    required this.cursorIndex,
+    required this.itemBuilder,
+  });
+
+  final PaneSide side;
+  final int itemCount;
+  final double extent;
+  final int? cursorIndex;
+  final Widget Function(BuildContext context, int index, double cellExtent)
+  itemBuilder;
+
+  @override
+  ConsumerState<_ThumbnailGrid> createState() => _ThumbnailGridState();
+}
+
+class _ThumbnailGridState extends ConsumerState<_ThumbnailGrid> {
+  static const _padding = 6.0;
+  static const _spacing = 4.0;
+  static const _labelHeight = 46.0; // 이름 34 + 간격 4 + 셀 안쪽 여백 8
+
+  final _scroll = ScrollController();
+  int _columns = 1;
+  double _cellWidth = 0;
+
+  double get _cellHeight => _cellWidth + _labelHeight;
+
+  @override
+  void didUpdateWidget(_ThumbnailGrid old) {
+    super.didUpdateWidget(old);
+    if (old.cursorIndex != widget.cursorIndex) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _revealCursor());
+    }
+  }
+
+  void _revealCursor() {
+    final index = widget.cursorIndex;
+    if (index == null || !_scroll.hasClients || _cellWidth <= 0) return;
+    final row = index ~/ _columns;
+    final top = _padding + row * (_cellHeight + _spacing);
+    final bottom = top + _cellHeight;
+    final position = _scroll.position;
+    final viewTop = position.pixels;
+    final viewBottom = viewTop + position.viewportDimension;
+    double? target;
+    if (top < viewTop) {
+      target = top - _padding;
+    } else if (bottom > viewBottom) {
+      target = bottom + _padding - position.viewportDimension;
+    }
+    if (target != null) {
+      _scroll.jumpTo(
+        target.clamp(position.minScrollExtent, position.maxScrollExtent),
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    _scroll.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final usable = math.max(1.0, constraints.maxWidth - _padding * 2);
+        // 셀은 고정 폭이고 남는 폭은 오른쪽에 비운다(탐색기처럼 왼쪽 정렬).
+        final cell = math.min(widget.extent, usable);
+        final columns = ((usable + _spacing) / (cell + _spacing))
+            .floor()
+            .clamp(1, 1000);
+        _columns = columns;
+        _cellWidth = cell;
+        // 스크롤바가 패널 오른쪽 끝에 붙도록 스크롤 영역은 항상 전체 폭이고,
+        // 남는 폭은 오른쪽 안쪽 여백으로 비운다.
+        final leftover = usable - (columns * cell + (columns - 1) * _spacing);
+        final side = widget.side;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted && ref.read(paneGridColumnsProvider(side)) != columns) {
+            ref.read(paneGridColumnsProvider(side).notifier).state = columns;
+          }
+        });
+        return GridView.builder(
+          controller: _scroll,
+          padding: EdgeInsets.fromLTRB(
+            _padding,
+            _padding,
+            _padding + leftover,
+            _padding,
+          ),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: columns,
+            mainAxisSpacing: _spacing,
+            crossAxisSpacing: _spacing,
+            childAspectRatio: _cellWidth / _cellHeight,
+          ),
+          itemCount: widget.itemCount,
+          itemBuilder: (context, index) =>
+              widget.itemBuilder(context, index, _cellWidth),
+        );
+      },
     );
   }
 }
