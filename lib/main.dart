@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:media_kit/media_kit.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:window_manager/window_manager.dart';
 
 import 'about/app_menu_bar.dart';
@@ -14,28 +15,26 @@ import 'l10n/app_localizations.dart';
 import 'presentation/home/folder_auto_refresh.dart';
 import 'presentation/home/home_screen.dart';
 import 'presentation/home/operation_controller.dart';
+import 'presentation/home/pane_layout_provider.dart';
 import 'presentation/theme/app_theme.dart';
 import 'presentation/theme/font_scale_provider.dart';
 import 'settings/app_settings.dart';
 import 'update/update_scope.dart';
 import 'update/update_service.dart';
+import 'window/window_dock.dart';
+import 'window/window_state.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   registerExtraLicenses();
   MediaKit.ensureInitialized();
 
+  // 업데이트 서비스가 "복사·이동 중인가"를 알아야 해서 컨테이너를 직접 만든다.
+  final container = ProviderContainer();
+
   if (Platform.isWindows || Platform.isMacOS || Platform.isLinux) {
     await windowManager.ensureInitialized();
-    const windowOptions = WindowOptions(
-      size: Size(1200, 720),
-      minimumSize: Size(960, 600),
-      title: AppIdentity.displayName,
-    );
-    windowManager.waitUntilReadyToShow(windowOptions, () async {
-      await windowManager.show();
-      await windowManager.focus();
-    });
+    await _prepareWindow(container);
   }
 
   // 이전 실행에서 남은 Finder 드롭 임시 사본 정리 (기다리지 않는다).
@@ -43,8 +42,6 @@ Future<void> main() async {
 
   final settings = await AppSettings.load();
 
-  // 업데이트 서비스가 "복사·이동 중인가"를 알아야 해서 컨테이너를 직접 만든다.
-  final container = ProviderContainer();
   // 데스크톱이 아니거나 UPDATE_SERVER 가 비어 있으면 null — 업데이트 확인 없음. 파일 작업 중에는
   // 알리지도 설치하지도 않는다 (설치는 앱을 종료시킨다).
   final updates = await UpdateService.create(isBusy: () => isFileOperationRunning(container));
@@ -56,6 +53,48 @@ Future<void> main() async {
       child: DaylightCommanderApp(settings: settings, updates: updates),
     ),
   ));
+}
+
+/// 지난 실행의 창 크기·위치·도킹 상태로 창을 연다. 1패널 모드로 끝냈다면 처음부터 최소 크기를
+/// 낮춰 두고(도킹을 한 번 거쳐야 줄어드는 문제 방지), 도킹 중이었다면 같은 가장자리에 다시 붙인다.
+Future<void> _prepareWindow(ProviderContainer container) async {
+  final saved = await WindowStateStore.load();
+  final prefs = await SharedPreferences.getInstance();
+  final singlePane = prefs.getBool(paneSingleModeKey) ?? false;
+  final minimum = minimumWindowSize(singlePane: singlePane);
+
+  var size = saved.size ?? const Size(1200, 720);
+  size = Size(
+    size.width < minimum.width ? minimum.width : size.width,
+    size.height < minimum.height ? minimum.height : size.height,
+  );
+
+  // 저장된 위치가 지금 연결된 모니터 안일 때만 쓴다.
+  Offset? position;
+  final savedBounds = saved.bounds;
+  if (savedBounds != null) {
+    try {
+      final moved = (savedBounds.topLeft) & size;
+      if (boundsVisibleOn(moved, await displayWorkAreas())) position = moved.topLeft;
+    } catch (_) {}
+  }
+
+  final windowOptions = WindowOptions(
+    size: size,
+    minimumSize: minimum,
+    title: AppIdentity.displayName,
+  );
+  windowManager.waitUntilReadyToShow(windowOptions, () async {
+    if (position != null) await windowManager.setPosition(position);
+    await windowManager.show();
+    await windowManager.focus();
+    final edge = saved.dockEdge;
+    if (singlePane && edge != null) {
+      await container.read(windowDockProvider.notifier).dock(edge);
+    }
+    // 복원이 끝난 뒤에 시작해야, 복원 중의 크기 변화가 저장되지 않는다.
+    WindowStateSaver(isDocked: () => container.read(windowDockProvider) != null).start();
+  });
 }
 
 class DaylightCommanderApp extends ConsumerStatefulWidget {

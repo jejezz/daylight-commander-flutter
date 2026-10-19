@@ -3,7 +3,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'pane_controller.dart';
 
-const _singleKey = 'pane_single_mode';
+/// 1패널 모드 저장 키. 시작할 때 창 최소 크기와 도킹 복원을 정하려고 main.dart도 읽는다.
+const paneSingleModeKey = 'pane_single_mode';
 const _swappedKey = 'pane_swapped';
 
 /// 패널 배치. 패널 상태([PaneSide])는 그대로 두고 화면에 놓이는 방식만 바꾼다.
@@ -31,7 +32,7 @@ class PaneLayoutController extends StateNotifier<PaneLayout> {
   Future<void> _load() async {
     final prefs = await SharedPreferences.getInstance();
     state = PaneLayout(
-      singlePane: prefs.getBool(_singleKey) ?? false,
+      singlePane: prefs.getBool(paneSingleModeKey) ?? false,
       swapped: prefs.getBool(_swappedKey) ?? false,
     );
   }
@@ -39,7 +40,7 @@ class PaneLayoutController extends StateNotifier<PaneLayout> {
   Future<void> _persist() async {
     final saved = state;
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(_singleKey, saved.singlePane);
+    await prefs.setBool(paneSingleModeKey, saved.singlePane);
     await prefs.setBool(_swappedKey, saved.swapped);
   }
 
