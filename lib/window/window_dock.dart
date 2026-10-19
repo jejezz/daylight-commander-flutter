@@ -5,6 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:screen_retriever/screen_retriever.dart';
 import 'package:window_manager/window_manager.dart';
 
+import 'window_state.dart';
+
 enum DockEdge { left, right }
 
 /// 창 도킹 폭 (논리 픽셀). 앱 바와 기능 막대가 겨우 들어가는 최소한의 폭이다.
@@ -15,6 +17,11 @@ const _dockedMinimumWidth = 480.0;
 /// 1패널 모드에서 도킹하지 않았을 때의 최소 창 크기. 도킹 창과 같아서, 창을 좁게
 /// 줄인 상태로 도킹/해제를 오가도 크기가 갑자기 바뀌지 않는다.
 const _singlePaneMinimumSize = Size(_dockedMinimumWidth, 480);
+
+/// 시작할 때 쓸 최소 창 크기. 1패널 모드로 끝냈다면 처음부터 낮춰 둔다 — 그렇지 않으면
+/// 도킹을 한 번 거치기 전까지 창이 960 폭 아래로 줄어들지 않는다.
+Size minimumWindowSize({required bool singlePane}) =>
+    singlePane ? _singlePaneMinimumSize : _normalMinimumSize;
 
 bool get windowDockSupported => Platform.isWindows || Platform.isMacOS || Platform.isLinux;
 
@@ -64,6 +71,9 @@ class WindowDockController extends StateNotifier<DockEdge?> {
         area.height,
       ));
       state = edge;
+      // 다음 실행에서 같은 도킹 상태와 도킹 전 위치·크기로 복원할 수 있게 남긴다.
+      await WindowStateStore.saveBounds(_restoreBounds!);
+      await WindowStateStore.saveDock(edge);
     } catch (_) {
       // 창 플러그인이 없거나 실패하면 도킹하지 않고 현재 상태를 유지한다.
     }
@@ -76,6 +86,7 @@ class WindowDockController extends StateNotifier<DockEdge?> {
     state = null;
     if (!windowDockSupported) return;
     try {
+      await WindowStateStore.saveDock(null);
       await windowManager.setMinimumSize(_idleMinimum);
       if (restore != null) await windowManager.setBounds(restore);
     } catch (_) {}
