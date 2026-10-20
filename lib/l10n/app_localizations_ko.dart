@@ -321,7 +321,24 @@ class AppLocalizationsKo extends AppLocalizations {
   String get viewModeThumbnailsTooltip => '썸네일 보기로 전환';
 
   @override
-  String get thumbnailSizeTooltip => '썸네일 크기 변경';
+  String get thumbnailSizeTooltip => '썸네일 크기';
+
+  @override
+  String get thumbnailSizeSmall => '작게';
+
+  @override
+  String get thumbnailSizeMedium => '보통';
+
+  @override
+  String get thumbnailSizeLarge => '크게';
+
+  @override
+  String clearThumbnailCache(String size) {
+    return '썸네일 캐시 비우기 ($size)';
+  }
+
+  @override
+  String get thumbnailCacheCleared => '썸네일 캐시를 비웠습니다';
 
   @override
   String get showHiddenTooltip => '숨김 파일 표시';

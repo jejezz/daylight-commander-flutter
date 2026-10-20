@@ -141,7 +141,17 @@
   "removeBookmarkTooltip": "즐겨찾기 해제",
   "viewModeDetailsTooltip": "자세히 보기로 전환",
   "viewModeThumbnailsTooltip": "썸네일 보기로 전환",
-  "thumbnailSizeTooltip": "썸네일 크기 변경",
+  "thumbnailSizeTooltip": "썸네일 크기",
+  "thumbnailSizeSmall": "작게",
+  "thumbnailSizeMedium": "보통",
+  "thumbnailSizeLarge": "크게",
+  "clearThumbnailCache": "썸네일 캐시 비우기 ({size})",
+  "@clearThumbnailCache": {
+    "placeholders": {
+      "size": { "type": "String" }
+    }
+  },
+  "thumbnailCacheCleared": "썸네일 캐시를 비웠습니다",
   "showHiddenTooltip": "숨김 파일 표시",
   "directoryTreeTooltip": "디렉토리 트리",
   "itemCountLabel": "{count}개 항목",

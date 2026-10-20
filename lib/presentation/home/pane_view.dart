@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:desktop_drop/desktop_drop.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_drag_out/flutter_drag_out.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -89,6 +90,7 @@ class PaneView extends ConsumerWidget {
         gridMode: grid,
         thumbExtent: thumbExtent,
         thumbKind: grid ? thumbnailPolicy.kindFor(entry) : null,
+        folderPreview: grid && thumbnailPolicy.canPreviewFolder(entry),
         selected: selected,
         isCursor: index == state.cursorIndex,
         dragPayload: payload,
@@ -218,6 +220,9 @@ class PaneView extends ConsumerWidget {
                                       itemCount: visibleEntries.length,
                                       extent: viewSettings.thumbnailSize.extent,
                                       cursorIndex: state.cursorIndex,
+                                      onStepSize: (delta) => ref
+                                          .read(paneViewSettingsProvider(side).notifier)
+                                          .stepThumbnailSize(delta),
                                       itemBuilder: (context, index, extent) =>
                                           buildItem(
                                             context,
@@ -251,8 +256,8 @@ class PaneView extends ConsumerWidget {
                   viewSettings: viewSettings,
                   onToggleViewMode: () =>
                       ref.read(paneViewSettingsProvider(side).notifier).toggleMode(),
-                  onCycleThumbnailSize: () =>
-                      ref.read(paneViewSettingsProvider(side).notifier).cycleThumbnailSize(),
+                  onSelectThumbnailSize: (size) =>
+                      ref.read(paneViewSettingsProvider(side).notifier).setThumbnailSize(size),
                 ),
               ],
             ),
@@ -589,11 +594,15 @@ class _FileRow extends StatelessWidget {
     this.gridMode = false,
     this.thumbExtent = 0,
     this.thumbKind,
+    this.folderPreview = false,
   });
 
   final bool gridMode;
   final double thumbExtent;
   final ThumbnailKind? thumbKind;
+
+  /// 폴더라면 안의 이미지를 모아 썸네일로 보인다.
+  final bool folderPreview;
   final FileEntry entry;
   final bool selected;
 
@@ -689,31 +698,29 @@ class _FileRow extends StatelessWidget {
     final iconExtent = thumbExtent - 8;
     return Column(
       children: [
+        // 폴더와 아이콘만 보이는 파일은 둥근 타일 위에 놓고, 내용이 있는 썸네일(이미지·PDF 등)은
+        // 그림 자체의 모서리를 둥글게 한다. 반지름은 셀 크기에 비례한다.
         Expanded(
-          child: entry.isDirectory || thumbKind == null
-              ? Center(
-                  child: FileIcon(
-                    name: entry.name,
-                    isDirectory: entry.isDirectory,
-                    size: iconExtent * 0.7,
-                  ),
+          child: folderPreview
+              ? FolderThumbnail(
+                  path: locationToPathString(entry.location),
+                  name: entry.name,
+                  extent: iconExtent,
+                  modifiedMs: entry.modifiedAt?.millisecondsSinceEpoch,
                 )
-              : DecoratedBox(
-                  decoration: BoxDecoration(
-                    color: theme.brightness == Brightness.dark
-                        ? Colors.white10
-                        : Colors.black12,
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(6),
-                    child: ThumbnailImage(
-                      path: locationToPathString(entry.location),
-                      name: entry.name,
-                      kind: thumbKind,
-                      extent: iconExtent,
-                    ),
-                  ),
+              : entry.isDirectory || thumbKind == null
+              ? ThumbnailIconTile(
+                  name: entry.name,
+                  isDirectory: entry.isDirectory,
+                  extent: iconExtent,
+                )
+              : ThumbnailImage(
+                  path: locationToPathString(entry.location),
+                  name: entry.name,
+                  kind: thumbKind,
+                  extent: iconExtent,
+                  modifiedMs: entry.modifiedAt?.millisecondsSinceEpoch,
+                  sizeBytes: entry.sizeBytes,
                 ),
         ),
         const SizedBox(height: 4),
@@ -847,12 +854,12 @@ class _PaneStatusBar extends StatelessWidget {
     required this.quickFilter,
     required this.viewSettings,
     required this.onToggleViewMode,
-    required this.onCycleThumbnailSize,
+    required this.onSelectThumbnailSize,
   });
 
   final PaneViewSettings viewSettings;
   final VoidCallback onToggleViewMode;
-  final VoidCallback onCycleThumbnailSize;
+  final ValueChanged<ThumbnailSize> onSelectThumbnailSize;
   final int count;
   final int selectedCount;
   final int selectedBytes;
@@ -881,7 +888,13 @@ class _PaneStatusBar extends StatelessWidget {
             child: Text(label, style: Theme.of(context).textTheme.labelSmall, overflow: TextOverflow.ellipsis),
           ),
           if (viewSettings.isThumbnails)
-            viewButton(Icons.photo_size_select_large, l10n.thumbnailSizeTooltip, onCycleThumbnailSize),
+            Builder(
+              builder: (buttonContext) => viewButton(
+                Icons.photo_size_select_large,
+                l10n.thumbnailSizeTooltip,
+                () => showThumbnailMenu(buttonContext, viewSettings.thumbnailSize, onSelectThumbnailSize),
+              ),
+            ),
           viewButton(
             viewSettings.isThumbnails ? Icons.view_list : Icons.grid_view,
             viewSettings.isThumbnails ? l10n.viewModeDetailsTooltip : l10n.viewModeThumbnailsTooltip,
@@ -964,6 +977,7 @@ class _ThumbnailGrid extends ConsumerStatefulWidget {
     required this.extent,
     required this.cursorIndex,
     required this.itemBuilder,
+    required this.onStepSize,
   });
 
   final PaneSide side;
@@ -972,6 +986,9 @@ class _ThumbnailGrid extends ConsumerStatefulWidget {
   final int? cursorIndex;
   final Widget Function(BuildContext context, int index, double cellExtent)
   itemBuilder;
+
+  /// Ctrl/Cmd + 마우스 휠로 썸네일 크기를 한 단계씩 바꾼다(+1 크게, -1 작게).
+  final ValueChanged<int> onStepSize;
 
   @override
   ConsumerState<_ThumbnailGrid> createState() => _ThumbnailGridState();
@@ -983,6 +1000,7 @@ class _ThumbnailGridState extends ConsumerState<_ThumbnailGrid> {
   static const _labelHeight = 46.0; // 이름 34 + 간격 4 + 셀 안쪽 여백 8
 
   final _scroll = ScrollController();
+  DateTime _lastWheelStep = DateTime.fromMillisecondsSinceEpoch(0);
   int _columns = 1;
   double _cellWidth = 0;
 
@@ -1053,7 +1071,20 @@ class _ThumbnailGridState extends ConsumerState<_ThumbnailGrid> {
             ref.read(paneGridPageRowsProvider(side).notifier).state = pageRows;
           }
         });
-        return GridView.builder(
+        return Listener(
+          onPointerSignal: (event) {
+            if (event is! PointerScrollEvent) return;
+            final keys = HardwareKeyboard.instance;
+            if (!keys.isControlPressed && !keys.isMetaPressed) return;
+            // 휠 한 번에 여러 이벤트가 오므로 일정 간격으로만 한 단계씩 바꾼다.
+            GestureBinding.instance.pointerSignalResolver.register(event, (_) {
+              final now = DateTime.now();
+              if (now.difference(_lastWheelStep) < const Duration(milliseconds: 250)) return;
+              _lastWheelStep = now;
+              widget.onStepSize(event.scrollDelta.dy < 0 ? 1 : -1);
+            });
+          },
+          child: GridView.builder(
           controller: _scroll,
           padding: EdgeInsets.fromLTRB(
             _padding,
@@ -1070,8 +1101,57 @@ class _ThumbnailGridState extends ConsumerState<_ThumbnailGrid> {
           itemCount: widget.itemCount,
           itemBuilder: (context, index) =>
               widget.itemBuilder(context, index, _cellWidth),
+          ),
         );
       },
     );
+  }
+}
+
+String _thumbnailSizeLabel(AppLocalizations l10n, ThumbnailSize size) => switch (size) {
+  ThumbnailSize.small => l10n.thumbnailSizeSmall,
+  ThumbnailSize.medium => l10n.thumbnailSizeMedium,
+  ThumbnailSize.large => l10n.thumbnailSizeLarge,
+};
+
+/// 썸네일 크기 선택과 썸네일 캐시 비우기 메뉴. 버튼 위에 펼친다.
+Future<void> showThumbnailMenu(
+  BuildContext buttonContext,
+  ThumbnailSize current,
+  ValueChanged<ThumbnailSize> onSelect,
+) async {
+  final l10n = AppLocalizations.of(buttonContext);
+  final messenger = ScaffoldMessenger.of(buttonContext);
+  final box = buttonContext.findRenderObject() as RenderBox;
+  final overlay = Overlay.of(buttonContext).context.findRenderObject() as RenderBox;
+  final position = RelativeRect.fromRect(
+    box.localToGlobal(Offset.zero, ancestor: overlay) & box.size,
+    Offset.zero & overlay.size,
+  );
+  final cacheBytes = await sharedThumbnailCache.totalBytes();
+  if (!buttonContext.mounted) return;
+  final choice = await showMenu<Object>(
+    context: buttonContext,
+    position: position,
+    items: [
+      for (final size in ThumbnailSize.values)
+        CheckedPopupMenuItem<Object>(
+          value: size,
+          checked: size == current,
+          child: Text(_thumbnailSizeLabel(l10n, size)),
+        ),
+      const PopupMenuDivider(),
+      PopupMenuItem<Object>(
+        value: 'clear',
+        child: Text(l10n.clearThumbnailCache(formatBytes(cacheBytes))),
+      ),
+    ],
+  );
+  if (choice is ThumbnailSize) {
+    onSelect(choice);
+  } else if (choice == 'clear') {
+    await sharedThumbnailCache.clear();
+    PaintingBinding.instance.imageCache.clear();
+    messenger.showSnackBar(SnackBar(content: Text(l10n.thumbnailCacheCleared)));
   }
 }
