@@ -1,7 +1,12 @@
+import 'dart:io';
+import 'dart:typed_data';
+
+import 'package:daylight_commander/application/thumbnail_cache.dart';
 import 'package:daylight_commander/application/thumbnail_policy.dart';
 import 'package:daylight_commander/domain/entities/file_entry.dart';
 import 'package:daylight_commander/presentation/home/pane_controller.dart';
-import 'package:daylight_commander/presentation/home/pane_view.dart' show breakableName;
+import 'package:daylight_commander/presentation/home/pane_view.dart'
+    show breakableName;
 import 'package:daylight_commander/presentation/home/pane_view_mode_provider.dart';
 import 'package:daylight_commander/presentation/widgets/thumbnail_image.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -31,7 +36,7 @@ void main() {
       expect(policy.kindFor(_file('/a/b.JPG')), ThumbnailKind.raster);
       expect(policy.kindFor(_file('/a/b.png')), ThumbnailKind.raster);
       expect(policy.kindFor(_file('/a/b.svg')), ThumbnailKind.svg);
-      expect(policy.kindFor(_file('/a/b.txt')), isNull);
+      expect(policy.kindFor(_file('/a/b.docx')), isNull);
       expect(policy.kindFor(_file('/a/noext')), isNull);
     });
 
@@ -86,6 +91,81 @@ nas:/export on /Volumes/nfs (nfs, nodev)
 //nas/share /mnt/x cifs rw 0 0
 ''';
       expect(parseNetworkMounts(linux), {'/mnt/x'});
+    });
+  });
+
+  group('ThumbnailPolicy 종류 확장', () {
+    final policy = ThumbnailPolicy();
+    test('pdf·비디오·오디오·텍스트도 종류를 정한다', () {
+      expect(policy.kindFor(_file('/a/doc.PDF')), ThumbnailKind.pdf);
+      expect(policy.kindFor(_file('/a/clip.mp4')), ThumbnailKind.video);
+      expect(policy.kindFor(_file('/a/song.mp3')), ThumbnailKind.audio);
+      expect(policy.kindFor(_file('/a/readme.md')), ThumbnailKind.text);
+      expect(
+        policy.kindFor(_file('/a/doc.pdf', size: maxPdfThumbnailBytes + 1)),
+        isNull,
+      );
+    });
+
+    test('원격 스킴의 pdf·비디오는 만들지 않는다', () {
+      expect(
+        policy.kindFor(
+          _file(
+            'x.pdf',
+            source: FileSourceType.webdav,
+            location: Uri.parse('webdav://h/x.pdf'),
+          ),
+        ),
+        isNull,
+      );
+    });
+  });
+
+  group('DiskThumbnailCache', () {
+    late Directory dir;
+    setUp(() => dir = Directory.systemTemp.createTempSync('thumbcache'));
+    tearDown(() => dir.deleteSync(recursive: true));
+
+    test('키는 파일이 바뀌면 달라지고 크기는 64px 구간으로 묶인다', () {
+      String k({int mtime = 1, int size = 10, int extent = 100}) =>
+          DiskThumbnailCache.keyFor(
+            path: '/a.pdf',
+            modifiedMs: mtime,
+            sizeBytes: size,
+            extent: extent,
+          );
+      expect(k(), k());
+      expect(k(), isNot(k(mtime: 2)));
+      expect(k(), isNot(k(size: 11)));
+      expect(k(extent: 100), k(extent: 120)); // 둘 다 128 구간
+      expect(k(extent: 100), isNot(k(extent: 130)));
+    });
+
+    test('저장한 PNG를 찾고, 만들 수 없음은 빈 기록으로 남는다', () async {
+      final cache = DiskThumbnailCache(directory: dir);
+      expect(await cache.lookup('abc'), isNull);
+
+      final stored = await cache.store('abc', Uint8List.fromList([1, 2, 3]));
+      expect(stored, isNotNull);
+      final hit = await cache.lookup('abc');
+      expect(hit!.file!.readAsBytesSync(), [1, 2, 3]);
+
+      expect(await cache.store('none', null), isNull);
+      final negative = await cache.lookup('none');
+      expect(negative, isNotNull);
+      expect(negative!.file, isNull);
+    });
+
+    test('용량을 넘으면 오래 안 쓴 것부터 지운다', () async {
+      final cache = DiskThumbnailCache(directory: dir, maxBytes: 100);
+      for (var i = 0; i < 4; i++) {
+        final file = await cache.store('k$i', Uint8List(40));
+        file!.setLastModifiedSync(DateTime(2026, 1, 1 + i));
+      }
+      await cache.trim();
+      expect(await cache.lookup('k0'), isNull);
+      expect(await cache.lookup('k1'), isNull);
+      expect(await cache.lookup('k3'), isNotNull);
     });
   });
 
@@ -156,8 +236,10 @@ nas:/export on /Volumes/nfs (nfs, nodev)
   });
 
   test('긴 이름은 구분 문자 뒤에 줄바꿈 후보를 넣는다', () {
-    expect(breakableName('dart_defines.local.example.json'),
-        'dart_\u200Bdefines.\u200Blocal.\u200Bexample.\u200Bjson');
+    expect(
+      breakableName('dart_defines.local.example.json'),
+      'dart_\u200Bdefines.\u200Blocal.\u200Bexample.\u200Bjson',
+    );
     expect(breakableName('plain'), 'plain');
   });
 }

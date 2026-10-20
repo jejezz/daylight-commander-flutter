@@ -4,12 +4,36 @@ import '../domain/entities/file_entry.dart';
 
 const thumbnailRasterExtensions = {'jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'};
 const thumbnailSvgExtensions = {'svg'};
+const thumbnailPdfExtensions = {'pdf'};
+const thumbnailVideoExtensions = {'mp4', 'mov', 'mkv', 'avi', 'webm', 'm4v'};
+const thumbnailAudioExtensions = {'mp3', 'flac', 'm4a', 'aac', 'ogg', 'wma', 'wav'};
+const thumbnailTextExtensions = {
+  'txt', 'md', 'json', 'xml', 'html', 'htm', 'css', 'java', 'dart', 'py', 'js',
+  'ts', 'yaml', 'yml', 'sql', 'sh', 'log', 'ini', 'csv', 'c', 'cpp', 'h', 'kt',
+  'swift', 'gradle',
+};
 
 /// 썸네일로 읽을 파일의 최대 크기. 이보다 크면 아이콘만 보인다.
 const maxRasterThumbnailBytes = 50 * 1024 * 1024;
 const maxSvgThumbnailBytes = 2 * 1024 * 1024;
+const maxPdfThumbnailBytes = 200 * 1024 * 1024;
+const maxAudioThumbnailBytes = 200 * 1024 * 1024;
 
-enum ThumbnailKind { raster, svg }
+/// 이보다 큰 래스터 이미지는 줄인 썸네일을 디스크 캐시에 두고 다시 쓴다. 작은 이미지는
+/// 디코딩이 싸서 캐시를 거치지 않는 편이 빠르다.
+const diskCachedRasterBytes = 1024 * 1024;
+
+enum ThumbnailKind {
+  raster,
+  svg,
+  pdf,
+  video,
+  audio,
+  text;
+
+  /// 만든 결과를 디스크 캐시에 두는 종류. (svg와 text는 위젯이 직접 그린다.)
+  bool get usesDiskCache => this == pdf || this == video || this == audio;
+}
 
 /// 마운트 정보에서 네트워크 파일시스템 마운트 지점을 뽑는다.
 /// macOS `mount` 출력(`//u@host/share on /Volumes/share (smbfs, ...)`)과
@@ -104,6 +128,16 @@ class ThumbnailPolicy {
       if (size != null && size > maxSvgThumbnailBytes) return null;
       return ThumbnailKind.svg;
     }
+    if (thumbnailPdfExtensions.contains(ext)) {
+      if (size != null && size > maxPdfThumbnailBytes) return null;
+      return ThumbnailKind.pdf;
+    }
+    if (thumbnailVideoExtensions.contains(ext)) return ThumbnailKind.video;
+    if (thumbnailAudioExtensions.contains(ext)) {
+      if (size != null && size > maxAudioThumbnailBytes) return null;
+      return ThumbnailKind.audio;
+    }
+    if (thumbnailTextExtensions.contains(ext)) return ThumbnailKind.text;
     return null;
   }
 }

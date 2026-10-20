@@ -712,6 +712,8 @@ class _FileRow extends StatelessWidget {
                       name: entry.name,
                       kind: thumbKind,
                       extent: iconExtent,
+                      modifiedMs: entry.modifiedAt?.millisecondsSinceEpoch,
+                      sizeBytes: entry.sizeBytes,
                     ),
                   ),
                 ),

@@ -1,10 +1,13 @@
 import 'dart:async';
 import 'dart:collection';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
+import '../../application/thumbnail_cache.dart';
+import '../../application/thumbnail_generator.dart';
 import '../../application/thumbnail_policy.dart';
 import 'file_icon.dart';
 
@@ -70,6 +73,9 @@ class ThumbnailTicket {
   }
 }
 
+/// 앱 전체가 공유하는 디스크 캐시.
+final DiskThumbnailCache sharedThumbnailCache = DiskThumbnailCache();
+
 /// 파일 썸네일. 만들 수 없거나 실패하면 [FileIcon]으로 대체한다.
 class ThumbnailImage extends StatefulWidget {
   const ThumbnailImage({
@@ -78,14 +84,24 @@ class ThumbnailImage extends StatefulWidget {
     required this.name,
     required this.kind,
     required this.extent,
+    this.modifiedMs,
+    this.sizeBytes,
     this.queue,
+    this.cache,
+    this.generator,
   });
 
   final String path;
   final String name;
   final ThumbnailKind? kind;
   final double extent;
+
+  /// 디스크 캐시 키에 쓰인다 — 파일이 바뀌면 썸네일도 새로 만든다.
+  final int? modifiedMs;
+  final int? sizeBytes;
   final ThumbnailQueue? queue;
+  final DiskThumbnailCache? cache;
+  final ThumbnailGenerator? generator;
 
   @override
   State<ThumbnailImage> createState() => _ThumbnailImageState();
@@ -96,10 +112,14 @@ class _ThumbnailImageState extends State<ThumbnailImage> {
   ImageProvider? _provider;
   ImageStream? _stream;
   ImageStreamListener? _listener;
+  String? _text;
   bool _ready = false;
   bool _failed = false;
 
   ThumbnailQueue get _queue => widget.queue ?? ThumbnailQueue.shared;
+  DiskThumbnailCache get _cache => widget.cache ?? sharedThumbnailCache;
+  ThumbnailGenerator get _generator =>
+      widget.generator ?? ThumbnailGenerator.shared;
 
   @override
   void initState() {
@@ -112,12 +132,26 @@ class _ThumbnailImageState extends State<ThumbnailImage> {
     super.didUpdateWidget(old);
     if (old.path != widget.path ||
         old.kind != widget.kind ||
-        old.extent != widget.extent) {
+        old.extent != widget.extent ||
+        old.modifiedMs != widget.modifiedMs) {
       _stop();
       _ready = false;
       _failed = false;
+      _text = null;
       _start();
     }
+  }
+
+  void _finish(ThumbnailTicket ticket, {bool failed = false}) {
+    _queue.release(ticket);
+    if (!mounted || _ticket != ticket) return;
+    setState(() {
+      if (failed) {
+        _failed = true;
+      } else {
+        _ready = true;
+      }
+    });
   }
 
   Future<void> _start() async {
@@ -130,29 +164,72 @@ class _ThumbnailImageState extends State<ThumbnailImage> {
 
     if (kind == ThumbnailKind.svg) {
       // SVG 파싱은 위젯이 비동기로 처리하므로 슬롯을 바로 돌려준다.
-      _queue.release(ticket);
-      setState(() => _ready = true);
+      _finish(ticket);
+      return;
+    }
+
+    if (kind == ThumbnailKind.text) {
+      try {
+        final bytes = await File(widget.path)
+            .openRead(0, 2048)
+            .fold<List<int>>([], (a, b) => a..addAll(b));
+        _text = utf8.decode(bytes, allowMalformed: true);
+        _finish(ticket);
+      } catch (_) {
+        _finish(ticket, failed: true);
+      }
       return;
     }
 
     final dpr = MediaQuery.devicePixelRatioOf(context);
-    final provider = ResizeImage(
-      FileImage(File(widget.path)),
-      width: (widget.extent * dpr).round(),
-      allowUpscaling: false,
-    );
+    final px = (widget.extent * dpr).round();
+    File? source;
+    final viaCache =
+        kind.usesDiskCache ||
+        (kind == ThumbnailKind.raster &&
+            (widget.sizeBytes ?? 0) >= diskCachedRasterBytes);
+    if (viaCache) {
+      try {
+        final key = DiskThumbnailCache.keyFor(
+          path: widget.path,
+          modifiedMs: widget.modifiedMs,
+          sizeBytes: widget.sizeBytes,
+          extent: px,
+        );
+        final hit = await _cache.lookup(key);
+        if (hit != null) {
+          source = hit.file;
+        } else {
+          final bytes = await _generator.generate(kind, widget.path, px);
+          source = await _cache.store(key, bytes);
+        }
+      } catch (_) {
+        source = null;
+      }
+      if (!mounted || _ticket != ticket) {
+        _queue.release(ticket);
+        return;
+      }
+      // 만들 수 없는 파일(앨범 아트 없음 등)은 기록만 남기고 아이콘으로 둔다.
+      if (source == null) {
+        _finish(ticket, failed: true);
+        return;
+      }
+    }
+
+    final provider = viaCache
+        ? FileImage(source!) as ImageProvider
+        : ResizeImage(
+            FileImage(File(widget.path)),
+            width: px,
+            allowUpscaling: false,
+          );
     _provider = provider;
     final stream = provider.resolve(ImageConfiguration.empty);
     _stream = stream;
     _listener = ImageStreamListener(
-      (info, sync) {
-        _queue.release(ticket);
-        if (mounted) setState(() => _ready = true);
-      },
-      onError: (error, stack) {
-        _queue.release(ticket);
-        if (mounted) setState(() => _failed = true);
-      },
+      (info, sync) => _finish(ticket),
+      onError: (error, stack) => _finish(ticket, failed: true),
     );
     stream.addListener(_listener!);
   }
@@ -185,22 +262,63 @@ class _ThumbnailImageState extends State<ThumbnailImage> {
     if (widget.kind == null || _failed || !_ready) {
       return Center(child: _icon());
     }
-    if (widget.kind == ThumbnailKind.svg) {
-      return SvgPicture.file(
-        File(widget.path),
-        width: widget.extent,
-        height: widget.extent,
-        fit: BoxFit.contain,
-        placeholderBuilder: (_) => Center(child: _icon()),
-      );
+    switch (widget.kind!) {
+      case ThumbnailKind.svg:
+        return SvgPicture.file(
+          File(widget.path),
+          width: widget.extent,
+          height: widget.extent,
+          fit: BoxFit.contain,
+          placeholderBuilder: (_) => Center(child: _icon()),
+        );
+      case ThumbnailKind.text:
+        return _TextPreview(text: _text ?? '', extent: widget.extent);
+      case ThumbnailKind.raster:
+      case ThumbnailKind.pdf:
+      case ThumbnailKind.video:
+      case ThumbnailKind.audio:
+        return Image(
+          image: _provider!,
+          fit: BoxFit.contain,
+          width: widget.extent,
+          height: widget.extent,
+          gaplessPlayback: true,
+          errorBuilder: (_, _, _) => Center(child: _icon()),
+        );
     }
-    return Image(
-      image: _provider!,
-      fit: BoxFit.contain,
-      width: widget.extent,
-      height: widget.extent,
-      gaplessPlayback: true,
-      errorBuilder: (_, _, _) => Center(child: _icon()),
+  }
+}
+
+/// 텍스트 파일의 앞부분을 작은 글씨로 보여 주는 종이 모양 미리보기.
+class _TextPreview extends StatelessWidget {
+  const _TextPreview({required this.text, required this.extent});
+
+  final String text;
+  final double extent;
+
+  @override
+  Widget build(BuildContext context) {
+    final lines = text.replaceAll('\r', '').split('\n').take(14).join('\n');
+    return Center(
+      child: ClipRect(
+        child: Container(
+          width: extent * 0.78,
+          height: extent,
+          padding: const EdgeInsets.all(5),
+          color: const Color(0xFFF7F5EF),
+          child: Text(
+            lines,
+            maxLines: 14,
+            overflow: TextOverflow.clip,
+            softWrap: false,
+            style: const TextStyle(
+              fontSize: 6,
+              height: 1.25,
+              color: Color(0xFF2A2A2A),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
