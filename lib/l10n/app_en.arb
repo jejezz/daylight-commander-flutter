@@ -141,7 +141,17 @@
   "removeBookmarkTooltip": "Remove Bookmark",
   "viewModeDetailsTooltip": "Switch to details view",
   "viewModeThumbnailsTooltip": "Switch to thumbnail view",
-  "thumbnailSizeTooltip": "Change thumbnail size",
+  "thumbnailSizeTooltip": "Thumbnail size",
+  "thumbnailSizeSmall": "Small",
+  "thumbnailSizeMedium": "Medium",
+  "thumbnailSizeLarge": "Large",
+  "clearThumbnailCache": "Clear thumbnail cache ({size})",
+  "@clearThumbnailCache": {
+    "placeholders": {
+      "size": { "type": "String" }
+    }
+  },
+  "thumbnailCacheCleared": "Thumbnail cache cleared",
   "showHiddenTooltip": "Show Hidden Files",
   "directoryTreeTooltip": "Directory tree",
   "itemCountLabel": "{count} item(s)",

@@ -6,9 +6,11 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
+import '../../application/folder_preview.dart';
 import '../../application/thumbnail_cache.dart';
 import '../../application/thumbnail_generator.dart';
 import '../../application/thumbnail_policy.dart';
+import '../../application/thumbnail_source.dart';
 import 'file_icon.dart';
 
 /// 동시에 디코딩하는 썸네일 수를 제한하는 큐. 사진이 수천 장인 폴더를 열어도
@@ -184,48 +186,24 @@ class _ThumbnailImageState extends State<ThumbnailImage> {
     }
 
     final dpr = MediaQuery.devicePixelRatioOf(context);
-    final px = (widget.extent * dpr).round();
-    File? source;
-    final viaCache =
-        kind.usesDiskCache ||
-        (kind == ThumbnailKind.raster &&
-            (widget.sizeBytes ?? 0) >= diskCachedRasterBytes);
-    if (viaCache) {
-      try {
-        final key = DiskThumbnailCache.keyFor(
-          path: widget.path,
-          modifiedMs: widget.modifiedMs,
-          sizeBytes: widget.sizeBytes,
-          extent: px,
-        );
-        final hit = await _cache.lookup(key);
-        if (hit != null) {
-          source = hit.file;
-        } else {
-          final bytes = await _generator.generate(kind, widget.path, px);
-          source = await _cache.store(key, bytes);
-        }
-      } catch (_) {
-        source = null;
-      }
-      if (!mounted || _ticket != ticket) {
-        _queue.release(ticket);
-        return;
-      }
-      // 만들 수 없는 파일(앨범 아트 없음 등)은 기록만 남기고 아이콘으로 둔다.
-      if (source == null) {
-        _finish(ticket, failed: true);
-        return;
-      }
+    final provider = await resolveThumbnailProvider(
+      kind: kind,
+      path: widget.path,
+      modifiedMs: widget.modifiedMs,
+      sizeBytes: widget.sizeBytes,
+      px: (widget.extent * dpr).round(),
+      cache: _cache,
+      generator: _generator,
+    );
+    if (!mounted || _ticket != ticket) {
+      _queue.release(ticket);
+      return;
     }
-
-    final provider = viaCache
-        ? FileImage(source!) as ImageProvider
-        : ResizeImage(
-            FileImage(File(widget.path)),
-            width: px,
-            allowUpscaling: false,
-          );
+    // 만들 수 없는 파일(앨범 아트 없음 등)은 아이콘으로 둔다.
+    if (provider == null) {
+      _finish(ticket, failed: true);
+      return;
+    }
     _provider = provider;
     final stream = provider.resolve(ImageConfiguration.empty);
     _stream = stream;
@@ -368,6 +346,135 @@ class _TextPreview extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// 폴더 썸네일 — 폴더 안의 이미지를 최대 4장 모아 둥근 타일에 보여 준다. 이미지가 없거나 아직
+/// 찾는 중이면 일반 폴더 아이콘 타일이다. 폴더임을 알 수 있게 모자이크 위에 작은 폴더 아이콘을 얹는다.
+class FolderThumbnail extends StatefulWidget {
+  const FolderThumbnail({
+    super.key,
+    required this.path,
+    required this.name,
+    required this.extent,
+    this.modifiedMs,
+    this.queue,
+    this.cache,
+    this.generator,
+    this.finder,
+  });
+
+  final String path;
+  final String name;
+  final double extent;
+  final int? modifiedMs;
+  final ThumbnailQueue? queue;
+  final DiskThumbnailCache? cache;
+  final ThumbnailGenerator? generator;
+  final FolderPreviewFinder? finder;
+
+  @override
+  State<FolderThumbnail> createState() => _FolderThumbnailState();
+}
+
+class _FolderThumbnailState extends State<FolderThumbnail> {
+  ThumbnailTicket? _ticket;
+  List<ImageProvider> _providers = const [];
+
+  ThumbnailQueue get _queue => widget.queue ?? ThumbnailQueue.shared;
+
+  @override
+  void initState() {
+    super.initState();
+    _start();
+  }
+
+  @override
+  void didUpdateWidget(FolderThumbnail old) {
+    super.didUpdateWidget(old);
+    if (old.path != widget.path || old.modifiedMs != widget.modifiedMs || old.extent != widget.extent) {
+      _stop();
+      _providers = const [];
+      _start();
+    }
+  }
+
+  Future<void> _start() async {
+    final ticket = _queue.acquire();
+    _ticket = ticket;
+    await ticket.granted;
+    if (!mounted || _ticket != ticket) return;
+    final dpr = MediaQuery.devicePixelRatioOf(context);
+    final px = (widget.extent / 2 * dpr).round();
+    try {
+      final images = await (widget.finder ?? FolderPreviewFinder.shared).find(widget.path, widget.modifiedMs);
+      final providers = <ImageProvider>[];
+      for (final image in images) {
+        final provider = await resolveThumbnailProvider(
+          kind: ThumbnailKind.raster,
+          path: image.path,
+          modifiedMs: image.modifiedMs,
+          sizeBytes: image.sizeBytes,
+          px: px,
+          cache: widget.cache ?? sharedThumbnailCache,
+          generator: widget.generator ?? ThumbnailGenerator.shared,
+        );
+        if (provider != null) providers.add(provider);
+        if (!mounted || _ticket != ticket) break;
+      }
+      if (mounted && _ticket == ticket) setState(() => _providers = providers);
+    } catch (_) {}
+    _queue.release(ticket);
+  }
+
+  void _stop() {
+    final ticket = _ticket;
+    if (ticket != null) _queue.cancel(ticket);
+    _ticket = null;
+  }
+
+  @override
+  void dispose() {
+    _stop();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_providers.isEmpty) {
+      return ThumbnailIconTile(name: widget.name, isDirectory: true, extent: widget.extent);
+    }
+    final radius = thumbnailRadius(widget.extent);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    Widget cell(int i) => i < _providers.length
+        ? Image(image: _providers[i], fit: BoxFit.cover, gaplessPlayback: true, errorBuilder: (_, _, _) => const SizedBox())
+        : const SizedBox();
+    final mosaic = _providers.length == 1
+        ? cell(0)
+        : Column(
+            children: [
+              Expanded(child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [Expanded(child: cell(0)), const SizedBox(width: 1), Expanded(child: cell(1))])),
+              const SizedBox(height: 1),
+              Expanded(child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [Expanded(child: cell(2)), const SizedBox(width: 1), Expanded(child: cell(3))])),
+            ],
+          );
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        DecoratedBox(
+          decoration: BoxDecoration(
+            color: isDark ? Colors.white10 : Colors.black12,
+            borderRadius: BorderRadius.circular(radius),
+          ),
+          child: ClipRRect(borderRadius: BorderRadius.circular(radius), child: mosaic),
+        ),
+        Positioned(
+          left: 4,
+          bottom: 4,
+          child: FileIcon(name: widget.name, isDirectory: true, size: widget.extent * 0.3),
+        ),
+      ],
     );
   }
 }

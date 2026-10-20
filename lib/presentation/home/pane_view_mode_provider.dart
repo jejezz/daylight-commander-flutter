@@ -75,6 +75,18 @@ class PaneViewSettingsController extends StateNotifier<PaneViewSettings> {
     _persist();
   }
 
+  void setThumbnailSize(ThumbnailSize size) {
+    if (size == state.thumbnailSize) return;
+    state = state.copyWith(thumbnailSize: size);
+    _persist();
+  }
+
+  /// 크기를 한 단계 키우거나(+1) 줄인다(-1). 끝에서는 더 가지 않는다(마우스 휠 조절용).
+  void stepThumbnailSize(int delta) {
+    final next = (state.thumbnailSize.index + delta).clamp(0, ThumbnailSize.values.length - 1);
+    setThumbnailSize(ThumbnailSize.values[next]);
+  }
+
   void cycleThumbnailSize() {
     state = state.copyWith(thumbnailSize: state.thumbnailSize.next);
     _persist();

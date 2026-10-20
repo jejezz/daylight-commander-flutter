@@ -695,8 +695,38 @@ abstract class AppLocalizations {
   /// No description provided for @thumbnailSizeTooltip.
   ///
   /// In ko, this message translates to:
-  /// **'썸네일 크기 변경'**
+  /// **'썸네일 크기'**
   String get thumbnailSizeTooltip;
+
+  /// No description provided for @thumbnailSizeSmall.
+  ///
+  /// In ko, this message translates to:
+  /// **'작게'**
+  String get thumbnailSizeSmall;
+
+  /// No description provided for @thumbnailSizeMedium.
+  ///
+  /// In ko, this message translates to:
+  /// **'보통'**
+  String get thumbnailSizeMedium;
+
+  /// No description provided for @thumbnailSizeLarge.
+  ///
+  /// In ko, this message translates to:
+  /// **'크게'**
+  String get thumbnailSizeLarge;
+
+  /// No description provided for @clearThumbnailCache.
+  ///
+  /// In ko, this message translates to:
+  /// **'썸네일 캐시 비우기 ({size})'**
+  String clearThumbnailCache(String size);
+
+  /// No description provided for @thumbnailCacheCleared.
+  ///
+  /// In ko, this message translates to:
+  /// **'썸네일 캐시를 비웠습니다'**
+  String get thumbnailCacheCleared;
 
   /// No description provided for @showHiddenTooltip.
   ///

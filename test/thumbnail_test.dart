@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:daylight_commander/application/folder_preview.dart';
 import 'package:daylight_commander/application/thumbnail_cache.dart';
 import 'package:daylight_commander/application/thumbnail_policy.dart';
 import 'package:daylight_commander/domain/entities/file_entry.dart';
@@ -241,5 +242,105 @@ nas:/export on /Volumes/nfs (nfs, nodev)
       'dart_\u200Bdefines.\u200Blocal.\u200Bexample.\u200Bjson',
     );
     expect(breakableName('plain'), 'plain');
+  });
+
+  group('폴더 썸네일', () {
+    late Directory dir;
+    setUp(() => dir = Directory.systemTemp.createTempSync('folderprev'));
+    tearDown(() => dir.deleteSync(recursive: true));
+
+    test('안의 이미지 중 이름순 앞 4장을 고르고 숨김·비이미지·하위 폴더는 건너뛴다', () async {
+      for (final name in [
+        'e.png',
+        'b.jpg',
+        'a.PNG',
+        'd.gif',
+        'c.webp',
+        '.hidden.png',
+        'note.txt',
+      ]) {
+        File('${dir.path}/$name').writeAsBytesSync([1, 2, 3]);
+      }
+      Directory('${dir.path}/sub').createSync();
+      File('${dir.path}/sub/z.png').writeAsBytesSync([1]);
+
+      final images = await FolderPreviewFinder().find(dir.path, 1);
+      expect(images.map((i) => i.path.split('/').last), [
+        'a.PNG',
+        'b.jpg',
+        'c.webp',
+        'd.gif',
+      ]);
+    });
+
+    test('이미지가 없으면 빈 목록이고, 폴더 수정 시각이 같으면 결과를 재사용한다', () async {
+      final finder = FolderPreviewFinder();
+      expect(await finder.find(dir.path, 1), isEmpty);
+      File('${dir.path}/a.png').writeAsBytesSync([1]);
+      expect(await finder.find(dir.path, 1), isEmpty); // 같은 수정 시각 → 캐시
+      expect(await finder.find(dir.path, 2), hasLength(1)); // 폴더가 바뀜 → 다시 훑음
+    });
+
+    test('로컬 폴더만 미리보기하고 원격 폴더와 파일은 제외한다', () {
+      final policy = ThumbnailPolicy(networkMounts: {'/Volumes/share'});
+      FileEntry folder(
+        Uri location, {
+        FileSourceType source = FileSourceType.local,
+      }) => FileEntry(
+        location: location,
+        name: 'f',
+        isDirectory: true,
+        source: source,
+      );
+      expect(policy.canPreviewFolder(folder(Uri.file('/a/f'))), isTrue);
+      expect(
+        policy.canPreviewFolder(folder(Uri.file('/Volumes/share/f'))),
+        isFalse,
+      );
+      expect(
+        policy.canPreviewFolder(
+          folder(Uri.parse('sftp://h/f'), source: FileSourceType.sftp),
+        ),
+        isFalse,
+      );
+      expect(policy.canPreviewFolder(_file('/a/f.png')), isFalse);
+    });
+  });
+
+  test('썸네일 크기 단계 조절은 끝에서 멈추고 저장된다', () async {
+    SharedPreferences.setMockInitialValues({});
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+    final notifier = container.read(
+      paneViewSettingsProvider(PaneSide.left).notifier,
+    );
+    await Future<void>.delayed(const Duration(milliseconds: 50));
+    ThumbnailSize size() =>
+        container.read(paneViewSettingsProvider(PaneSide.left)).thumbnailSize;
+
+    expect(size(), ThumbnailSize.medium);
+    notifier.stepThumbnailSize(1);
+    expect(size(), ThumbnailSize.large);
+    notifier.stepThumbnailSize(1);
+    expect(size(), ThumbnailSize.large); // 끝에서 더 가지 않는다
+    notifier.stepThumbnailSize(-2);
+    expect(size(), ThumbnailSize.small);
+    notifier.setThumbnailSize(ThumbnailSize.medium);
+    await Future<void>.delayed(const Duration(milliseconds: 50));
+    expect(
+      (await SharedPreferences.getInstance()).getString('pane_thumb_size_left'),
+      'medium',
+    );
+  });
+
+  test('캐시 용량 합계를 구하고 비운다', () async {
+    final dir = Directory.systemTemp.createTempSync('thumbtotal');
+    addTearDown(() => dir.deleteSync(recursive: true));
+    final cache = DiskThumbnailCache(directory: dir);
+    await cache.store('a', Uint8List(100));
+    await cache.store('b', Uint8List(50));
+    expect(await cache.totalBytes(), 150);
+    await cache.clear();
+    expect(await cache.totalBytes(), 0);
   });
 }

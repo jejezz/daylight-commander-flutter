@@ -325,7 +325,24 @@ class AppLocalizationsEn extends AppLocalizations {
   String get viewModeThumbnailsTooltip => 'Switch to thumbnail view';
 
   @override
-  String get thumbnailSizeTooltip => 'Change thumbnail size';
+  String get thumbnailSizeTooltip => 'Thumbnail size';
+
+  @override
+  String get thumbnailSizeSmall => 'Small';
+
+  @override
+  String get thumbnailSizeMedium => 'Medium';
+
+  @override
+  String get thumbnailSizeLarge => 'Large';
+
+  @override
+  String clearThumbnailCache(String size) {
+    return 'Clear thumbnail cache ($size)';
+  }
+
+  @override
+  String get thumbnailCacheCleared => 'Thumbnail cache cleared';
 
   @override
   String get showHiddenTooltip => 'Show Hidden Files';

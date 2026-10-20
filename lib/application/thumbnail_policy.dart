@@ -112,6 +112,10 @@ class ThumbnailPolicy {
     return false;
   }
 
+  /// 폴더 안의 이미지를 모아 폴더 썸네일로 보여 줄 수 있는지. 폴더 안을 읽어야 하므로 로컬 폴더만이다.
+  bool canPreviewFolder(FileEntry entry) =>
+      entry.isDirectory && entry.source == FileSourceType.local && !isNetworkLocation(entry.location);
+
   /// [entry]에 만들 썸네일 종류. 만들지 않으면 null (아이콘만 표시).
   ThumbnailKind? kindFor(FileEntry entry) {
     if (entry.isDirectory || entry.source != FileSourceType.local) return null;

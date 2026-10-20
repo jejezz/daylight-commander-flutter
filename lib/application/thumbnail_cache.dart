@@ -104,6 +104,17 @@ class DiskThumbnailCache {
     } catch (_) {}
   }
 
+  /// 캐시가 차지하는 용량(바이트).
+  Future<int> totalBytes() async {
+    var total = 0;
+    try {
+      await for (final entity in (await _dir()).list()) {
+        if (entity is File) total += await entity.length();
+      }
+    } catch (_) {}
+    return total;
+  }
+
   /// 캐시를 모두 지운다.
   Future<void> clear() async {
     try {
