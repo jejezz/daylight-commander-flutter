@@ -113,6 +113,7 @@ class _ThumbnailImageState extends State<ThumbnailImage> {
   ImageStream? _stream;
   ImageStreamListener? _listener;
   String? _text;
+  double? _aspect;
   bool _ready = false;
   bool _failed = false;
 
@@ -138,6 +139,7 @@ class _ThumbnailImageState extends State<ThumbnailImage> {
       _ready = false;
       _failed = false;
       _text = null;
+      _aspect = null;
       _start();
     }
   }
@@ -228,7 +230,10 @@ class _ThumbnailImageState extends State<ThumbnailImage> {
     final stream = provider.resolve(ImageConfiguration.empty);
     _stream = stream;
     _listener = ImageStreamListener(
-      (info, sync) => _finish(ticket),
+      (info, sync) {
+        _aspect = info.image.width / info.image.height;
+        _finish(ticket);
+      },
       onError: (error, stack) => _finish(ticket, failed: true),
     );
     stream.addListener(_listener!);
@@ -251,70 +256,114 @@ class _ThumbnailImageState extends State<ThumbnailImage> {
     super.dispose();
   }
 
-  Widget _icon() => FileIcon(
+  Widget _fallback() => ThumbnailIconTile(
     name: widget.name,
     isDirectory: false,
-    size: widget.extent * 0.7,
+    extent: widget.extent,
   );
 
   @override
   Widget build(BuildContext context) {
-    if (widget.kind == null || _failed || !_ready) {
-      return Center(child: _icon());
-    }
+    if (widget.kind == null || _failed || !_ready) return _fallback();
+    final radius = thumbnailRadius(widget.extent);
     switch (widget.kind!) {
       case ThumbnailKind.svg:
-        return SvgPicture.file(
-          File(widget.path),
-          width: widget.extent,
-          height: widget.extent,
-          fit: BoxFit.contain,
-          placeholderBuilder: (_) => Center(child: _icon()),
+        // 벡터 그림은 비율과 여백이 제각각이라 타일 위에 놓는다.
+        return ThumbnailIconTile(
+          name: widget.name,
+          isDirectory: false,
+          extent: widget.extent,
+          child: SvgPicture.file(
+            File(widget.path),
+            fit: BoxFit.contain,
+            placeholderBuilder: (_) => const SizedBox.shrink(),
+          ),
         );
       case ThumbnailKind.text:
-        return _TextPreview(text: _text ?? '', extent: widget.extent);
+        return _TextPreview(text: _text ?? '', extent: widget.extent, radius: radius);
       case ThumbnailKind.raster:
       case ThumbnailKind.pdf:
       case ThumbnailKind.video:
       case ThumbnailKind.audio:
-        return Image(
-          image: _provider!,
-          fit: BoxFit.contain,
-          width: widget.extent,
-          height: widget.extent,
-          gaplessPlayback: true,
-          errorBuilder: (_, _, _) => Center(child: _icon()),
+        // 비율을 알고 있으니 그 크기로 맞춘 뒤 모서리를 자른다 — 여백 없이 그림 자체가 둥글다.
+        return Center(
+          child: AspectRatio(
+            aspectRatio: _aspect ?? 1,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(radius),
+              child: Image(
+                image: _provider!,
+                fit: BoxFit.fill,
+                gaplessPlayback: true,
+                errorBuilder: (_, _, _) => _fallback(),
+              ),
+            ),
+          ),
         );
     }
   }
 }
 
+/// 썸네일 모서리 반지름 — 셀 크기에 비례해 작게/크게 어느 크기에서나 비슷해 보인다.
+double thumbnailRadius(double extent) => (extent * 0.08).clamp(5.0, 14.0);
+
+/// 아이콘(폴더, 내용 썸네일이 없는 파일)을 둥근 타일 위에 놓는다. [child]가 있으면 아이콘 대신 쓴다.
+class ThumbnailIconTile extends StatelessWidget {
+  const ThumbnailIconTile({
+    super.key,
+    required this.name,
+    required this.isDirectory,
+    required this.extent,
+    this.child,
+  });
+
+  final String name;
+  final bool isDirectory;
+  final double extent;
+  final Widget? child;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: isDark ? Colors.white10 : Colors.black12,
+        borderRadius: BorderRadius.circular(thumbnailRadius(extent)),
+      ),
+      child: Center(
+        child:
+            child ??
+            FileIcon(name: name, isDirectory: isDirectory, size: extent * 0.7),
+      ),
+    );
+  }
+}
+
 /// 텍스트 파일의 앞부분을 작은 글씨로 보여 주는 종이 모양 미리보기.
 class _TextPreview extends StatelessWidget {
-  const _TextPreview({required this.text, required this.extent});
+  const _TextPreview({required this.text, required this.extent, required this.radius});
 
   final String text;
   final double extent;
+  final double radius;
 
   @override
   Widget build(BuildContext context) {
     final lines = text.replaceAll('\r', '').split('\n').take(14).join('\n');
     return Center(
-      child: ClipRect(
-        child: Container(
-          width: extent * 0.78,
-          height: extent,
-          padding: const EdgeInsets.all(5),
-          color: const Color(0xFFF7F5EF),
-          child: Text(
-            lines,
-            maxLines: 14,
-            overflow: TextOverflow.clip,
-            softWrap: false,
-            style: const TextStyle(
-              fontSize: 6,
-              height: 1.25,
-              color: Color(0xFF2A2A2A),
+      child: AspectRatio(
+        aspectRatio: 0.78,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(radius),
+          child: Container(
+            padding: const EdgeInsets.all(5),
+            color: const Color(0xFFF7F5EF),
+            child: Text(
+              lines,
+              maxLines: 14,
+              overflow: TextOverflow.clip,
+              softWrap: false,
+              style: const TextStyle(fontSize: 6, height: 1.25, color: Color(0xFF2A2A2A)),
             ),
           ),
         ),

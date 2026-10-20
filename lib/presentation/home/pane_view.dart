@@ -689,33 +689,22 @@ class _FileRow extends StatelessWidget {
     final iconExtent = thumbExtent - 8;
     return Column(
       children: [
+        // 폴더와 아이콘만 보이는 파일은 둥근 타일 위에 놓고, 내용이 있는 썸네일(이미지·PDF 등)은
+        // 그림 자체의 모서리를 둥글게 한다. 반지름은 셀 크기에 비례한다.
         Expanded(
           child: entry.isDirectory || thumbKind == null
-              ? Center(
-                  child: FileIcon(
-                    name: entry.name,
-                    isDirectory: entry.isDirectory,
-                    size: iconExtent * 0.7,
-                  ),
+              ? ThumbnailIconTile(
+                  name: entry.name,
+                  isDirectory: entry.isDirectory,
+                  extent: iconExtent,
                 )
-              : DecoratedBox(
-                  decoration: BoxDecoration(
-                    color: theme.brightness == Brightness.dark
-                        ? Colors.white10
-                        : Colors.black12,
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(6),
-                    child: ThumbnailImage(
-                      path: locationToPathString(entry.location),
-                      name: entry.name,
-                      kind: thumbKind,
-                      extent: iconExtent,
-                      modifiedMs: entry.modifiedAt?.millisecondsSinceEpoch,
-                      sizeBytes: entry.sizeBytes,
-                    ),
-                  ),
+              : ThumbnailImage(
+                  path: locationToPathString(entry.location),
+                  name: entry.name,
+                  kind: thumbKind,
+                  extent: iconExtent,
+                  modifiedMs: entry.modifiedAt?.millisecondsSinceEpoch,
+                  sizeBytes: entry.sizeBytes,
                 ),
         ),
         const SizedBox(height: 4),
