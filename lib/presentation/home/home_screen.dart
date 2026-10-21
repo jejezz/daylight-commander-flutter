@@ -397,28 +397,37 @@ class _SyncBar extends ConsumerWidget {
     return Row(
       children: [
         Expanded(
-          child: OutlinedButton.icon(
+          child: Tooltip(
+            message: l10n.syncDiffToRight(leftCount),
+            child: OutlinedButton.icon(
             onPressed: leftCount > 0 ? () => syncFolders(context, ref, PaneSide.left) : null,
             icon: const ToolIcon('icons8-folder-exchange.svg', size: 16),
             label: Text(l10n.syncDiffToRight(leftCount), overflow: TextOverflow.ellipsis),
           ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: OutlinedButton.icon(
-            onPressed: rightCount > 0 ? () => syncFolders(context, ref, PaneSide.right) : null,
-            icon: const ToolIcon('icons8-folder-exchange.svg', size: 16),
-            label: Text(l10n.syncDiffToLeft(rightCount), overflow: TextOverflow.ellipsis),
           ),
         ),
         const SizedBox(width: 8),
         Expanded(
-          child: OutlinedButton.icon(
+          child: Tooltip(
+            message: l10n.syncDiffToLeft(rightCount),
+            child: OutlinedButton.icon(
+            onPressed: rightCount > 0 ? () => syncFolders(context, ref, PaneSide.right) : null,
+            icon: const ToolIcon('icons8-folder-exchange.svg', size: 16),
+            label: Text(l10n.syncDiffToLeft(rightCount), overflow: TextOverflow.ellipsis),
+          ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Tooltip(
+            message: l10n.bidirectionalSyncButton,
+            child: OutlinedButton.icon(
             onPressed: (leftCount > 0 || rightCount > 0)
                 ? () => syncFoldersBidirectional(context, ref)
                 : null,
             icon: const ToolIcon('icons8-folder-exchange.svg', size: 16),
             label: Text(l10n.bidirectionalSyncButton, overflow: TextOverflow.ellipsis),
+          ),
           ),
         ),
       ],
@@ -539,10 +548,14 @@ class _FnButton extends StatelessWidget {
     return Expanded(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 4),
-        child: OutlinedButton.icon(
-          onPressed: onPressed,
-          icon: Icon(icon, size: 16),
-          label: Text(label, overflow: TextOverflow.ellipsis),
+        // 창이 좁아 글자가 잘려도 버튼의 역할을 알 수 있게 툴팁으로 보인다.
+        child: Tooltip(
+          message: label,
+          child: OutlinedButton.icon(
+            onPressed: onPressed,
+            icon: Icon(icon, size: 16),
+            label: Text(label, overflow: TextOverflow.ellipsis),
+          ),
         ),
       ),
     );
