@@ -775,7 +775,11 @@ class _FileRow extends StatelessWidget {
         : tappable();
 
     final windowSize = MediaQuery.sizeOf(context);
-    return Draggable<DragPayload>(
+    // 이름이 길어 잘려도 전체 이름·확장자를 볼 수 있게 마우스를 올리면 툴팁으로 보인다.
+    return Tooltip(
+      message: entry.name,
+      waitDuration: const Duration(milliseconds: 600),
+      child: Draggable<DragPayload>(
       data: dragPayload,
       // 창 밖으로 나가면 OS 드래그로 넘겨 Finder/탐색기에 떨굴 수 있게 한다.
       // 원격 항목은 드롭된 뒤 그 자리로 내려받는다(macOS 파일 프로미스).
@@ -787,6 +791,7 @@ class _FileRow extends StatelessWidget {
       feedback: _DragFeedback(payload: dragPayload),
       childWhenDragging: Opacity(opacity: 0.35, child: _row(context)),
       child: content,
+      ),
     );
   }
 }
