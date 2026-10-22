@@ -9,16 +9,17 @@
 import 'package:flutter/material.dart';
 
 import '../l10n/app_localizations.dart';
+import '../presentation/widgets/tool_icon.dart';
 import 'app_settings.dart';
 
 /// 언어 이름은 그 언어로 쓴다 — 잘못 골라도 읽고 되돌아올 수 있게.
 const _languages = [(Locale('ko'), '한국어'), (Locale('en'), 'English')];
 
-IconData _themeIcon(ThemeMode mode) => switch (mode) {
-      ThemeMode.system => Icons.brightness_auto_rounded,
-      ThemeMode.light => Icons.light_mode_rounded,
-      ThemeMode.dark => Icons.dark_mode_rounded,
-    };
+Widget _themeIcon(ThemeMode mode) => ToolIcon(switch (mode) {
+      ThemeMode.system => 'icons8-system-theme.svg',
+      ThemeMode.light => 'icons8-light-theme.svg',
+      ThemeMode.dark => 'icons8-dark-theme.svg',
+    });
 
 String _themeLabel(AppLocalizations l10n, ThemeMode mode) => switch (mode) {
       ThemeMode.system => l10n.themeSystem,
@@ -35,7 +36,7 @@ class ThemeMenuButton extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     return PopupMenuButton<ThemeMode>(
       tooltip: l10n.themeMenuTooltip,
-      icon: Icon(_themeIcon(settings.themeMode)),
+      icon: _themeIcon(settings.themeMode),
       initialValue: settings.themeMode,
       onSelected: settings.setThemeMode,
       itemBuilder: (_) => [
@@ -61,7 +62,7 @@ class LanguageMenuButton extends StatelessWidget {
     final current = settings.locale?.languageCode ?? '';
     return PopupMenuButton<String>(
       tooltip: l10n.languageMenuTooltip,
-      icon: const Icon(Icons.language_rounded),
+      icon: const ToolIcon('icons8-language.svg'),
       initialValue: current,
       onSelected: (code) => settings.setLocale(code.isEmpty ? null : Locale(code)),
       itemBuilder: (_) => [
@@ -89,7 +90,7 @@ class ThemeSegmentedButton extends StatelessWidget {
     return SegmentedButton<ThemeMode>(
       segments: [
         for (final mode in ThemeMode.values)
-          ButtonSegment(value: mode, icon: Icon(_themeIcon(mode)), label: Text(_themeLabel(l10n, mode))),
+          ButtonSegment(value: mode, icon: _themeIcon(mode), label: Text(_themeLabel(l10n, mode))),
       ],
       selected: {settings.themeMode},
       onSelectionChanged: (s) => settings.setThemeMode(s.single),
