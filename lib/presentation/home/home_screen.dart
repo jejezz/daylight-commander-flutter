@@ -137,32 +137,29 @@ class HomeScreen extends ConsumerWidget {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.terminal),
+            icon: const ToolIcon('icons8-terminal.svg'),
             tooltip: activeIsRemote ? l10n.openTerminalDisabledTooltip : l10n.openTerminalTooltip,
             onPressed: activeIsRemote ? null : () => openTerminalHere(ref, activeSide),
           ),
           IconButton(
-            icon: Icon(
-              Icons.compare_arrows,
-              color: compareMode ? Theme.of(context).colorScheme.primary : null,
-            ),
+            icon: ToolIcon('icons8-compare.svg', active: compareMode),
             tooltip: compareMode ? l10n.compareModeOffTooltip : l10n.compareModeOnTooltip,
             onPressed: () =>
                 ref.read(compareModeProvider.notifier).state = !compareMode,
           ),
           IconButton(
-            icon: const Icon(Icons.swap_horiz),
+            icon: const ToolIcon('icons8-exchange.svg'),
             tooltip: l10n.swapPanesTooltip,
             onPressed: () => ref.read(paneLayoutProvider.notifier).swap(),
           ),
           IconButton(
-            icon: Icon(layout.singlePane ? Icons.vertical_split : Icons.crop_portrait),
+            icon: ToolIcon(layout.singlePane ? 'icons8-dual-panel.svg' : 'icons8-single-panel.svg'),
             tooltip: layout.singlePane ? l10n.dualPaneTooltip : l10n.singlePaneTooltip,
             onPressed: () => ref.read(paneLayoutProvider.notifier).toggleSinglePane(),
           ),
           if (layout.singlePane && windowDockSupported)
             PopupMenuButton<DockEdge>(
-              icon: Icon(dockEdge == null ? Icons.dock_outlined : Icons.dock),
+              icon: ToolIcon('icons8-docking.svg', active: dockEdge != null),
               tooltip: l10n.windowDockTooltip,
               onSelected: (edge) => ref.read(windowDockProvider.notifier).dock(edge),
               itemBuilder: (_) => [
@@ -187,7 +184,7 @@ class HomeScreen extends ConsumerWidget {
           const ThemeMenuButton(),
           const LanguageMenuButton(),
           IconButton(
-            icon: const Icon(Icons.info_outline),
+            icon: const ToolIcon('icons8-about.svg'),
             tooltip: l10n.aboutTooltip,
             onPressed: () => showDaylightAbout(context),
           ),

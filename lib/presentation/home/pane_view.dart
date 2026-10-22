@@ -366,31 +366,31 @@ class _PathBarState extends State<_PathBar> {
         children: [
           IconButton(
             visualDensity: VisualDensity.compact,
-            icon: const ToolIcon('icons8-left.svg', size: 15),
+            icon: const ToolIcon('icons8-left.svg', size: 18),
             tooltip: l10n.goBackTooltip,
             onPressed: widget.canGoBack ? widget.onBack : null,
           ),
           IconButton(
             visualDensity: VisualDensity.compact,
-            icon: const ToolIcon('icons8-right.svg', size: 15),
+            icon: const ToolIcon('icons8-right.svg', size: 18),
             tooltip: l10n.goForwardTooltip,
             onPressed: widget.canGoForward ? widget.onForward : null,
           ),
           IconButton(
             visualDensity: VisualDensity.compact,
-            icon: const ToolIcon('icons8-up.svg', size: 15),
+            icon: const ToolIcon('icons8-up.svg', size: 18),
             tooltip: l10n.goUpTooltip,
             onPressed: widget.onUp,
           ),
           IconButton(
             visualDensity: VisualDensity.compact,
-            icon: const ToolIcon('icons8-refresh.svg', size: 15),
+            icon: const ToolIcon('icons8-refresh.svg', size: 18),
             tooltip: l10n.refreshTooltip,
             onPressed: widget.onRefresh,
           ),
           PopupMenuButton<String>(
             tooltip: l10n.switchDriveTooltip,
-            icon: const ToolIcon('icons8-hdd-64.svg', size: 15),
+            icon: const ToolIcon('icons8-drive.svg', size: 18),
             onSelected: widget.onSelectDrive,
             itemBuilder: (context) => [
               for (final drive in widget.drives)
@@ -399,7 +399,7 @@ class _PathBarState extends State<_PathBar> {
           ),
           PopupMenuButton<String>(
             tooltip: l10n.networkConnectTooltip,
-            icon: ToolIcon('icons8-cloud-storage-64.svg', size: 15, active: widget.isRemote),
+            icon: ToolIcon('icons8-network-drive.svg', size: 18, active: widget.isRemote),
             onSelected: (value) {
               switch (value) {
                 case 'smb':
@@ -427,14 +427,14 @@ class _PathBarState extends State<_PathBar> {
           ),
           IconButton(
             visualDensity: VisualDensity.compact,
-            icon: ToolIcon('icons8-heart-64.svg', size: 15, active: widget.isBookmarked),
+            icon: ToolIcon('icons8-favorite.svg', size: 18, active: widget.isBookmarked),
             tooltip: widget.isBookmarked ? l10n.removeBookmarkTooltip : l10n.addBookmarkTooltip,
             onPressed: widget.onToggleBookmark,
           ),
           if (widget.bookmarks.isNotEmpty || widget.recentFolders.isNotEmpty)
             PopupMenuButton<String>(
               tooltip: l10n.bookmarksAndRecentTooltip,
-              icon: const ToolIcon('icons8-favorite-folder-64.svg', size: 15),
+              icon: const ToolIcon('icons8-favorite-folder.svg', size: 18),
               onSelected: widget.onSelectBookmark,
               itemBuilder: (context) => [
                 if (widget.bookmarks.isNotEmpty) ...[
@@ -511,14 +511,14 @@ class _PathBarState extends State<_PathBar> {
           ),
           IconButton(
             visualDensity: VisualDensity.compact,
-            icon: ToolIcon('icons8-hide-64.svg', size: 15, active: widget.showHidden),
+            icon: ToolIcon('icons8-hide.svg', size: 18, active: widget.showHidden),
             tooltip: l10n.showHiddenTooltip,
             onPressed: widget.onToggleHidden,
           ),
           Builder(
             builder: (buttonContext) => IconButton(
               visualDensity: VisualDensity.compact,
-              icon: const Icon(Icons.account_tree_outlined, size: 16),
+              icon: const ToolIcon('icons8-folder-tree.svg', size: 18),
               tooltip: l10n.directoryTreeTooltip,
               onPressed: () => toggleDirectoryTreePopup(buttonContext, widget.side),
             ),
@@ -877,12 +877,12 @@ class _PaneStatusBar extends StatelessWidget {
         ? l10n.selectedCountLabel(selectedCount, formatBytes(selectedBytes))
         : l10n.itemCountLabel(count);
     final label = quickFilter.isEmpty ? base : l10n.searchStatusLabel(quickFilter, base);
-    Widget viewButton(IconData icon, String tooltip, VoidCallback onPressed) => InkWell(
+    Widget viewButton(String asset, String tooltip, VoidCallback onPressed) => InkWell(
       onTap: onPressed,
       splashFactory: NoSplash.splashFactory,
       child: Tooltip(
         message: tooltip,
-        child: Padding(padding: const EdgeInsets.symmetric(horizontal: 6), child: Icon(icon, size: 16)),
+        child: Padding(padding: const EdgeInsets.symmetric(horizontal: 6), child: ToolIcon(asset, size: 18)),
       ),
     );
     return Padding(
@@ -895,13 +895,13 @@ class _PaneStatusBar extends StatelessWidget {
           if (viewSettings.isThumbnails)
             Builder(
               builder: (buttonContext) => viewButton(
-                Icons.photo_size_select_large,
+                'icons8-resize-file.svg',
                 l10n.thumbnailSizeTooltip,
                 () => showThumbnailMenu(buttonContext, viewSettings.thumbnailSize, onSelectThumbnailSize),
               ),
             ),
           viewButton(
-            viewSettings.isThumbnails ? Icons.view_list : Icons.grid_view,
+            viewSettings.isThumbnails ? 'icons8-list.svg' : 'icons8-grid-view.svg',
             viewSettings.isThumbnails ? l10n.viewModeDetailsTooltip : l10n.viewModeThumbnailsTooltip,
             onToggleViewMode,
           ),
