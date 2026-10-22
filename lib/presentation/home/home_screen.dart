@@ -137,12 +137,15 @@ class HomeScreen extends ConsumerWidget {
         ),
         actions: [
           IconButton(
-            icon: const ToolIcon('icons8-terminal.svg'),
+            icon: const Icon(Icons.terminal),
             tooltip: activeIsRemote ? l10n.openTerminalDisabledTooltip : l10n.openTerminalTooltip,
             onPressed: activeIsRemote ? null : () => openTerminalHere(ref, activeSide),
           ),
           IconButton(
-            icon: ToolIcon('icons8-folder-exchange.svg', active: compareMode),
+            icon: Icon(
+              Icons.compare_arrows,
+              color: compareMode ? Theme.of(context).colorScheme.primary : null,
+            ),
             tooltip: compareMode ? l10n.compareModeOffTooltip : l10n.compareModeOnTooltip,
             onPressed: () =>
                 ref.read(compareModeProvider.notifier).state = !compareMode,
@@ -184,7 +187,7 @@ class HomeScreen extends ConsumerWidget {
           const ThemeMenuButton(),
           const LanguageMenuButton(),
           IconButton(
-            icon: const ToolIcon('icons8-information.svg'),
+            icon: const Icon(Icons.info_outline),
             tooltip: l10n.aboutTooltip,
             onPressed: () => showDaylightAbout(context),
           ),
