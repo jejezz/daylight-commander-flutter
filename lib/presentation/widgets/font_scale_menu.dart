@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../l10n/app_localizations.dart';
 import '../theme/font_scale_provider.dart';
-import 'tool_icon.dart';
 
 /// 글자 크기: 앱 바 아이콘 → 체크 표시가 있는 팝업 메뉴 (테마·언어 메뉴와 같은 방식 —
 /// 순환 버튼은 지금 상태와 다음 상태가 보이지 않는다, theming.md §3).
@@ -21,7 +20,7 @@ class FontScaleMenuButton extends ConsumerWidget {
         };
     return PopupMenuButton<double>(
       tooltip: l10n.fontScaleMenuTooltip,
-      icon: const ToolIcon('icons8-ocr.svg'),
+      icon: const Icon(Icons.text_fields),
       initialValue: scale,
       onSelected: ref.read(fontScaleProvider.notifier).setScale,
       itemBuilder: (_) => [
