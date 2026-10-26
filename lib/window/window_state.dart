@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io' show Platform;
+import 'dart:math' as math;
 import 'dart:ui';
 
 import 'package:screen_retriever/screen_retriever.dart';
@@ -20,14 +21,17 @@ const _kTop = 'window_y';
 const _kWidth = 'window_width';
 const _kHeight = 'window_height';
 const _kDockEdge = 'window_dock_edge';
+const _kDisplay = 'window_display';
 
 /// 지난 실행이 남긴 창 상태. [bounds]는 도킹하지 않은 상태의 위치·크기(도킹 중이어도
 /// 도킹 전 값)이고, [dockEdge]는 도킹 중이었다면 붙어 있던 가장자리다.
+/// [displayName]은 모니터가 여럿일 때 창이 마지막에 있던 모니터의 이름이다.
 class SavedWindowState {
-  const SavedWindowState({this.bounds, this.dockEdge});
+  const SavedWindowState({this.bounds, this.dockEdge, this.displayName});
 
   final Rect? bounds;
   final DockEdge? dockEdge;
+  final String? displayName;
 
   Size? get size => bounds?.size;
 }
@@ -45,11 +49,12 @@ class WindowStateStore {
       bounds = Rect.fromLTWH(x ?? 0, y ?? 0, w, h);
     }
     final edge = DockEdge.values.asNameMap()[prefs.getString(_kDockEdge)];
-    return SavedWindowState(bounds: bounds, dockEdge: edge);
+    return SavedWindowState(bounds: bounds, dockEdge: edge, displayName: prefs.getString(_kDisplay));
   }
 
-  static Future<void> saveBounds(Rect bounds) async {
+  static Future<void> saveBounds(Rect bounds, {String? displayName}) async {
     final prefs = await SharedPreferences.getInstance();
+    if (displayName != null) await prefs.setString(_kDisplay, displayName);
     await prefs.setDouble(_kLeft, bounds.left);
     await prefs.setDouble(_kTop, bounds.top);
     await prefs.setDouble(_kWidth, bounds.width);
@@ -104,7 +109,8 @@ class WindowStateSaver with WindowListener {
           await windowManager.isMinimized()) {
         return;
       }
-      await WindowStateStore.saveBounds(await windowManager.getBounds());
+      final bounds = await windowManager.getBounds();
+      await WindowStateStore.saveBounds(bounds, displayName: await currentDisplayName(bounds));
     } catch (_) {}
   }
 
@@ -160,4 +166,62 @@ Rect? virtualScreenBounds() {
   final height = GetSystemMetrics(SM_CYVIRTUALSCREEN);
   if (width <= 0 || height <= 0) return null;
   return Rect.fromLTWH(left.toDouble(), top.toDouble(), width.toDouble(), height.toDouble());
+}
+
+/// [bounds](window_manager가 돌려주는 값)의 중심이 놓인 모니터의 이름. window_manager의
+/// 좌표는 "창이 지금 있는 모니터의 배율"이 적용된 값이라, 모니터마다 "이 모니터의
+/// 배율로 환산해 그 모니터 영역 안에 들어가는가"를 따져 어느 모니터인지 찾는다.
+/// 모니터가 하나뿐이거나 찾지 못하면 null.
+String? displayNameForBounds(Rect bounds, List<Display> displays) {
+  if (displays.length < 2) return null;
+  final center = bounds.center;
+  for (final d in displays) {
+    final scale = (d.scaleFactor ?? 1).toDouble();
+    final origin = d.visiblePosition ?? Offset.zero;
+    final area = d.visibleSize ?? d.size;
+    final physical = Rect.fromLTWH(
+      origin.dx * scale,
+      origin.dy * scale,
+      area.width * scale,
+      area.height * scale,
+    );
+    if (physical.contains(Offset(center.dx * scale, center.dy * scale))) return d.name;
+  }
+  return null;
+}
+
+Future<String?> currentDisplayName(Rect bounds) async {
+  if (!Platform.isWindows) return null;
+  try {
+    return displayNameForBounds(bounds, await screenRetriever.getAllDisplays());
+  } catch (_) {
+    return null;
+  }
+}
+
+/// 창을 [target] 모니터 가운데에 놓는다(Windows 전용 보정 포함).
+///
+/// `window_manager.setBounds`는 넘긴 좌표에 "창이 그 순간 있는 모니터의 배율"을
+/// 곱한다(실측 확인). 창은 주 모니터에서 만들어지므로, 배율이 다른 보조 모니터
+/// 가운데 좌표를 그대로 넘기면 배율 비율만큼 불어나 모니터 밖에 놓인다(주
+/// 175%, 보조 100%에서 3565가 6238이 되어 보조 모니터 오른쪽 바깥에 놓였다).
+/// 그래서 1차는 주 모니터 배율로 나눈 값으로 [target] 안에 먼저 올리고, 창이
+/// 그 모니터의 배율로 넘어간 뒤 2차로 [target] 배율 기준 좌표를 준다.
+Future<void> centerWindowOnDisplay(Display target, Size size) async {
+  final primary = await screenRetriever.getPrimaryDisplay();
+  final primaryScale = (primary.scaleFactor ?? 1).toDouble();
+  final targetScale = (target.scaleFactor ?? 1).toDouble();
+  final origin = target.visiblePosition ?? Offset.zero;
+  final area = target.visibleSize ?? target.size;
+  final logical = Offset(
+    origin.dx + math.max(0.0, (area.width - size.width) / 2),
+    origin.dy + math.max(0.0, (area.height - size.height) / 2),
+  );
+  final ratio = targetScale / primaryScale;
+  await windowManager.setBounds(
+    Rect.fromLTWH(logical.dx * ratio, logical.dy * ratio, size.width, size.height),
+  );
+  // 창이 새 모니터의 DPI로 넘어갈 시간을 플랫폼 채널 왕복 한 번으로 확보한다.
+  await windowManager.getBounds();
+  await windowManager.setBounds(Rect.fromLTWH(logical.dx, logical.dy, size.width, size.height));
 }
