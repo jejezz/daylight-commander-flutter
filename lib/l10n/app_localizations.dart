@@ -278,6 +278,12 @@ abstract class AppLocalizations {
   /// **'삭제'**
   String get deleteTitle;
 
+  /// No description provided for @folderOpenErrorTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'폴더를 열 수 없습니다'**
+  String get folderOpenErrorTitle;
+
   /// No description provided for @deleteConfirmMessage.
   ///
   /// In ko, this message translates to:
@@ -481,6 +487,18 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'좌우 패널 교환 (Ctrl+U)'**
   String get swapPanesTooltip;
+
+  /// No description provided for @syncPathRightTooltip.
+  ///
+  /// In ko, this message translates to:
+  /// **'왼쪽 패널 경로를 오른쪽으로 (Ctrl+Shift+→)'**
+  String get syncPathRightTooltip;
+
+  /// No description provided for @syncPathLeftTooltip.
+  ///
+  /// In ko, this message translates to:
+  /// **'오른쪽 패널 경로를 왼쪽으로 (Ctrl+Shift+←)'**
+  String get syncPathLeftTooltip;
 
   /// No description provided for @singlePaneTooltip.
   ///
@@ -737,7 +755,7 @@ abstract class AppLocalizations {
   /// No description provided for @directoryTreeTooltip.
   ///
   /// In ko, this message translates to:
-  /// **'디렉토리 트리'**
+  /// **'디렉토리 트리 (Ctrl+T)'**
   String get directoryTreeTooltip;
 
   /// No description provided for @itemCountLabel.

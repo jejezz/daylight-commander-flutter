@@ -29,7 +29,9 @@ final drivesProvider = StreamProvider<List<DriveEntry>>((ref) async* {
 bool _sameDrives(List<DriveEntry> a, List<DriveEntry> b) {
   if (a.length != b.length) return false;
   for (var i = 0; i < a.length; i++) {
-    if (a[i].path != b[i].path || a[i].name != b[i].name) return false;
+    if (a[i].path != b[i].path || a[i].name != b[i].name || a[i].kind != b[i].kind) {
+      return false;
+    }
   }
   return true;
 }

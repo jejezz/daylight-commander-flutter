@@ -103,6 +103,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get deleteTitle => 'Delete';
 
   @override
+  String get folderOpenErrorTitle => 'Can\'t open folder';
+
+  @override
   String deleteConfirmMessage(int count) {
     return 'Delete the selected $count item(s)?';
   }
@@ -212,6 +215,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get swapPanesTooltip => 'Swap left/right panes (Ctrl+U)';
+
+  @override
+  String get syncPathRightTooltip =>
+      'Send left pane\'s path to the right (Ctrl+Shift+Right)';
+
+  @override
+  String get syncPathLeftTooltip =>
+      'Send right pane\'s path to the left (Ctrl+Shift+Left)';
 
   @override
   String get singlePaneTooltip => 'Single-pane mode (Ctrl+\\)';
@@ -348,7 +359,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get showHiddenTooltip => 'Show Hidden Files';
 
   @override
-  String get directoryTreeTooltip => 'Directory tree';
+  String get directoryTreeTooltip => 'Directory tree (Ctrl+T)';
 
   @override
   String itemCountLabel(int count) {

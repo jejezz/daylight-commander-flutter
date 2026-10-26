@@ -101,6 +101,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get deleteTitle => '삭제';
 
   @override
+  String get folderOpenErrorTitle => '폴더를 열 수 없습니다';
+
+  @override
   String deleteConfirmMessage(int count) {
     return '선택한 $count개 항목을 삭제할까요?';
   }
@@ -208,6 +211,12 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get swapPanesTooltip => '좌우 패널 교환 (Ctrl+U)';
+
+  @override
+  String get syncPathRightTooltip => '왼쪽 패널 경로를 오른쪽으로 (Ctrl+Shift+→)';
+
+  @override
+  String get syncPathLeftTooltip => '오른쪽 패널 경로를 왼쪽으로 (Ctrl+Shift+←)';
 
   @override
   String get singlePaneTooltip => '1패널 모드 (Ctrl+\\)';
@@ -344,7 +353,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get showHiddenTooltip => '숨김 파일 표시';
 
   @override
-  String get directoryTreeTooltip => '디렉토리 트리';
+  String get directoryTreeTooltip => '디렉토리 트리 (Ctrl+T)';
 
   @override
   String itemCountLabel(int count) {

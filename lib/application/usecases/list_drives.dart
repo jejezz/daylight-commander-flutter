@@ -1,9 +1,28 @@
 import 'dart:io';
 
+import 'package:ffi/ffi.dart';
 import 'package:path/path.dart' as p;
-import 'package:win32/win32.dart' show GetLogicalDrives;
+import 'package:win32/win32.dart'
+    show
+        GetDriveType,
+        GetLogicalDrives,
+        DRIVE_FIXED,
+        DRIVE_REMOTE,
+        DRIVE_REMOVABLE;
 
 import '../../domain/entities/drive_entry.dart';
+
+/// [path]가 매핑된 네트워크 드라이브(Windows) 또는 UNC 경로(`\\server\share`)
+/// 위에 있는지 빠르게 확인한다. 아래 `GetDriveType`과 같은 이유로 실제 네트워크
+/// 접근 없이 즉시 반환된다. 다른 OS는 아직 구분할 방법이 없어([DriveEntry.kind]
+/// 참고) 항상 false다.
+bool isNetworkDrivePath(String path) {
+  if (!Platform.isWindows) return false;
+  if (path.startsWith(r'\\')) return true;
+  final root = p.rootPrefix(path);
+  if (root.isEmpty) return false;
+  return _windowsDriveKind(root) == DriveKind.network;
+}
 
 /// 현재 OS에서 전환 가능한 드라이브/볼륨 목록을 찾는다.
 ///
@@ -32,7 +51,7 @@ class ListDrives {
       if (mask & (1 << i) == 0) continue;
       final letter = String.fromCharCode('A'.codeUnitAt(0) + i);
       final path = '$letter:\\';
-      drives.add(DriveEntry(name: path, path: path));
+      drives.add(DriveEntry(name: path, path: path, kind: _windowsDriveKind(path)));
     }
     return drives;
   }
@@ -63,5 +82,25 @@ class ListDrives {
       }
     }
     return drives;
+  }
+}
+
+// GetDriveType도 GetLogicalDrives처럼 커널의 드라이브 종류 정보만 바로
+// 읽으므로(위 주석 참고), 연결 끊긴 네트워크 드라이브가 있어도 멈추지 않는다.
+DriveKind _windowsDriveKind(String path) {
+  final ptr = path.toNativeUtf16();
+  try {
+    switch (GetDriveType(ptr)) {
+      case DRIVE_REMOVABLE:
+        return DriveKind.removable;
+      case DRIVE_FIXED:
+        return DriveKind.fixed;
+      case DRIVE_REMOTE:
+        return DriveKind.network;
+      default:
+        return DriveKind.unknown;
+    }
+  } finally {
+    calloc.free(ptr);
   }
 }

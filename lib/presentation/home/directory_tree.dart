@@ -6,78 +6,9 @@ import 'package:path/path.dart' as p;
 
 import '../../domain/entities/drive_entry.dart';
 import '../theme/app_theme.dart';
+import 'drive_icon.dart';
 import 'pane_controller.dart';
 import 'drives_provider.dart';
-
-OverlayEntry? _treeBarrier;
-OverlayEntry? _treePopup;
-
-bool get isDirectoryTreePopupOpen => _treePopup != null;
-
-void closeDirectoryTreePopup() {
-  _treeBarrier?.remove();
-  _treePopup?.remove();
-  _treeBarrier = null;
-  _treePopup = null;
-}
-
-/// [anchorContext](패널 우측의 트리 버튼) 아래에 [side] 패널용 디렉토리 트리
-/// 팝업을 띄운다. 트리에서 폴더를 누르면 그 패널이 이동하고 팝업은 유지되며,
-/// 팝업 바깥(패널 등)을 누르면 팝업이 닫힌다 — 그 클릭은 아래 위젯에도 그대로
-/// 전달된다(barrier가 translucent라서).
-///
-/// 이미 열려 있으면 닫는다(토글). 같은 버튼을 다시 누르면 닫히고, 다른 패널의 버튼을
-/// 누르면 그 패널용으로 다시 열린다.
-void toggleDirectoryTreePopup(BuildContext anchorContext, PaneSide side) {
-  final reopen = !isDirectoryTreePopupOpen || _treeSide != side;
-  closeDirectoryTreePopup();
-  if (reopen) _showDirectoryTreePopup(anchorContext, side);
-}
-
-PaneSide? _treeSide;
-
-void _showDirectoryTreePopup(BuildContext anchorContext, PaneSide side) {
-  _treeSide = side;
-  final overlay = Overlay.of(anchorContext);
-  final button = anchorContext.findRenderObject() as RenderBox;
-  final overlayBox = overlay.context.findRenderObject() as RenderBox;
-  final anchor = button.localToGlobal(Offset.zero, ancestor: overlayBox);
-  final buttonRect = button.localToGlobal(Offset.zero) & button.size;
-  final screen = overlayBox.size;
-
-  const width = 300.0;
-  final height = (screen.height - anchor.dy - button.size.height - 16).clamp(160.0, 440.0);
-  final left = (anchor.dx + button.size.width - width).clamp(8.0, screen.width - width - 8);
-  final top = anchor.dy + button.size.height + 4;
-
-  _treeBarrier = OverlayEntry(
-    builder: (_) => Positioned.fill(
-      child: Listener(
-        behavior: HitTestBehavior.translucent,
-        // 트리 버튼 위의 클릭은 버튼(토글)이 처리하게 둔다.
-        onPointerDown: (e) {
-          if (!buttonRect.contains(e.position)) closeDirectoryTreePopup();
-        },
-      ),
-    ),
-  );
-  _treePopup = OverlayEntry(
-    builder: (_) => Positioned(
-      left: left,
-      top: top,
-      width: width,
-      height: height,
-      child: Material(
-        elevation: 8,
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(AppRadius.tile),
-        child: DirectoryTree(side: side),
-      ),
-    ),
-  );
-  overlay.insert(_treeBarrier!);
-  overlay.insert(_treePopup!);
-}
 
 /// 탐색기/Finder 스타일의 디렉토리 트리. 루트는 드라이브/볼륨 목록이고
 /// 하위 폴더는 펼칠 때 지연 로딩한다. 폴더를 클릭하면 [side] 패널이 그
@@ -177,7 +108,7 @@ class _DirectoryTreeState extends ConsumerState<DirectoryTree> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final rows = <Widget>[];
 
-    void addNode(String path, String label, int depth) {
+    void addNode(String path, String label, int depth, {DriveKind? driveKind}) {
       final expanded = _expanded.contains(path);
       final children = _children[path];
       final hasNoChildren = children != null && children.isEmpty;
@@ -189,6 +120,7 @@ class _DirectoryTreeState extends ConsumerState<DirectoryTree> {
           leaf: hasNoChildren,
           selected: _samePath(path, currentPath),
           isDark: isDark,
+          driveKind: driveKind,
           onToggle: () => _toggle(path),
           onTap: () => _select(path),
         ),
@@ -201,7 +133,7 @@ class _DirectoryTreeState extends ConsumerState<DirectoryTree> {
     }
 
     for (final d in drives) {
-      addNode(d.path, d.name, 0);
+      addNode(d.path, d.name, 0, driveKind: d.kind);
     }
 
     return DecoratedBox(
@@ -233,6 +165,7 @@ class _TreeRow extends StatelessWidget {
     required this.isDark,
     required this.onToggle,
     required this.onTap,
+    this.driveKind,
   });
 
   final String label;
@@ -244,9 +177,15 @@ class _TreeRow extends StatelessWidget {
   final VoidCallback onToggle;
   final VoidCallback onTap;
 
+  /// 드라이브 루트 행에서만 넘어온다(하위 폴더는 null) — 네트워크/이동식
+  /// 드라이브면 전용 아이콘을, 아니면 평소 폴더 아이콘을 쓴다.
+  final DriveKind? driveKind;
+
   @override
   Widget build(BuildContext context) {
     final accent = isDark ? AppColors.primary : AppColors.primaryDeep;
+    final icon = (driveKind == null ? null : driveKindIcon(driveKind!, color: accent)) ??
+        Icon(expanded ? Icons.folder_open : Icons.folder, size: 16, color: accent);
     return InkWell(
       onTap: onTap,
       splashFactory: NoSplash.splashFactory,
@@ -268,11 +207,7 @@ class _TreeRow extends StatelessWidget {
                       ),
                     ),
             ),
-            Icon(
-              expanded ? Icons.folder_open : Icons.folder,
-              size: 16,
-              color: accent,
-            ),
+            icon,
             const SizedBox(width: 6),
             Expanded(
               child: Text(
@@ -280,7 +215,11 @@ class _TreeRow extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   fontSize: 13,
-                  fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
+                  fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+                  // 색을 안 넣으면 bodyMedium(textMid, 흐린 보조색)을 물려받아
+                  // 다크 모드에서 특히 희미해 보인다 — 파일 목록 이름(bodyLarge)과
+                  // 같은 고대비 색으로 맞춘다.
+                  color: isDark ? AppColors.textHi : AppColors.textHiLight,
                 ),
               ),
             ),

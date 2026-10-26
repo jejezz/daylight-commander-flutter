@@ -38,6 +38,7 @@
   "addToSelection": "선택 추가",
 
   "deleteTitle": "삭제",
+  "folderOpenErrorTitle": "폴더를 열 수 없습니다",
   "deleteConfirmMessage": "선택한 {count}개 항목을 삭제할까요?",
   "@deleteConfirmMessage": {
     "placeholders": {
@@ -90,6 +91,8 @@
   "compareModeOffTooltip": "폴더 비교 끄기",
   "compareModeOnTooltip": "폴더 비교 (좌우 패널)",
   "swapPanesTooltip": "좌우 패널 교환 (Ctrl+U)",
+  "syncPathRightTooltip": "왼쪽 패널 경로를 오른쪽으로 (Ctrl+Shift+→)",
+  "syncPathLeftTooltip": "오른쪽 패널 경로를 왼쪽으로 (Ctrl+Shift+←)",
   "singlePaneTooltip": "1패널 모드 (Ctrl+\\)",
   "dualPaneTooltip": "2패널 모드 (Ctrl+\\)",
   "dockedPaneTooltip": "도킹된 패널: {path}\n클릭하면 이 패널로 전환, 파일을 놓으면 복사/이동",
@@ -153,7 +156,7 @@
   },
   "thumbnailCacheCleared": "썸네일 캐시를 비웠습니다",
   "showHiddenTooltip": "숨김 파일 표시",
-  "directoryTreeTooltip": "디렉토리 트리",
+  "directoryTreeTooltip": "디렉토리 트리 (Ctrl+T)",
   "itemCountLabel": "{count}개 항목",
   "@itemCountLabel": {
     "placeholders": {

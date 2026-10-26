@@ -11,6 +11,7 @@ import '../theme/app_theme.dart';
 import '../widgets/operation_banner.dart';
 import '../widgets/tool_icon.dart';
 import '../../domain/entities/drive_entry.dart';
+import 'directory_tree.dart';
 import 'drag_payload.dart';
 import 'drive_utils.dart';
 import 'drives_provider.dart';
@@ -20,6 +21,7 @@ import 'pane_controller.dart';
 import 'pane_view_mode_provider.dart';
 import 'pane_layout_provider.dart';
 import 'pane_view.dart';
+import 'tree_dock_provider.dart';
 import '../../window/focus_tint.dart';
 
 class HomeScreen extends ConsumerWidget {
@@ -109,6 +111,7 @@ class HomeScreen extends ConsumerWidget {
     final compareMode = ref.watch(compareModeProvider);
     final layout = ref.watch(paneLayoutProvider);
     final dockEdge = ref.watch(windowDockProvider);
+    final treeDockOpen = ref.watch(treeDockProvider.select((s) => s.open));
     final activeIsRemote = isRemotePath(ref.watch(paneControllerProvider(activeSide)).currentPath);
     final l10n = AppLocalizations.of(context);
 
@@ -118,6 +121,13 @@ class HomeScreen extends ConsumerWidget {
       ref.read(windowDockProvider.notifier).setSinglePane(next.singlePane);
       if (!next.singlePane && ref.read(windowDockProvider) != null) {
         ref.read(windowDockProvider.notifier).undock();
+      }
+    });
+    // 디렉토리 트리를 도킹하면 2패널 모드의 최소 창 폭도 그만큼 늘려서, 트리 열
+    // 때문에 패널 경로 바 아이콘이 넘치지 않게 한다.
+    ref.listen<TreeDockState>(treeDockProvider, (previous, next) {
+      if (previous?.open != next.open) {
+        ref.read(windowDockProvider.notifier).setTreeDockOpen(next.open);
       }
     });
 
@@ -136,6 +146,11 @@ class HomeScreen extends ConsumerWidget {
           ],
         ),
         actions: [
+          IconButton(
+            icon: ToolIcon('icons8-folder-tree.svg', active: !treeDockOpen),
+            tooltip: l10n.directoryTreeTooltip,
+            onPressed: () => ref.read(treeDockProvider.notifier).toggle(),
+          ),
           IconButton(
             icon: const ToolIcon('icons8-terminal.svg'),
             tooltip: activeIsRemote ? l10n.openTerminalDisabledTooltip : l10n.openTerminalTooltip,
@@ -191,7 +206,7 @@ class HomeScreen extends ConsumerWidget {
           const SizedBox(width: 8),
         ],
       ),
-      body: CallbackShortcuts(
+      body: _GlobalShortcuts(
         bindings: {
           const SingleActivator(LogicalKeyboardKey.f3): () =>
               viewSelected(context, ref, activeSide),
@@ -205,6 +220,10 @@ class HomeScreen extends ConsumerWidget {
               moveSelectionToOtherPane(context, ref, activeSide),
           const SingleActivator(LogicalKeyboardKey.f7): () =>
               createFolder(context, ref, activeSide),
+          const SingleActivator(LogicalKeyboardKey.keyT, control: true): () =>
+              ref.read(treeDockProvider.notifier).toggle(),
+          const SingleActivator(LogicalKeyboardKey.keyT, meta: true): () =>
+              ref.read(treeDockProvider.notifier).toggle(),
           const SingleActivator(LogicalKeyboardKey.keyR, control: true): () =>
               ref.read(paneControllerProvider(activeSide).notifier).refresh(),
           const SingleActivator(LogicalKeyboardKey.keyR, meta: true): () =>
@@ -249,6 +268,10 @@ class HomeScreen extends ConsumerWidget {
               _openCursorEntry(context, ref, activeSide),
           const SingleActivator(LogicalKeyboardKey.space): () =>
               ref.read(paneControllerProvider(activeSide).notifier).toggleCursorSelection(),
+          const SingleActivator(LogicalKeyboardKey.arrowRight, control: true, shift: true): () =>
+              _syncPanePath(ref, from: layout.leftmost, to: otherSide(layout.leftmost)),
+          const SingleActivator(LogicalKeyboardKey.arrowLeft, control: true, shift: true): () =>
+              _syncPanePath(ref, from: otherSide(layout.leftmost), to: layout.leftmost),
         },
         child: Focus(
           autofocus: true,
@@ -276,36 +299,175 @@ class HomeScreen extends ConsumerWidget {
   }
 }
 
+void _syncPanePath(WidgetRef ref, {required PaneSide from, required PaneSide to}) {
+  final path = ref.read(paneControllerProvider(from)).currentPath;
+  ref.read(paneControllerProvider(to).notifier).navigateTo(path);
+}
+
+/// [CallbackShortcuts]와 같지만, 포커스가 텍스트 입력 칸(주소 입력창 등) 안에 있으면
+/// 전역 단축키를 무시한다. 그렇지 않으면 화살표/Enter/F2/Tab 등이 CallbackShortcuts의
+/// Focus 노드까지 올라와, 입력칸 안에서 커서를 움직이거나 경로를 입력하는 동작과 충돌한다.
+class _GlobalShortcuts extends StatelessWidget {
+  const _GlobalShortcuts({required this.bindings, required this.child});
+
+  final Map<ShortcutActivator, VoidCallback> bindings;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Focus(
+      canRequestFocus: false,
+      skipTraversal: true,
+      onKeyEvent: (node, event) {
+        if (event is! KeyDownEvent && event is! KeyRepeatEvent) {
+          return KeyEventResult.ignored;
+        }
+        final primaryFocus = FocusManager.instance.primaryFocus;
+        if (primaryFocus != null &&
+            primaryFocus.context?.findAncestorWidgetOfExactType<EditableText>() != null) {
+          return KeyEventResult.ignored;
+        }
+        for (final entry in bindings.entries) {
+          if (entry.key.accepts(event, HardwareKeyboard.instance)) {
+            entry.value();
+            return KeyEventResult.handled;
+          }
+        }
+        return KeyEventResult.ignored;
+      },
+      child: child,
+    );
+  }
+}
+
 /// 패널 영역. 2패널 모드는 [PaneLayout.leftmost] 순서로 나란히 놓고, 1패널
 /// 모드는 활성 패널만 펼치고 나머지는 원래 놓일 가장자리에 [_DockedRail]로 도킹한다.
-class _PaneArea extends StatelessWidget {
+/// 디렉토리 트리가 열려 있으면 활성 패널을 따라가는 트리 열을 왼쪽에 덧붙인다.
+class _PaneArea extends ConsumerWidget {
   const _PaneArea({required this.layout, required this.activeSide});
 
   final PaneLayout layout;
   final PaneSide activeSide;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final first = layout.leftmost;
     final second = otherSide(first);
+    final Widget panes;
     if (!layout.singlePane) {
-      return Row(
+      panes = Row(
         children: [
           Expanded(child: PaneView(key: ValueKey(first), side: first)),
-          const SizedBox(width: 10),
+          _PaneSyncGap(leftSide: first, rightSide: second),
           Expanded(child: PaneView(key: ValueKey(second), side: second)),
         ],
       );
+    } else {
+      final docked = otherSide(activeSide);
+      final dockedFirst = docked == first;
+      final rail = _DockedRail(side: docked);
+      panes = Row(
+        children: [
+          if (dockedFirst) ...[rail, const SizedBox(width: 10)],
+          Expanded(child: PaneView(key: ValueKey(activeSide), side: activeSide)),
+          if (!dockedFirst) ...[const SizedBox(width: 10), rail],
+        ],
+      );
     }
-    final docked = otherSide(activeSide);
-    final dockedFirst = docked == first;
-    final rail = _DockedRail(side: docked);
-    return Row(
-      children: [
-        if (dockedFirst) ...[rail, const SizedBox(width: 10)],
-        Expanded(child: PaneView(key: ValueKey(activeSide), side: activeSide)),
-        if (!dockedFirst) ...[const SizedBox(width: 10), rail],
-      ],
+
+    final treeDock = ref.watch(treeDockProvider);
+    if (!treeDock.open) return panes;
+
+    const handleWidth = 10.0;
+    // 패널이 자기 경로 바 아이콘을 다 그릴 수 있는 최소 폭. 트리가 이보다 더
+    // 넓어지려 하면, 패널 아이콘이 넘치는 대신 트리 폭을 줄이거나 트리를 숨긴다.
+    const minPaneContentWidth = 400.0;
+    final minPanesWidth = layout.singlePane
+        ? minPaneContentWidth + 46 // 도킹 레일(36) + 간격(10)
+        : minPaneContentWidth * 2 + 28; // 패널 두 개 + 동기화 간격
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final maxTreeWidth = constraints.maxWidth - handleWidth - minPanesWidth;
+        if (maxTreeWidth < treeDockMinWidth) return panes;
+        final width = treeDock.width.clamp(treeDockMinWidth, maxTreeWidth);
+        return Row(
+          children: [
+            SizedBox(
+              width: width,
+              child: DirectoryTree(key: ValueKey(activeSide), side: activeSide),
+            ),
+            _TreeDockHandle(currentWidth: width),
+            Expanded(child: panes),
+          ],
+        );
+      },
+    );
+  }
+}
+
+/// 디렉토리 트리 열의 폭을 드래그로 조절하는 분할선.
+class _TreeDockHandle extends ConsumerWidget {
+  const _TreeDockHandle({required this.currentWidth});
+
+  final double currentWidth;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.resizeLeftRight,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onHorizontalDragUpdate: (details) {
+          ref.read(treeDockProvider.notifier).setWidth(currentWidth + details.delta.dx);
+        },
+        child: SizedBox(
+          width: 10,
+          child: Center(
+            child: Container(
+              width: 2,
+              margin: const EdgeInsets.symmetric(vertical: 24),
+              color: Theme.of(context).dividerColor,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// 두 패널 사이에서 한쪽의 현재 경로를 다른 쪽으로 보내는 동기화 버튼.
+/// [leftSide]/[rightSide]는 활성 패널이 아니라 화면에 놓인 위치 기준이라,
+/// Ctrl+Shift+화살표 단축키와 화살표 방향이 그대로 맞는다.
+class _PaneSyncGap extends ConsumerWidget {
+  const _PaneSyncGap({required this.leftSide, required this.rightSide});
+
+  final PaneSide leftSide;
+  final PaneSide rightSide;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    return SizedBox(
+      width: 28,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          IconButton(
+            visualDensity: VisualDensity.compact,
+            icon: const ToolIcon('icons8-right.svg', size: 16),
+            tooltip: l10n.syncPathRightTooltip,
+            onPressed: () => _syncPanePath(ref, from: leftSide, to: rightSide),
+          ),
+          const SizedBox(height: 4),
+          IconButton(
+            visualDensity: VisualDensity.compact,
+            icon: const ToolIcon('icons8-left.svg', size: 16),
+            tooltip: l10n.syncPathLeftTooltip,
+            onPressed: () => _syncPanePath(ref, from: rightSide, to: leftSide),
+          ),
+        ],
+      ),
     );
   }
 }

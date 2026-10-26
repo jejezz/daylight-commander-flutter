@@ -43,6 +43,29 @@ Future<String?> promptForName(
   );
 }
 
+/// 확인 버튼 하나만 있는 간단한 오류 안내.
+Future<void> showErrorDialog(
+  BuildContext context, {
+  required String title,
+  required String message,
+}) {
+  final l10n = AppLocalizations.of(context);
+  return showDialog<void>(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: Text(title),
+      content: Text(message),
+      actions: [
+        FilledButton(
+          autofocus: true,
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(l10n.confirm),
+        ),
+      ],
+    ),
+  );
+}
+
 /// SMB 서버 연결 정보 입력. 비밀번호는 절대 받지 않는다 — OS가 띄우는 신뢰된
 /// 다이얼로그에서 사용자가 직접 입력하게 한다 (ARCHITECTURE.md 4장).
 class SmbConnectRequest {
