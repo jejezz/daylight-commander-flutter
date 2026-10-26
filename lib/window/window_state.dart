@@ -1,8 +1,16 @@
 import 'dart:async';
+import 'dart:io' show Platform;
 import 'dart:ui';
 
 import 'package:screen_retriever/screen_retriever.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:win32/win32.dart'
+    show
+        GetSystemMetrics,
+        SM_CXVIRTUALSCREEN,
+        SM_CYVIRTUALSCREEN,
+        SM_XVIRTUALSCREEN,
+        SM_YVIRTUALSCREEN;
 import 'package:window_manager/window_manager.dart';
 
 import 'window_dock.dart';
@@ -120,4 +128,36 @@ Future<List<Rect>> displayWorkAreas() async {
     for (final d in displays)
       (d.visiblePosition ?? Offset.zero) & (d.visibleSize ?? d.size),
   ];
+}
+
+/// [bounds]로 창을 옮기거나 키운다. 모니터마다 DPI가 다르면, 창이 아직 이전
+/// 모니터의 DPI 컨텍스트에 있는 상태로 한 번에 멀리 떨어진 모니터로 옮겨질 때
+/// 요청한 좌표가 DPI 배율만큼 어긋난 자리에 놓이는 걸 실측으로 확인했다(두
+/// 모니터 배율 비율만큼 정확히 어긋남). 한 번 더 같은 값으로 맞추면, 그때는
+/// 창이 이미 대상 모니터의 DPI 컨텍스트로 넘어가 있어서 정확한 자리에
+/// 안착한다. 다만 듀얼 모니터에서 창이 화면 밖으로 빠지던 문제는 FancyZones
+/// 같은 창 관리 유틸리티가 별도로 위치를 덮어쓰는 것도 겹쳐 있었다 — 이
+/// 함수는 그와 무관하게 "요청한 자리에 정확히 놓는다"를 보장하기 위한
+/// 안전장치로 남겨둔다.
+Future<void> setBoundsAcrossMonitors(Rect bounds) async {
+  await windowManager.setBounds(bounds);
+  // 두 호출을 곧바로 이어 붙이면 Windows가 모니터 간 DPI 전환(DPI 변경
+  // 메시지 처리)을 미처 끝내기 전이라 두 번째 호출도 여전히 어긋날 때가
+  // 있었다(실측으로 확인 — 중간에 플랫폼 채널 왕복 하나만 끼워도 안정됨).
+  // getBounds 왕복 한 번으로 그 사이 시간을 확보한다.
+  await windowManager.getBounds();
+  await windowManager.setBounds(bounds);
+}
+
+/// 모든 모니터를 합친 가상 화면 전체 경계(Windows 전용, `GetSystemMetrics`, 물리
+/// 픽셀). window_manager의 좌표(배율이 적용된 논리 단위)와 단위가 달라서
+/// 정확한 경계가 아니라 "창이 화면 전체 바깥으로 나가지 않게" 하는 느슨한 상한으로만 쓴다.
+Rect? virtualScreenBounds() {
+  if (!Platform.isWindows) return null;
+  final left = GetSystemMetrics(SM_XVIRTUALSCREEN);
+  final top = GetSystemMetrics(SM_YVIRTUALSCREEN);
+  final width = GetSystemMetrics(SM_CXVIRTUALSCREEN);
+  final height = GetSystemMetrics(SM_CYVIRTUALSCREEN);
+  if (width <= 0 || height <= 0) return null;
+  return Rect.fromLTWH(left.toDouble(), top.toDouble(), width.toDouble(), height.toDouble());
 }

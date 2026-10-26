@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:media_kit/media_kit.dart';
+import 'package:screen_retriever/screen_retriever.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:window_manager/window_manager.dart';
 
@@ -69,14 +70,35 @@ Future<void> _prepareWindow(ProviderContainer container) async {
     size.height < minimum.height ? minimum.height : size.height,
   );
 
-  // 저장된 위치가 지금 연결된 모니터 안일 때만 쓴다.
+  // 모니터가 여럿이면(Windows) 저장된 좌표로 복원하려 하지 않고 늘 주 모니터
+  // 가운데에 연다. 모니터 배율이 서로 다를 때 저장된 좌표를 그대로 복원하려다
+  // 창이 화면 밖으로 빠지는 문제를 여러 차례 겪었고, FancyZones 같은 창 관리
+  // 유틸리티가 위치를 다시 덮어쓰는 경우까지 겹쳐서, 좌표를 정교하게 다루는
+  // 대신 가장 단순하고 항상 보이는 방법을 쓰기로 했다(사용자 결정). 모니터가
+  // 하나뿐이면(가장 흔한 경우) 그런 문제가 없으니 기존처럼 저장된 위치를
+  // 그대로 복원한다.
   Offset? position;
-  final savedBounds = saved.bounds;
-  if (savedBounds != null) {
-    try {
-      final moved = (savedBounds.topLeft) & size;
-      if (boundsVisibleOn(moved, await displayWorkAreas())) position = moved.topLeft;
-    } catch (_) {}
+  final displays = Platform.isWindows ? await screenRetriever.getAllDisplays() : const <Display>[];
+  if (displays.length > 1) {
+    // 주 모니터는 원점(0,0)에 있어서 screen_retriever의 논리 좌표가
+    // window_manager의 좌표와 같은 단위다(틀어지는 건 원점이 아닌 보조
+    // 모니터뿐). 물리 픽셀로 계산하면 배율이 큰 모니터에서 창이 오른쪽
+    // 모니터에 걸쳐 버린다.
+    final primary = await screenRetriever.getPrimaryDisplay();
+    final origin = primary.visiblePosition ?? Offset.zero;
+    final area = primary.visibleSize ?? primary.size;
+    position = Offset(
+      origin.dx + ((area.width - size.width) / 2).clamp(0, double.infinity),
+      origin.dy + ((area.height - size.height) / 2).clamp(0, double.infinity),
+    );
+  } else {
+    final savedBounds = saved.bounds;
+    if (savedBounds != null) {
+      try {
+        final moved = (savedBounds.topLeft) & size;
+        if (boundsVisibleOn(moved, await displayWorkAreas())) position = moved.topLeft;
+      } catch (_) {}
+    }
   }
 
   final windowOptions = WindowOptions(
@@ -85,8 +107,14 @@ Future<void> _prepareWindow(ProviderContainer container) async {
     title: AppIdentity.displayName,
   );
   windowManager.waitUntilReadyToShow(windowOptions, () async {
-    if (position != null) await windowManager.setPosition(position);
+    // 숨긴 채로 옮긴 뒤 보여주면, getBounds()가 보고하는 창틀 좌표는 맞는데도
+    // 실제 화면에는 안 보이는 경우가 있었다(렌더링 서피스가 모니터를 넘어갈 때
+    // 제대로 못 따라간 것으로 추정). 먼저 보여준 뒤 옮기면 이미 떠 있는 창을
+    // 드래그하는 것과 같은 경로를 타서 더 안정적이다.
     await windowManager.show();
+    if (position != null) {
+      await setBoundsAcrossMonitors(Rect.fromLTWH(position.dx, position.dy, size.width, size.height));
+    }
     await windowManager.focus();
     final edge = saved.dockEdge;
     if (singlePane && edge != null) {

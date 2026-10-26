@@ -31,6 +31,47 @@ Size minimumWindowSize({required bool singlePane}) =>
 
 bool get windowDockSupported => Platform.isWindows || Platform.isMacOS || Platform.isLinux;
 
+/// [bounds]가 중심으로 걸쳐 있는 모니터의 작업 영역. 모니터 정보가 없거나
+/// 어디에도 안 걸치면 첫 번째 모니터(그마저 없으면 [bounds] 자신)를 쓴다.
+Rect _hostWorkArea(Rect bounds, List<Display> displays) {
+  Rect work(Display d) => (d.visiblePosition ?? Offset.zero) & (d.visibleSize ?? d.size);
+  final center = bounds.center;
+  return displays.map(work).firstWhere(
+        (r) => r.contains(center),
+        orElse: () => displays.isEmpty ? bounds : work(displays.first),
+      );
+}
+
+/// [bounds]를 크기는 그대로 두고 [area] 밖으로 빠지지 않게 왼쪽/위로 당긴다.
+Rect _clampRectInto(Rect bounds, Rect area) {
+  var left = bounds.left;
+  var top = bounds.top;
+  if (left + bounds.width > area.right) left = area.right - bounds.width;
+  if (left < area.left) left = area.left;
+  if (top + bounds.height > area.bottom) top = area.bottom - bounds.height;
+  if (top < area.top) top = area.top;
+  return Rect.fromLTWH(left, top, bounds.width, bounds.height);
+}
+
+/// [bounds]를 크기는 그대로 두고, 화면 밖으로 빠지지 않게 왼쪽/위로 당긴다.
+/// 오른쪽에 보조 모니터가 있을 때 창을 오른쪽으로 키우면 모니터 밖으로 빠질 수
+/// 있어서(`_growToAtLeast`/`undock`에서 이 문제가 실제로 있었다) 키우거나
+/// 복원할 때마다 이 함수를 거친다. Windows는 `virtualScreenBounds`(모든 모니터를
+/// 합친 전체 경계, window_manager와 같은 Win32 좌표계)로 당긴다 — 모니터별
+/// 작업 영역(screen_retriever)은 모니터마다 DPI가 다르면 좌표가 어긋날 수 있다
+/// (window_state.dart의 virtualScreenBounds 문서 참고). 다른 OS나 정보를 못
+/// 읽은 경우에는 지금 걸쳐 있는 모니터의 작업 영역을 쓴다.
+Future<Rect> _clampToHostMonitor(Rect bounds) async {
+  final virtualScreen = virtualScreenBounds();
+  if (virtualScreen != null) return _clampRectInto(bounds, virtualScreen);
+  try {
+    final displays = await screenRetriever.getAllDisplays();
+    return _clampRectInto(bounds, _hostWorkArea(bounds, displays));
+  } catch (_) {
+    return bounds;
+  }
+}
+
 /// 앱 창을 화면(작업 영역) 왼쪽/오른쪽 가장자리에 세로로 꽉 차게 붙인다.
 /// OS의 AppBar 도킹이 아니라 창 크기와 위치만 바꾸는 방식이라, 해제하면 도킹 전 위치·크기로 돌아간다.
 class WindowDockController extends StateNotifier<DockEdge?> {
@@ -48,13 +89,17 @@ class WindowDockController extends StateNotifier<DockEdge?> {
 
   /// 창이 [minimum]보다 작으면 그 크기까지 키운다. `setMinimumSize`는 앞으로의
   /// 드래그 리사이즈만 제한할 뿐, 이미 그보다 작아진 창을 직접 키워주지는 않는다.
+  /// 키운 뒤에는 [_clampToHostMonitor]로 모니터 밖으로 빠지지 않게 당긴다.
   Future<void> _growToAtLeast(Size minimum) async {
     final bounds = await windowManager.getBounds();
     if (bounds.width < minimum.width || bounds.height < minimum.height) {
-      await windowManager.setSize(Size(
+      final grown = Rect.fromLTWH(
+        bounds.left,
+        bounds.top,
         math.max(bounds.width, minimum.width),
         math.max(bounds.height, minimum.height),
-      ));
+      );
+      await setBoundsAcrossMonitors(await _clampToHostMonitor(grown));
     }
   }
 
@@ -92,17 +137,11 @@ class WindowDockController extends StateNotifier<DockEdge?> {
       _restoreBounds ??= current;
 
       final displays = await screenRetriever.getAllDisplays();
-      final center = current.center;
-      Rect work(Display d) =>
-          (d.visiblePosition ?? Offset.zero) & (d.visibleSize ?? d.size);
-      final area = displays.map(work).firstWhere(
-            (r) => r.contains(center),
-            orElse: () => displays.isEmpty ? current : work(displays.first),
-          );
+      final area = _hostWorkArea(current, displays);
 
       final width = dockedWindowWidth.clamp(_dockedMinimumWidth, area.width);
       await windowManager.setMinimumSize(const Size(_dockedMinimumWidth, 480));
-      await windowManager.setBounds(Rect.fromLTWH(
+      await setBoundsAcrossMonitors(Rect.fromLTWH(
         edge == DockEdge.left ? area.left : area.right - width,
         area.top,
         width,
@@ -128,13 +167,15 @@ class WindowDockController extends StateNotifier<DockEdge?> {
       final minimum = _idleMinimum;
       await windowManager.setMinimumSize(minimum);
       if (restore != null) {
-        // 도킹 전 위치로 복원하되, 그 사이 모드가 바뀌어 최소 크기보다 작아졌다면 키운다.
-        await windowManager.setBounds(Rect.fromLTWH(
+        // 도킹 전 위치로 복원하되, 그 사이 모드가 바뀌어 최소 크기보다 작아졌다면
+        // 키우고, 모니터 밖으로 빠지지 않게 당긴다.
+        final grown = Rect.fromLTWH(
           restore.left,
           restore.top,
           math.max(restore.width, minimum.width),
           math.max(restore.height, minimum.height),
-        ));
+        );
+        await setBoundsAcrossMonitors(await _clampToHostMonitor(grown));
       } else {
         await _growToAtLeast(minimum);
       }
