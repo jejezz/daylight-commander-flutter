@@ -38,6 +38,7 @@
   "addToSelection": "Add to Selection",
 
   "deleteTitle": "Delete",
+  "folderOpenErrorTitle": "Can't open folder",
   "deleteConfirmMessage": "Delete the selected {count} item(s)?",
   "@deleteConfirmMessage": {
     "placeholders": {
@@ -90,6 +91,8 @@
   "compareModeOffTooltip": "Turn off folder comparison",
   "compareModeOnTooltip": "Compare Folders (left/right panes)",
   "swapPanesTooltip": "Swap left/right panes (Ctrl+U)",
+  "syncPathRightTooltip": "Send left pane's path to the right (Ctrl+Shift+Right)",
+  "syncPathLeftTooltip": "Send right pane's path to the left (Ctrl+Shift+Left)",
   "singlePaneTooltip": "Single-pane mode (Ctrl+\\)",
   "dualPaneTooltip": "Dual-pane mode (Ctrl+\\)",
   "dockedPaneTooltip": "Docked pane: {path}\nClick to switch to it, drop files to copy/move",
@@ -153,7 +156,7 @@
   },
   "thumbnailCacheCleared": "Thumbnail cache cleared",
   "showHiddenTooltip": "Show Hidden Files",
-  "directoryTreeTooltip": "Directory tree",
+  "directoryTreeTooltip": "Directory tree (Ctrl+T)",
   "itemCountLabel": "{count} item(s)",
   "@itemCountLabel": {
     "placeholders": {

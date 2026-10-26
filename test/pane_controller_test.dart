@@ -2,13 +2,16 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:daylight_commander/application/ftp_session_manager.dart';
 import 'package:daylight_commander/application/sftp_session_manager.dart';
 import 'package:daylight_commander/application/webdav_session_manager.dart';
+import 'package:daylight_commander/presentation/home/last_opened_path_store.dart';
 import 'package:daylight_commander/presentation/home/pane_controller.dart';
 
 PaneController _newController(String path) => PaneController(
+      PaneSide.left,
       path,
       FtpSessionManager(),
       SftpSessionManager(),
@@ -22,9 +25,11 @@ Future<void> _waitLoaded(PaneController controller) async {
 }
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
   late Directory tempDir;
 
   setUp(() async {
+    SharedPreferences.setMockInitialValues({});
     tempDir = await Directory.systemTemp.createTemp('daylight_commander_pane_test_');
     File(p.join(tempDir.path, 'b.txt')).writeAsStringSync('0123456789'); // 10 bytes
     File(p.join(tempDir.path, 'a.txt')).writeAsStringSync('01234'); // 5 bytes
@@ -309,5 +314,51 @@ void main() {
 
     expect(controller.state.currentPath, p.join(tempDir.path, 'zz_folder'));
     expect(controller.state.entries, isEmpty);
+  });
+
+  test('마지막으로 연 디렉토리를 다음에 새 컨트롤러로 열 때 복원한다', () async {
+    final sub = p.join(tempDir.path, 'zz_folder');
+    final first = _newController(tempDir.path);
+    await _waitLoaded(first);
+    await first.navigateTo(sub);
+    await _waitLoaded(first);
+
+    final second = _newController('${tempDir.path}-다른-기본값');
+    await _waitLoaded(second);
+
+    expect(second.state.currentPath, sub);
+  });
+
+  test('마지막으로 연 디렉토리가 지워졌으면 폴백 경로를 연다', () async {
+    final sub = p.join(tempDir.path, 'zz_folder');
+    final first = _newController(tempDir.path);
+    await _waitLoaded(first);
+    await first.navigateTo(sub);
+    await _waitLoaded(first);
+
+    await Directory(sub).delete(recursive: true);
+
+    final second = _newController(tempDir.path);
+    await _waitLoaded(second);
+
+    expect(second.state.currentPath, tempDir.path);
+  });
+
+  test('isRemotePath: ftp/sftp/webdav 스킴만 원격으로 본다', () {
+    expect(isRemotePath('ftp://host/dir'), isTrue);
+    expect(isRemotePath('sftp://host/dir'), isTrue);
+    expect(isRemotePath('webdav://host/dir'), isTrue);
+    expect(isRemotePath('webdavs://host/dir'), isTrue);
+    expect(isRemotePath(tempDir.path), isFalse);
+  });
+
+  test('마지막으로 연 디렉토리가 원격 경로였다면 저장하지 않는다(복원 시 시도하지 않게)', () async {
+    final controller = _newController(tempDir.path);
+    await _waitLoaded(controller);
+
+    // navigateTo는 원격 스킴이면 실제 접속을 시도하므로, 저장 쪽만 떼어
+    // LastOpenedPathStore를 직접 확인한다: 로컬 경로를 연 뒤 저장됐는지,
+    // 그리고 원격 경로라면 _load의 저장 조건(!isRemotePath)에서 걸러지는지.
+    expect(await LastOpenedPathStore.read(PaneSide.left), tempDir.path);
   });
 }

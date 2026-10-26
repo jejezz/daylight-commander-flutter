@@ -9,15 +9,18 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   testWidgets('앱이 활성화된 동안만 두 패널을 다시 읽는다', (tester) async {
+    SharedPreferences.setMockInitialValues({});
     final dir = Directory.systemTemp.createTempSync('dc_auto_');
     addTearDown(() => dir.deleteSync(recursive: true));
     // 처음부터 임시 폴더를 열어 둔다 (기본은 홈 폴더라 읽는 데 오래 걸리고 결과가 섞인다).
     final container = ProviderContainer(overrides: [
       paneControllerProvider.overrideWith(
         (ref, side) => PaneController(
+          side,
           dir.path,
           ref.read(ftpSessionManagerProvider.notifier),
           ref.read(sftpSessionManagerProvider.notifier),

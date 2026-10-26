@@ -1,15 +1,18 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../application/ftp_session_manager.dart';
 import '../../application/sftp_session_manager.dart';
+import '../../application/usecases/list_drives.dart';
 import '../../application/usecases/list_ftp_directory.dart';
 import '../../application/usecases/list_local_directory.dart';
 import '../../application/usecases/list_sftp_directory.dart';
 import '../../application/usecases/list_webdav_directory.dart';
 import '../../application/webdav_session_manager.dart';
 import '../../domain/entities/file_entry.dart';
+import 'last_opened_path_store.dart';
 
 enum PaneSide { left, right }
 
@@ -235,15 +238,36 @@ bool _sameEntries(List<FileEntry> a, List<FileEntry> b) {
 }
 
 class PaneController extends StateNotifier<PaneState> {
-  PaneController(String initialPath, this._ftpSessions, this._sftpSessions, this._webdavSessions)
-      : super(PaneState(currentPath: initialPath)) {
-    _load(initialPath, backHistory: const [], forwardHistory: const []);
+  PaneController(
+    this.side,
+    String fallbackPath,
+    this._ftpSessions,
+    this._sftpSessions,
+    this._webdavSessions,
+  ) : _fallbackPath = fallbackPath,
+      super(PaneState(currentPath: fallbackPath)) {
+    _loadInitial();
   }
 
+  final PaneSide side;
+  final String _fallbackPath;
   final _listDirectory = const ListLocalDirectory();
   final FtpSessionManager _ftpSessions;
   final SftpSessionManager _sftpSessions;
   final WebdavSessionManager _webdavSessions;
+
+  /// 마지막으로 연 디렉토리를 복원한다. 원격 경로(FTP/SFTP/WebDAV·매핑된
+  /// 네트워크 드라이브)였다면 시도하지 않고, 지워졌다면 폴백으로 연다 —
+  /// 둘 다 네트워크 접근이나 느린 존재 확인 없이 즉시 판단 가능하다.
+  Future<void> _loadInitial() async {
+    state = state.copyWith(loading: true);
+    final saved = await LastOpenedPathStore.read(side);
+    var path = _fallbackPath;
+    if (saved != null && !isRemotePath(saved) && !isNetworkDrivePath(saved)) {
+      if (await Directory(saved).exists()) path = saved;
+    }
+    await _load(path, backHistory: const [], forwardHistory: const []);
+  }
 
   Future<List<FileEntry>> _listEntries(String path) {
     if (isFtpPath(path)) return ListFtpDirectory(_ftpSessions)(Uri.parse(path));
@@ -296,6 +320,9 @@ class PaneController extends StateNotifier<PaneState> {
         backHistory: backHistory,
         forwardHistory: forwardHistory,
       );
+      if (!isRemotePath(path) && !isNetworkDrivePath(path)) {
+        unawaited(LastOpenedPathStore.save(side, path));
+      }
     } catch (e) {
       state = state.copyWith(loading: false, error: e.toString());
     }
@@ -333,6 +360,12 @@ class PaneController extends StateNotifier<PaneState> {
   }
 
   Future<void> refresh() async => _applyEntries(await _listEntries(state.currentPath));
+
+  /// [state.error]를 확인(다이얼로그로 보여주는 등)한 뒤 지운다. 목록은 실패해도
+  /// 그대로 남아 있으므로(이동 자체가 일어나지 않는다), 지워도 화면엔 영향이 없다.
+  void clearError() {
+    if (state.error != null) state = state.copyWith(error: null);
+  }
 
   void _applyEntries(List<FileEntry> entries) {
     final validPaths = entries.map((e) => e.location).toSet();
@@ -504,6 +537,7 @@ String homeDirectory() {
 final paneControllerProvider =
     StateNotifierProvider.family<PaneController, PaneState, PaneSide>(
   (ref, side) => PaneController(
+    side,
     homeDirectory(),
     ref.read(ftpSessionManagerProvider.notifier),
     ref.read(sftpSessionManagerProvider.notifier),

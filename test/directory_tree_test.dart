@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:daylight_commander/domain/entities/drive_entry.dart';
 import 'package:daylight_commander/presentation/home/directory_tree.dart';
@@ -11,8 +12,9 @@ import 'package:daylight_commander/presentation/home/drives_provider.dart';
 import 'package:daylight_commander/presentation/home/pane_controller.dart';
 
 void main() {
-  testWidgets('트리에서 폴더를 누르면 패널이 이동하고 팝업은 유지, 바깥을 누르면 닫힌다', (tester) async {
-    final root = Directory.systemTemp.createTempSync('daylight_tree_popup_');
+  testWidgets('트리에서 폴더를 누르면 패널이 이동하고 그 패널이 활성 패널이 된다', (tester) async {
+    SharedPreferences.setMockInitialValues({});
+    final root = Directory.systemTemp.createTempSync('daylight_tree_');
     addTearDown(() => root.deleteSync(recursive: true));
     final sub = Directory(p.join(root.path, 'alpha'))..createSync();
     Directory(p.join(root.path, 'beta')).createSync();
@@ -26,31 +28,14 @@ void main() {
 
     await tester.pumpWidget(UncontrolledProviderScope(
       container: container,
-      child: MaterialApp(
-        home: Scaffold(
-          body: Stack(children: [
-            const Positioned.fill(child: ColoredBox(color: Colors.black, key: Key('outside'))),
-            Positioned(
-              top: 10,
-              right: 10,
-              child: Builder(
-                builder: (ctx) => IconButton(
-                  key: const Key('open'),
-                  icon: const Icon(Icons.account_tree_outlined),
-                  onPressed: () => toggleDirectoryTreePopup(ctx, PaneSide.right),
-                ),
-              ),
-            ),
-          ]),
-        ),
+      child: const MaterialApp(
+        home: Scaffold(body: DirectoryTree(side: PaneSide.right)),
       ),
     ));
 
-    await tester.tap(find.byKey(const Key('open')));
     await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 100)));
     await tester.pump();
     await tester.pump();
-    expect(isDirectoryTreePopupOpen, isTrue);
     expect(find.text('ROOT'), findsOneWidget);
 
     // 루트를 펼쳐 하위 폴더를 보이게 한다.
@@ -68,11 +53,5 @@ void main() {
     }
     expect(container.read(paneControllerProvider(PaneSide.right)).currentPath, sub.path);
     expect(container.read(activePaneProvider), PaneSide.right);
-    expect(isDirectoryTreePopupOpen, isTrue);
-
-    await tester.tapAt(const Offset(20, 400));
-    await tester.pump();
-    expect(isDirectoryTreePopupOpen, isFalse);
-    expect(find.text('ROOT'), findsNothing);
   });
 }

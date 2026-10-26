@@ -63,8 +63,10 @@ dependencies:
   # 창을 놓을 모니터의 작업 영역(도킹 위치 계산)
   screen_retriever: ^0.2.2
 
-  # Windows 드라이브 목록을 네트워크 접근 없이 즉시 조회 (GetLogicalDrives)
+  # Windows 드라이브 목록·종류를 네트워크 접근 없이 즉시 조회
+  # (GetLogicalDrives/GetDriveType)
   win32: ^5.5.0
+  ffi: ^2.1.0
 
   # OS → 앱 드래그앤드롭
   desktop_drop: ^0.6.0

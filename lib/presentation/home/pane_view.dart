@@ -15,12 +15,13 @@ import '../../domain/entities/drive_entry.dart';
 import '../../domain/entities/file_entry.dart';
 import '../../l10n/app_localizations.dart';
 import '../theme/app_theme.dart';
+import '../widgets/dialogs.dart';
 import '../widgets/file_icon.dart';
 import '../widgets/thumbnail_image.dart';
 import '../widgets/tool_icon.dart';
 import 'bookmarks_provider.dart';
-import 'directory_tree.dart';
 import 'drag_payload.dart';
+import 'drive_icon.dart';
 import 'drive_utils.dart';
 import 'drives_provider.dart';
 import 'folder_comparison_provider.dart';
@@ -52,12 +53,20 @@ class PaneView extends ConsumerWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final visibleEntries = state.visibleEntries;
+    final l10n = AppLocalizations.of(context);
 
     ref.listen<PaneState>(paneControllerProvider(side), (previous, next) {
       if (!next.loading &&
           next.error == null &&
           previous?.currentPath != next.currentPath) {
         ref.read(recentFoldersProvider.notifier).record(next.currentPath);
+      }
+      // 이동 실패(권한 없음 등)는 목록을 지우지 않고 그대로 둔 채(._load가 currentPath/
+      // entries를 안 건드린다) 팝업으로만 알린다.
+      if (next.error != null && previous?.error != next.error) {
+        final message = next.error!;
+        controller.clearError();
+        showErrorDialog(context, title: l10n.folderOpenErrorTitle, message: message);
       }
     });
 
@@ -191,13 +200,6 @@ class PaneView extends ConsumerWidget {
                 Expanded(
                   child: state.loading
                       ? const Center(child: CircularProgressIndicator())
-                      : state.error != null
-                      ? Center(
-                          child: Text(
-                            state.error!,
-                            style: theme.textTheme.bodyMedium,
-                          ),
-                        )
                       : DragTarget<DragPayload>(
                           onAcceptWithDetails: (details) =>
                               handleDrop(details.data, state.currentPath),
@@ -392,10 +394,27 @@ class _PathBarState extends State<_PathBar> {
             tooltip: l10n.switchDriveTooltip,
             icon: const ToolIcon('icons8-drive.svg', size: 18),
             onSelected: widget.onSelectDrive,
-            itemBuilder: (context) => [
-              for (final drive in widget.drives)
-                PopupMenuItem(value: drive.path, child: Text(drive.name)),
-            ],
+            itemBuilder: (context) {
+              final isDark = Theme.of(context).brightness == Brightness.dark;
+              final accent = isDark ? AppColors.primary : AppColors.primaryDeep;
+              return [
+                for (final drive in widget.drives)
+                  PopupMenuItem(
+                    value: drive.path,
+                    child: Row(
+                      children: [
+                        SizedBox(
+                          width: 20,
+                          child: driveKindIcon(drive.kind, color: accent, size: 16),
+                        ),
+                        Expanded(
+                          child: Text(drive.name, overflow: TextOverflow.ellipsis),
+                        ),
+                      ],
+                    ),
+                  ),
+              ];
+            },
           ),
           PopupMenuButton<String>(
             tooltip: l10n.networkConnectTooltip,
@@ -441,6 +460,7 @@ class _PathBarState extends State<_PathBar> {
                   PopupMenuItem<String>(
                     enabled: false,
                     height: 26,
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
                     child: Text(
                       l10n.bookmarksSectionLabel,
                       style: const TextStyle(
@@ -452,6 +472,8 @@ class _PathBarState extends State<_PathBar> {
                   for (final path in widget.bookmarks)
                     PopupMenuItem(
                       value: path,
+                      height: 32,
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
                       child: Row(
                         children: [
                           Expanded(
@@ -476,6 +498,7 @@ class _PathBarState extends State<_PathBar> {
                   PopupMenuItem<String>(
                     enabled: false,
                     height: 26,
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
                     child: Text(
                       l10n.recentSectionLabel,
                       style: const TextStyle(
@@ -487,26 +510,31 @@ class _PathBarState extends State<_PathBar> {
                   for (final path in widget.recentFolders)
                     PopupMenuItem(
                       value: path,
+                      height: 32,
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
                       child: Text(path, overflow: TextOverflow.ellipsis),
                     ),
                 ],
               ],
             ),
           Expanded(
-            child: TextField(
-              controller: _controller,
-              focusNode: _focusNode,
-              style: Theme.of(context).textTheme.bodyMedium,
-              decoration: const InputDecoration(
-                isDense: true,
-                border: InputBorder.none,
-                contentPadding: EdgeInsets.symmetric(horizontal: 6),
+            child: Tooltip(
+              message: widget.path,
+              child: TextField(
+                controller: _controller,
+                focusNode: _focusNode,
+                style: Theme.of(context).textTheme.bodyMedium,
+                decoration: const InputDecoration(
+                  isDense: true,
+                  border: InputBorder.none,
+                  contentPadding: EdgeInsets.symmetric(horizontal: 6),
+                ),
+                onSubmitted: (value) {
+                  widget.onSubmitPath(value);
+                  _releaseFocus();
+                },
+                onTapOutside: (_) => _releaseFocus(),
               ),
-              onSubmitted: (value) {
-                widget.onSubmitPath(value);
-                _releaseFocus();
-              },
-              onTapOutside: (_) => _releaseFocus(),
             ),
           ),
           IconButton(
@@ -514,14 +542,6 @@ class _PathBarState extends State<_PathBar> {
             icon: ToolIcon('icons8-hide.svg', size: 18, active: widget.showHidden),
             tooltip: l10n.showHiddenTooltip,
             onPressed: widget.onToggleHidden,
-          ),
-          Builder(
-            builder: (buttonContext) => IconButton(
-              visualDensity: VisualDensity.compact,
-              icon: const ToolIcon('icons8-folder-tree.svg', size: 18),
-              tooltip: l10n.directoryTreeTooltip,
-              onPressed: () => toggleDirectoryTreePopup(buttonContext, widget.side),
-            ),
           ),
         ],
       ),
