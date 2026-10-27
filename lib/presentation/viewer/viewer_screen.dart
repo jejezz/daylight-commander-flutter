@@ -137,14 +137,7 @@ class _VideoViewerState extends State<_VideoViewer> {
   void initState() {
     super.initState();
     _player = _sharedPlayer ??= Player();
-    _controller = _sharedController ??= VideoController(
-      _player,
-      // ANGLE(하드웨어) 텍스처 경로가 Windows 에서 해제/크기 변경 때 경합해
-      // 종료되므로 픽셀 버퍼(소프트웨어) 경로를 쓴다.
-      configuration: const VideoControllerConfiguration(
-        enableHardwareAcceleration: false,
-      ),
-    );
+    _controller = _sharedController ??= VideoController(_player);
     _player.open(Media(Uri.file(widget.path).toString()));
   }
 
