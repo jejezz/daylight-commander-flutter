@@ -691,4 +691,210 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get updateBusyBody =>
       'A task is in progress. Please try again when it has finished.';
+
+  @override
+  String get fnEdit => 'F4 Edit';
+
+  @override
+  String get contextMenuEdit => 'Edit (F4)';
+
+  @override
+  String get editorSave => 'Save';
+
+  @override
+  String get editorDontSave => 'Don\'t save';
+
+  @override
+  String get editorSavedMessage => 'Saved';
+
+  @override
+  String get editorUnsavedTitle => 'Unsaved changes';
+
+  @override
+  String editorUnsavedBody(String name) {
+    return 'Save changes to $name?';
+  }
+
+  @override
+  String get editorExternalChangedTitle => 'File changed on disk';
+
+  @override
+  String get editorExternalChangedBody =>
+      'The file on disk changed after you opened it. Overwrite it?';
+
+  @override
+  String get editorOverwrite => 'Overwrite';
+
+  @override
+  String editorSaveFailed(String error) {
+    return 'Couldn\'t save: $error';
+  }
+
+  @override
+  String editorLoadFailed(String error) {
+    return 'Couldn\'t open the file: $error';
+  }
+
+  @override
+  String get editorCannotTooLarge =>
+      'Files over 5 MB can\'t be edited. Open it with F3 View instead.';
+
+  @override
+  String get editorCannotRemote =>
+      'Remote files can\'t be edited yet. Open it with F3 View instead.';
+
+  @override
+  String get editorFind => 'Find';
+
+  @override
+  String get editorFindHint => 'Find';
+
+  @override
+  String get editorReplaceHint => 'Replace with';
+
+  @override
+  String get editorReplace => 'Replace';
+
+  @override
+  String get editorReplaceAll => 'Replace all';
+
+  @override
+  String get editorMatchCase => 'Match case';
+
+  @override
+  String get editorRegex => 'Regular expression';
+
+  @override
+  String get editorPrevMatch => 'Previous';
+
+  @override
+  String get editorNextMatch => 'Next';
+
+  @override
+  String get editorToggleReplace => 'Toggle replace';
+
+  @override
+  String get editorNoMatches => 'No results';
+
+  @override
+  String editorMatchCount(int current, int total) {
+    return '$current/$total';
+  }
+
+  @override
+  String get editorWordWrap => 'Word wrap';
+
+  @override
+  String get editorGoToLine => 'Go to line';
+
+  @override
+  String editorGoToLineHint(int max) {
+    return 'Line number (1–$max)';
+  }
+
+  @override
+  String editorStatusPosition(int line, int column) {
+    return 'Ln $line, Col $column';
+  }
+
+  @override
+  String get editorHighlightOff => 'Syntax highlighting off (large file)';
+
+  @override
+  String get editorLineBreakLf => 'LF';
+
+  @override
+  String get editorLineBreakCrlf => 'CRLF';
+
+  @override
+  String get editorSaveAs => 'Save As';
+
+  @override
+  String get editorSaveAsHint =>
+      'Path to save to (a bare name uses the same folder)';
+
+  @override
+  String editorOverwriteExistingBody(String name) {
+    return '$name already exists. Overwrite it?';
+  }
+
+  @override
+  String get editorReadOnlyBinary =>
+      'This file is binary or not UTF-8. Bytes are shown one character each, read-only.';
+
+  @override
+  String get editorUndo => 'Undo';
+
+  @override
+  String get editorRedo => 'Redo';
+
+  @override
+  String get editorPreview => 'Markdown preview';
+
+  @override
+  String get editorShortcuts => 'Keyboard shortcuts';
+
+  @override
+  String get editorGroupFile => 'File & more';
+
+  @override
+  String get editorGroupEdit => 'Edit';
+
+  @override
+  String get editorGroupMove => 'Lines, move & select';
+
+  @override
+  String get editorGroupFind => 'Find & go to';
+
+  @override
+  String get editorScClose => 'Close (only closes Find if it is open)';
+
+  @override
+  String get editorScCutCopyPaste => 'Cut / Copy / Paste';
+
+  @override
+  String get editorScSelectAll => 'Select all';
+
+  @override
+  String get editorScSelectLine => 'Select line';
+
+  @override
+  String get editorScDeleteLine => 'Delete line';
+
+  @override
+  String get editorScMoveLine => 'Move line up / down';
+
+  @override
+  String get editorScIndent => 'Indent / Outdent';
+
+  @override
+  String get editorScComment => 'Toggle line comment';
+
+  @override
+  String get editorScBlockComment => 'Toggle block comment';
+
+  @override
+  String get editorScDeleteWord => 'Delete word';
+
+  @override
+  String get editorScLineStartEnd => 'To line start / end';
+
+  @override
+  String get editorScDocStartEnd => 'To document start / end';
+
+  @override
+  String get editorScWordMove => 'Move by word';
+
+  @override
+  String get editorScExtendSelection =>
+      'Movement keys + Shift: extend selection';
+
+  @override
+  String get editorScNextMatch => 'Next result (in the Find field)';
+
+  @override
+  String get editorScBlockSelect => 'Column (block) selection';
+
+  @override
+  String get editorScFold => 'Fold / unfold code';
 }

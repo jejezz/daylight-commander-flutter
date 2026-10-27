@@ -9,6 +9,7 @@ import 'package:path/path.dart' as p;
 import '../../application/archive_service.dart';
 import '../../application/cancel_token.dart';
 import '../../application/file_operation_service.dart';
+import '../../application/editor/text_file.dart';
 import '../../application/ftp_session_manager.dart';
 import '../../application/ftp_transfer_service.dart';
 import '../../application/sftp_session_manager.dart';
@@ -30,6 +31,7 @@ import '../../domain/entities/ftp_profile.dart';
 import '../../domain/entities/sftp_profile.dart';
 import '../../domain/entities/webdav_profile.dart';
 import '../../l10n/app_localizations.dart';
+import '../editor/editor_screen.dart';
 import '../viewer/archive_viewer_screen.dart';
 import '../viewer/viewer_screen.dart';
 import '../widgets/dialogs.dart';
@@ -502,6 +504,43 @@ Future<void> viewSelected(BuildContext context, WidgetRef ref, PaneSide side) as
   );
 }
 
+/// F4 편집. 로컬 텍스트 파일만 연다 — 원격·바이너리·5MB 초과·UTF-8 아님은 이유를 알리고 열지 않는다.
+Future<void> editSelected(BuildContext context, WidgetRef ref, PaneSide side) async {
+  final entries = ref.read(paneControllerProvider(side)).selectedEntries;
+  final editable = entries.where((e) => !e.isDirectory).toList();
+  if (editable.length != 1) return;
+  final entry = editable.first;
+  final l10n = AppLocalizations.of(context);
+  final messenger = ScaffoldMessenger.of(context);
+  final navigator = Navigator.of(context);
+
+  if (entry.location.scheme != 'file') {
+    messenger.showSnackBar(SnackBar(content: Text(l10n.editorCannotRemote)));
+    return;
+  }
+  final path = entry.location.toFilePath();
+  final EditorLoadResult result;
+  try {
+    result = await loadEditorTextFile(path);
+  } catch (e) {
+    messenger.showSnackBar(SnackBar(content: Text(l10n.editorLoadFailed('$e'))));
+    return;
+  }
+  final file = result.file;
+  if (file == null) {
+    final message = switch (result.failure!) {
+      EditorLoadFailure.tooLarge => l10n.editorCannotTooLarge,
+    };
+    messenger.showSnackBar(SnackBar(content: Text(message)));
+    return;
+  }
+  await navigator.push(
+    MaterialPageRoute(
+      builder: (_) => EditorScreen(path: path, name: entry.name, file: file),
+    ),
+  );
+}
+
 /// Finder/탐색기처럼 OS가 확장자에 연결해 둔 기본 앱으로 [entry]를 연다.
 /// 더블클릭과 컨텍스트 메뉴 둘 다 여기로 온다.
 Future<void> openEntryWithDefaultApp(
@@ -865,6 +904,7 @@ Future<void> showRowContextMenu(
       if (canView)
         PopupMenuItem(value: 'open_with_default', child: Text(l10n.contextMenuOpenWithDefault)),
       if (canView) PopupMenuItem(value: 'view', child: Text(l10n.contextMenuView)),
+      if (canView) PopupMenuItem(value: 'edit', child: Text(l10n.contextMenuEdit)),
       if (singleTarget != null)
         PopupMenuItem(value: 'rename', child: Text(l10n.contextMenuRename)),
       PopupMenuItem(value: 'copy', child: Text(l10n.contextMenuCopy)),
@@ -892,6 +932,8 @@ Future<void> showRowContextMenu(
       await openEntryWithDefaultApp(context, ref, singleTarget!);
     case 'view':
       await viewSelected(context, ref, side);
+    case 'edit':
+      await editSelected(context, ref, side);
     case 'rename':
       await renameSelected(context, ref, side);
     case 'copy':

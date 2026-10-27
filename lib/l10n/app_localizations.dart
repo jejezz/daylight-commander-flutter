@@ -1303,6 +1303,378 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'작업이 진행 중입니다. 끝난 뒤에 다시 시도해 주세요.'**
   String get updateBusyBody;
+
+  /// No description provided for @fnEdit.
+  ///
+  /// In ko, this message translates to:
+  /// **'F4 편집'**
+  String get fnEdit;
+
+  /// No description provided for @contextMenuEdit.
+  ///
+  /// In ko, this message translates to:
+  /// **'편집 (F4)'**
+  String get contextMenuEdit;
+
+  /// No description provided for @editorSave.
+  ///
+  /// In ko, this message translates to:
+  /// **'저장'**
+  String get editorSave;
+
+  /// No description provided for @editorDontSave.
+  ///
+  /// In ko, this message translates to:
+  /// **'저장 안 함'**
+  String get editorDontSave;
+
+  /// No description provided for @editorSavedMessage.
+  ///
+  /// In ko, this message translates to:
+  /// **'저장했습니다'**
+  String get editorSavedMessage;
+
+  /// No description provided for @editorUnsavedTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'저장하지 않은 변경'**
+  String get editorUnsavedTitle;
+
+  /// No description provided for @editorUnsavedBody.
+  ///
+  /// In ko, this message translates to:
+  /// **'{name}의 변경 내용을 저장할까요?'**
+  String editorUnsavedBody(String name);
+
+  /// No description provided for @editorExternalChangedTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'파일이 바뀌었습니다'**
+  String get editorExternalChangedTitle;
+
+  /// No description provided for @editorExternalChangedBody.
+  ///
+  /// In ko, this message translates to:
+  /// **'열어 둔 뒤에 디스크의 파일이 바뀌었습니다. 덮어쓸까요?'**
+  String get editorExternalChangedBody;
+
+  /// No description provided for @editorOverwrite.
+  ///
+  /// In ko, this message translates to:
+  /// **'덮어쓰기'**
+  String get editorOverwrite;
+
+  /// No description provided for @editorSaveFailed.
+  ///
+  /// In ko, this message translates to:
+  /// **'저장하지 못했습니다: {error}'**
+  String editorSaveFailed(String error);
+
+  /// No description provided for @editorLoadFailed.
+  ///
+  /// In ko, this message translates to:
+  /// **'파일을 열지 못했습니다: {error}'**
+  String editorLoadFailed(String error);
+
+  /// No description provided for @editorCannotTooLarge.
+  ///
+  /// In ko, this message translates to:
+  /// **'5MB를 넘는 파일은 편집할 수 없습니다. F3 보기로 열어 주세요.'**
+  String get editorCannotTooLarge;
+
+  /// No description provided for @editorCannotRemote.
+  ///
+  /// In ko, this message translates to:
+  /// **'원격 파일은 아직 편집할 수 없습니다. F3 보기로 열어 주세요.'**
+  String get editorCannotRemote;
+
+  /// No description provided for @editorFind.
+  ///
+  /// In ko, this message translates to:
+  /// **'찾기'**
+  String get editorFind;
+
+  /// No description provided for @editorFindHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'찾을 내용'**
+  String get editorFindHint;
+
+  /// No description provided for @editorReplaceHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'바꿀 내용'**
+  String get editorReplaceHint;
+
+  /// No description provided for @editorReplace.
+  ///
+  /// In ko, this message translates to:
+  /// **'바꾸기'**
+  String get editorReplace;
+
+  /// No description provided for @editorReplaceAll.
+  ///
+  /// In ko, this message translates to:
+  /// **'모두 바꾸기'**
+  String get editorReplaceAll;
+
+  /// No description provided for @editorMatchCase.
+  ///
+  /// In ko, this message translates to:
+  /// **'대소문자 구분'**
+  String get editorMatchCase;
+
+  /// No description provided for @editorRegex.
+  ///
+  /// In ko, this message translates to:
+  /// **'정규식'**
+  String get editorRegex;
+
+  /// No description provided for @editorPrevMatch.
+  ///
+  /// In ko, this message translates to:
+  /// **'이전'**
+  String get editorPrevMatch;
+
+  /// No description provided for @editorNextMatch.
+  ///
+  /// In ko, this message translates to:
+  /// **'다음'**
+  String get editorNextMatch;
+
+  /// No description provided for @editorToggleReplace.
+  ///
+  /// In ko, this message translates to:
+  /// **'바꾸기 전환'**
+  String get editorToggleReplace;
+
+  /// No description provided for @editorNoMatches.
+  ///
+  /// In ko, this message translates to:
+  /// **'결과 없음'**
+  String get editorNoMatches;
+
+  /// No description provided for @editorMatchCount.
+  ///
+  /// In ko, this message translates to:
+  /// **'{current}/{total}'**
+  String editorMatchCount(int current, int total);
+
+  /// No description provided for @editorWordWrap.
+  ///
+  /// In ko, this message translates to:
+  /// **'줄 바꿈'**
+  String get editorWordWrap;
+
+  /// No description provided for @editorGoToLine.
+  ///
+  /// In ko, this message translates to:
+  /// **'줄 이동'**
+  String get editorGoToLine;
+
+  /// No description provided for @editorGoToLineHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'줄 번호 (1–{max})'**
+  String editorGoToLineHint(int max);
+
+  /// No description provided for @editorStatusPosition.
+  ///
+  /// In ko, this message translates to:
+  /// **'{line}행 {column}열'**
+  String editorStatusPosition(int line, int column);
+
+  /// No description provided for @editorHighlightOff.
+  ///
+  /// In ko, this message translates to:
+  /// **'구문 강조 꺼짐 (파일이 큼)'**
+  String get editorHighlightOff;
+
+  /// No description provided for @editorLineBreakLf.
+  ///
+  /// In ko, this message translates to:
+  /// **'LF'**
+  String get editorLineBreakLf;
+
+  /// No description provided for @editorLineBreakCrlf.
+  ///
+  /// In ko, this message translates to:
+  /// **'CRLF'**
+  String get editorLineBreakCrlf;
+
+  /// No description provided for @editorSaveAs.
+  ///
+  /// In ko, this message translates to:
+  /// **'다른 이름으로 저장'**
+  String get editorSaveAs;
+
+  /// No description provided for @editorSaveAsHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'저장할 경로 (이름만 쓰면 같은 폴더)'**
+  String get editorSaveAsHint;
+
+  /// No description provided for @editorOverwriteExistingBody.
+  ///
+  /// In ko, this message translates to:
+  /// **'{name}이(가) 이미 있습니다. 덮어쓸까요?'**
+  String editorOverwriteExistingBody(String name);
+
+  /// No description provided for @editorReadOnlyBinary.
+  ///
+  /// In ko, this message translates to:
+  /// **'바이너리이거나 UTF-8이 아닌 파일입니다. 바이트를 글자 하나씩 그대로 보여 주는 읽기 전용입니다.'**
+  String get editorReadOnlyBinary;
+
+  /// No description provided for @editorUndo.
+  ///
+  /// In ko, this message translates to:
+  /// **'실행 취소'**
+  String get editorUndo;
+
+  /// No description provided for @editorRedo.
+  ///
+  /// In ko, this message translates to:
+  /// **'다시 실행'**
+  String get editorRedo;
+
+  /// No description provided for @editorPreview.
+  ///
+  /// In ko, this message translates to:
+  /// **'마크다운 미리보기'**
+  String get editorPreview;
+
+  /// No description provided for @editorShortcuts.
+  ///
+  /// In ko, this message translates to:
+  /// **'단축키'**
+  String get editorShortcuts;
+
+  /// No description provided for @editorGroupFile.
+  ///
+  /// In ko, this message translates to:
+  /// **'파일·기타'**
+  String get editorGroupFile;
+
+  /// No description provided for @editorGroupEdit.
+  ///
+  /// In ko, this message translates to:
+  /// **'편집'**
+  String get editorGroupEdit;
+
+  /// No description provided for @editorGroupMove.
+  ///
+  /// In ko, this message translates to:
+  /// **'줄·이동·선택'**
+  String get editorGroupMove;
+
+  /// No description provided for @editorGroupFind.
+  ///
+  /// In ko, this message translates to:
+  /// **'찾기·이동'**
+  String get editorGroupFind;
+
+  /// No description provided for @editorScClose.
+  ///
+  /// In ko, this message translates to:
+  /// **'닫기 (찾기가 열려 있으면 찾기만 닫음)'**
+  String get editorScClose;
+
+  /// No description provided for @editorScCutCopyPaste.
+  ///
+  /// In ko, this message translates to:
+  /// **'잘라내기 / 복사 / 붙여넣기'**
+  String get editorScCutCopyPaste;
+
+  /// No description provided for @editorScSelectAll.
+  ///
+  /// In ko, this message translates to:
+  /// **'모두 선택'**
+  String get editorScSelectAll;
+
+  /// No description provided for @editorScSelectLine.
+  ///
+  /// In ko, this message translates to:
+  /// **'줄 선택'**
+  String get editorScSelectLine;
+
+  /// No description provided for @editorScDeleteLine.
+  ///
+  /// In ko, this message translates to:
+  /// **'줄 삭제'**
+  String get editorScDeleteLine;
+
+  /// No description provided for @editorScMoveLine.
+  ///
+  /// In ko, this message translates to:
+  /// **'줄 위/아래로 옮기기'**
+  String get editorScMoveLine;
+
+  /// No description provided for @editorScIndent.
+  ///
+  /// In ko, this message translates to:
+  /// **'들여쓰기 / 내어쓰기'**
+  String get editorScIndent;
+
+  /// No description provided for @editorScComment.
+  ///
+  /// In ko, this message translates to:
+  /// **'한 줄 주석 토글'**
+  String get editorScComment;
+
+  /// No description provided for @editorScBlockComment.
+  ///
+  /// In ko, this message translates to:
+  /// **'블록 주석 토글'**
+  String get editorScBlockComment;
+
+  /// No description provided for @editorScDeleteWord.
+  ///
+  /// In ko, this message translates to:
+  /// **'단어 단위 삭제'**
+  String get editorScDeleteWord;
+
+  /// No description provided for @editorScLineStartEnd.
+  ///
+  /// In ko, this message translates to:
+  /// **'줄 처음 / 끝으로'**
+  String get editorScLineStartEnd;
+
+  /// No description provided for @editorScDocStartEnd.
+  ///
+  /// In ko, this message translates to:
+  /// **'문서 처음 / 끝으로'**
+  String get editorScDocStartEnd;
+
+  /// No description provided for @editorScWordMove.
+  ///
+  /// In ko, this message translates to:
+  /// **'단어 단위로 이동'**
+  String get editorScWordMove;
+
+  /// No description provided for @editorScExtendSelection.
+  ///
+  /// In ko, this message translates to:
+  /// **'이동 키 + Shift: 선택 넓히기'**
+  String get editorScExtendSelection;
+
+  /// No description provided for @editorScNextMatch.
+  ///
+  /// In ko, this message translates to:
+  /// **'다음 결과 (찾기 입력창에서)'**
+  String get editorScNextMatch;
+
+  /// No description provided for @editorScBlockSelect.
+  ///
+  /// In ko, this message translates to:
+  /// **'세로(블록) 선택'**
+  String get editorScBlockSelect;
+
+  /// No description provided for @editorScFold.
+  ///
+  /// In ko, this message translates to:
+  /// **'코드 접기 / 펴기'**
+  String get editorScFold;
 }
 
 class _AppLocalizationsDelegate

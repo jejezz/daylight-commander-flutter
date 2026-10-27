@@ -210,6 +210,8 @@ class HomeScreen extends ConsumerWidget {
         bindings: {
           const SingleActivator(LogicalKeyboardKey.f3): () =>
               viewSelected(context, ref, activeSide),
+          const SingleActivator(LogicalKeyboardKey.f4): () =>
+              editSelected(context, ref, activeSide),
           const SingleActivator(LogicalKeyboardKey.f5): () =>
               copySelectionToOtherPane(context, ref, activeSide),
           const SingleActivator(LogicalKeyboardKey.keyD, control: true): () =>
@@ -624,6 +626,11 @@ class _FunctionBar extends ConsumerWidget {
               label: l10n.fnView,
               icon: Icons.visibility_outlined,
               onPressed: canView ? () => viewSelected(context, ref, activeSide) : null,
+            ),
+            _FnButton(
+              label: l10n.fnEdit,
+              icon: Icons.edit_outlined,
+              onPressed: canView ? () => editSelected(context, ref, activeSide) : null,
             ),
             _FnButton(
               label: l10n.fnNewFolder,
