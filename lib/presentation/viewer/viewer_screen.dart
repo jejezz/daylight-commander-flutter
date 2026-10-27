@@ -143,15 +143,17 @@ class _VideoViewerState extends State<_VideoViewer> {
     // 해제하면 네이티브 쪽에서 비정상 종료될 수 있어, 위젯이 내려간 뒤에 정리한다.
     final player = _player;
     final opening = _opening;
+    // 재생 중 프레임 렌더링 콜백이 해제된 컨텍스트를 건드리지 않도록 먼저 멈춘다.
+    player.pause().catchError((_) {});
     () async {
       try {
         await opening;
-      } catch (_) {}
-      await Future<void>.delayed(const Duration(milliseconds: 300));
-      try {
         await player.stop();
       } catch (_) {}
-      await player.dispose();
+      await Future<void>.delayed(const Duration(seconds: 1));
+      try {
+        await player.dispose();
+      } catch (_) {}
     }();
     super.dispose();
   }
