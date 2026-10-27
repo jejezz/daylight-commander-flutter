@@ -132,12 +132,27 @@ class _VideoViewerState extends State<_VideoViewer> {
     super.initState();
     _player = Player();
     _controller = VideoController(_player);
-    _player.open(Media(Uri.file(widget.path).toString()));
+    _opening = _player.open(Media(Uri.file(widget.path).toString()));
   }
+
+  late final Future<void> _opening;
 
   @override
   void dispose() {
-    _player.dispose();
+    // 열기가 끝나기 전이나 Video 위젯의 텍스처가 해제되기 전에 플레이어를
+    // 해제하면 네이티브 쪽에서 비정상 종료될 수 있어, 위젯이 내려간 뒤에 정리한다.
+    final player = _player;
+    final opening = _opening;
+    () async {
+      try {
+        await opening;
+      } catch (_) {}
+      await Future<void>.delayed(const Duration(milliseconds: 300));
+      try {
+        await player.stop();
+      } catch (_) {}
+      await player.dispose();
+    }();
     super.dispose();
   }
 
