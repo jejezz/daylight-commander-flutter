@@ -124,37 +124,26 @@ class _VideoViewer extends StatefulWidget {
 }
 
 class _VideoViewerState extends State<_VideoViewer> {
+  // Player/VideoController 를 열 때마다 만들고 없애면 Windows 에서 텍스처 해제가
+  // 렌더링 스레드와 경합해 flutter_windows.dll 에서 비정상 종료된다. 하나를
+  // 앱 수명 동안 재사용하고, 뷰어를 닫을 때는 정지만 한다.
+  static Player? _sharedPlayer;
+  static VideoController? _sharedController;
+
   late final Player _player;
   late final VideoController _controller;
 
   @override
   void initState() {
     super.initState();
-    _player = Player();
-    _controller = VideoController(_player);
-    _opening = _player.open(Media(Uri.file(widget.path).toString()));
+    _player = _sharedPlayer ??= Player();
+    _controller = _sharedController ??= VideoController(_player);
+    _player.open(Media(Uri.file(widget.path).toString()));
   }
-
-  late final Future<void> _opening;
 
   @override
   void dispose() {
-    // 열기가 끝나기 전이나 Video 위젯의 텍스처가 해제되기 전에 플레이어를
-    // 해제하면 네이티브 쪽에서 비정상 종료될 수 있어, 위젯이 내려간 뒤에 정리한다.
-    final player = _player;
-    final opening = _opening;
-    // 재생 중 프레임 렌더링 콜백이 해제된 컨텍스트를 건드리지 않도록 먼저 멈춘다.
-    player.pause().catchError((_) {});
-    () async {
-      try {
-        await opening;
-        await player.stop();
-      } catch (_) {}
-      await Future<void>.delayed(const Duration(seconds: 1));
-      try {
-        await player.dispose();
-      } catch (_) {}
-    }();
+    _player.stop().catchError((_) {});
     super.dispose();
   }
 
