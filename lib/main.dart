@@ -20,6 +20,7 @@ import 'presentation/home/pane_layout_provider.dart';
 import 'presentation/theme/app_theme.dart';
 import 'presentation/theme/font_scale_provider.dart';
 import 'settings/app_settings.dart';
+import 'presentation/viewer/video_host.dart';
 import 'update/update_scope.dart';
 import 'update/update_service.dart';
 import 'window/window_dock.dart';
@@ -195,7 +196,7 @@ class _DaylightCommanderAppState extends ConsumerState<DaylightCommanderApp> wit
             onCheckForUpdates: widget.updates == null ? null : _checkForUpdates,
             child: MediaQuery(
               data: MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(fontScale)),
-              child: child!,
+              child: VideoHostLayer(child: child!),
             ),
           ),
           home: const FolderAutoRefresh(child: HomeScreen()),

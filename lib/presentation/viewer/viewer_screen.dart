@@ -4,12 +4,12 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:media_kit/media_kit.dart';
-import 'package:media_kit_video/media_kit_video.dart';
 import 'package:pdfrx/pdfrx.dart';
 
 import '../../application/usecases/open_with_default_app.dart';
 import '../../l10n/app_localizations.dart';
 import '../theme/app_theme.dart';
+import 'video_host.dart';
 
 const _openWithDefaultApp = OpenWithDefaultApp();
 
@@ -124,32 +124,9 @@ class _VideoViewer extends StatefulWidget {
 }
 
 class _VideoViewerState extends State<_VideoViewer> {
-  // Player/VideoController 를 열 때마다 만들고 없애면 Windows 에서 텍스처 해제가
-  // 렌더링 스레드와 경합해 flutter_windows.dll 에서 비정상 종료된다. 하나를
-  // 앱 수명 동안 재사용하고, 뷰어를 닫을 때는 정지만 한다.
-  static Player? _sharedPlayer;
-  static VideoController? _sharedController;
-
-  late final Player _player;
-  late final VideoController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _player = _sharedPlayer ??= Player();
-    _controller = _sharedController ??= VideoController(_player);
-    _player.open(Media(Uri.file(widget.path).toString()));
-  }
-
-  @override
-  void dispose() {
-    _player.stop().catchError((_) {});
-    super.dispose();
-  }
-
   @override
   Widget build(BuildContext context) {
-    return Video(controller: _controller);
+    return VideoSlot(path: widget.path);
   }
 }
 
