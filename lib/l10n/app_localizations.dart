@@ -1106,6 +1106,90 @@ abstract class AppLocalizations {
   /// **'크게'**
   String get fontScaleLarge;
 
+  /// No description provided for @settingsTooltip.
+  ///
+  /// In ko, this message translates to:
+  /// **'설정'**
+  String get settingsTooltip;
+
+  /// No description provided for @settingsTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'설정'**
+  String get settingsTitle;
+
+  /// No description provided for @settingsSectionAppearance.
+  ///
+  /// In ko, this message translates to:
+  /// **'화면'**
+  String get settingsSectionAppearance;
+
+  /// No description provided for @settingsSectionLanguage.
+  ///
+  /// In ko, this message translates to:
+  /// **'언어'**
+  String get settingsSectionLanguage;
+
+  /// No description provided for @settingsBrightness.
+  ///
+  /// In ko, this message translates to:
+  /// **'테마'**
+  String get settingsBrightness;
+
+  /// No description provided for @settingsPalette.
+  ///
+  /// In ko, this message translates to:
+  /// **'색 구성'**
+  String get settingsPalette;
+
+  /// No description provided for @settingsPaletteSaturn.
+  ///
+  /// In ko, this message translates to:
+  /// **'새턴'**
+  String get settingsPaletteSaturn;
+
+  /// No description provided for @settingsPaletteTeal.
+  ///
+  /// In ko, this message translates to:
+  /// **'청록'**
+  String get settingsPaletteTeal;
+
+  /// No description provided for @settingsPaletteAmber.
+  ///
+  /// In ko, this message translates to:
+  /// **'호박'**
+  String get settingsPaletteAmber;
+
+  /// No description provided for @settingsPaletteRose.
+  ///
+  /// In ko, this message translates to:
+  /// **'장미'**
+  String get settingsPaletteRose;
+
+  /// No description provided for @settingsPaletteSlate.
+  ///
+  /// In ko, this message translates to:
+  /// **'슬레이트'**
+  String get settingsPaletteSlate;
+
+  /// No description provided for @settingsPaletteHighContrast.
+  ///
+  /// In ko, this message translates to:
+  /// **'고대비'**
+  String get settingsPaletteHighContrast;
+
+  /// No description provided for @settingsFontSize.
+  ///
+  /// In ko, this message translates to:
+  /// **'글자 크기'**
+  String get settingsFontSize;
+
+  /// No description provided for @settingsLanguage.
+  ///
+  /// In ko, this message translates to:
+  /// **'언어'**
+  String get settingsLanguage;
+
   /// No description provided for @updateCheckMenuItem.
   ///
   /// In ko, this message translates to:
