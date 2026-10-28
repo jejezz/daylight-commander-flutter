@@ -138,9 +138,9 @@ class _DirectoryTreeState extends ConsumerState<DirectoryTree> {
 
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: isDark ? AppColors.surface : AppColors.surfaceLight,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(AppRadius.tile),
-        border: Border.all(color: isDark ? AppColors.stroke : AppColors.strokeLight),
+        border: Border.all(color: Theme.of(context).dividerColor),
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(AppRadius.tile),
@@ -183,7 +183,7 @@ class _TreeRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final accent = isDark ? AppColors.primary : AppColors.primaryDeep;
+    final accent = Theme.of(context).colorScheme.primary;
     final icon = (driveKind == null ? null : driveKindIcon(driveKind!, color: accent)) ??
         Icon(expanded ? Icons.folder_open : Icons.folder, size: 16, color: accent);
     return InkWell(
@@ -219,7 +219,7 @@ class _TreeRow extends StatelessWidget {
                   // 색을 안 넣으면 bodyMedium(textMid, 흐린 보조색)을 물려받아
                   // 다크 모드에서 특히 희미해 보인다 — 파일 목록 이름(bodyLarge)과
                   // 같은 고대비 색으로 맞춘다.
-                  color: isDark ? AppColors.textHi : AppColors.textHiLight,
+                  color: Theme.of(context).colorScheme.onSurface,
                 ),
               ),
             ),

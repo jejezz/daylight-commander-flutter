@@ -146,12 +146,12 @@ class PaneView extends ConsumerWidget {
       onFilesDropped: (paths) => dropExternalFiles(context, ref, side, paths),
       child: DecoratedBox(
         decoration: BoxDecoration(
-          color: isDark ? AppColors.surface : AppColors.surfaceLight,
+          color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(AppRadius.tile),
           border: Border.all(
             color: isActive
-                ? (isDark ? AppColors.primary : AppColors.primaryDeep)
-                : (isDark ? AppColors.stroke : AppColors.strokeLight),
+                ? Theme.of(context).colorScheme.primary
+                : (Theme.of(context).dividerColor),
             width: isActive ? 1.5 : 1,
           ),
         ),
@@ -207,13 +207,7 @@ class PaneView extends ConsumerWidget {
                             return DecoratedBox(
                               decoration: BoxDecoration(
                                 color: candidateData.isNotEmpty
-                                    ? (isDark
-                                          ? AppColors.primary.withValues(
-                                              alpha: 0.06,
-                                            )
-                                          : AppColors.primaryDeep.withValues(
-                                              alpha: 0.05,
-                                            ))
+                                    ? (Theme.of(context).colorScheme.primary.withValues(alpha: isDark ? 0.06 : 0.05))
                                     : null,
                               ),
                               child: viewSettings.isThumbnails
@@ -395,8 +389,7 @@ class _PathBarState extends State<_PathBar> {
             icon: const ToolIcon('icons8-drive.svg', size: 18),
             onSelected: widget.onSelectDrive,
             itemBuilder: (context) {
-              final isDark = Theme.of(context).brightness == Brightness.dark;
-              final accent = isDark ? AppColors.primary : AppColors.primaryDeep;
+              final accent = Theme.of(context).colorScheme.primary;
               return [
                 for (final drive in widget.drives)
                   PopupMenuItem(
@@ -642,13 +635,9 @@ class _FileRow extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final bgColor = dragHighlight
-        ? (isDark
-              ? AppColors.primary.withValues(alpha: 0.28)
-              : AppColors.primaryDeep.withValues(alpha: 0.18))
+        ? (Theme.of(context).colorScheme.primary.withValues(alpha: isDark ? 0.28 : 0.18))
         : selected
-        ? (isDark
-              ? AppColors.primary.withValues(alpha: 0.16)
-              : AppColors.primaryDeep.withValues(alpha: 0.10))
+        ? (Theme.of(context).colorScheme.primary.withValues(alpha: isDark ? 0.16 : 0.10))
         : switch (diffStatus) {
             FileDiffStatus.onlyHere =>
               (isDark ? AppColors.accent : AppColors.accent).withValues(
@@ -665,12 +654,12 @@ class _FileRow extends StatelessWidget {
         borderRadius: gridMode ? BorderRadius.circular(8) : null,
         border: isCursor
             ? Border.all(
-                color: isDark ? AppColors.primary : AppColors.primaryDeep,
+                color: Theme.of(context).colorScheme.primary,
                 width: gridMode ? 1.5 : 1,
               )
             : (gridMode && selected)
             ? Border.all(
-                color: (isDark ? AppColors.primary : AppColors.primaryDeep)
+                color: Theme.of(context).colorScheme.primary
                     .withValues(alpha: 0.5),
               )
             : null,
@@ -824,7 +813,6 @@ class _DragFeedback extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
     final multi = payload.entries.length > 1;
     final first = payload.entries.first;
     return Material(
@@ -835,10 +823,10 @@ class _DragFeedback extends StatelessWidget {
           constraints: const BoxConstraints(maxWidth: 220),
           child: DecoratedBox(
             decoration: BoxDecoration(
-              color: isDark ? AppColors.surfaceHi : AppColors.surfaceHiLight,
+              color: Theme.of(context).colorScheme.surfaceContainerHighest,
               borderRadius: BorderRadius.circular(8),
               border: Border.all(
-                color: isDark ? AppColors.primary : AppColors.primaryDeep,
+                color: Theme.of(context).colorScheme.primary,
               ),
             ),
             child: Padding(
@@ -952,7 +940,6 @@ class _ExternalDropOverlayState extends State<_ExternalDropOverlay> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     return DropTarget(
       onDragEntered: (_) => setState(() => _hovering = true),
       onDragExited: (_) => setState(() => _hovering = false),
@@ -968,10 +955,10 @@ class _ExternalDropOverlayState extends State<_ExternalDropOverlay> {
               child: IgnorePointer(
                 child: DecoratedBox(
                   decoration: BoxDecoration(
-                    color: (isDark ? AppColors.primary : AppColors.primaryDeep)
+                    color: Theme.of(context).colorScheme.primary
                         .withValues(alpha: 0.10),
                     border: Border.all(
-                      color: isDark ? AppColors.primary : AppColors.primaryDeep,
+                      color: Theme.of(context).colorScheme.primary,
                       width: 2,
                     ),
                     borderRadius: BorderRadius.circular(AppRadius.tile),

@@ -113,6 +113,7 @@ class AppTheme {
       onSurface: AppColors.textHi,
       error: AppColors.danger,
       onError: Colors.white,
+      surfaceContainerHighest: AppColors.surfaceHi,
     );
     return _base(scheme, AppColors.bg, AppColors.textHi, AppColors.textMid);
   }
@@ -128,6 +129,7 @@ class AppTheme {
       onSurface: AppColors.textHiLight,
       error: AppColors.danger,
       onError: Colors.white,
+      surfaceContainerHighest: AppColors.surfaceHiLight,
     );
     return _base(
         scheme, AppColors.bgLight, AppColors.textHiLight, AppColors.textMidLight);
@@ -184,6 +186,8 @@ class AppTheme {
       fontFamily: _fontFamily,
       fontFamilyFallback: _fontFallback,
       scaffoldBackgroundColor: background,
+      // 분할선(디렉토리 트리 경계 등)이 Theme.of(context).dividerColor 를 읽는다. 기본값은 흰색에 가깝다.
+      dividerColor: stroke,
       canvasColor: background,
       splashFactory: InkSparkle.splashFactory,
       appBarTheme: AppBarTheme(
