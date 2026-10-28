@@ -8,16 +8,22 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../presentation/theme/app_theme.dart';
+
 class AppSettings extends ChangeNotifier {
-  AppSettings._(this._prefs, this._themeMode, this._locale);
+  AppSettings._(this._prefs, this._themeMode, this._locale, this._palette);
 
   /// 저장 키 — 모든 앱 공통 (localization.md §5). 바꾸지 않는다.
   static const themeModeKey = 'theme_mode';
   static const localeKey = 'app_locale';
 
+  /// 색 구성(color theme) — 이 앱 고유 설정. daylight-workbench와 같은 키.
+  static const paletteKey = 'theme_palette';
+
   final SharedPreferences _prefs;
   ThemeMode _themeMode;
   Locale? _locale;
+  ColorPalette _palette;
 
   /// 저장된 값을 읽는다. [legacyKeys]는 예전 앱이 쓰던 키를 새 키로 한 번
   /// 옮긴다 — 키를 그냥 바꾸면 사용자 설정이 사라진다.
@@ -31,13 +37,23 @@ class AppSettings extends ChangeNotifier {
     }
     final mode = ThemeMode.values.asNameMap()[prefs.getString(themeModeKey)] ?? ThemeMode.system;
     final code = prefs.getString(localeKey);
-    return AppSettings._(prefs, mode, code == null ? null : Locale(code));
+    final palette = ColorPalette.values.asNameMap()[prefs.getString(paletteKey)] ?? ColorPalette.saturn;
+    return AppSettings._(prefs, mode, code == null ? null : Locale(code), palette);
   }
 
   ThemeMode get themeMode => _themeMode;
 
   /// null = 시스템 언어를 따른다.
   Locale? get locale => _locale;
+
+  ColorPalette get palette => _palette;
+
+  Future<void> setPalette(ColorPalette palette) async {
+    if (palette == _palette) return;
+    _palette = palette;
+    notifyListeners();
+    await _prefs.setString(paletteKey, palette.name);
+  }
 
   Future<void> setThemeMode(ThemeMode mode) async {
     if (mode == _themeMode) return;

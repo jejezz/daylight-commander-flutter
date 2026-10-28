@@ -5,8 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../about/daylight_about.dart';
 import '../../l10n/app_localizations.dart';
 import '../../window/window_dock.dart';
-import '../../settings/settings_menus.dart';
-import '../widgets/font_scale_menu.dart';
+import '../../settings/settings_dialog.dart';
 import '../theme/app_theme.dart';
 import '../widgets/operation_banner.dart';
 import '../widgets/tool_icon.dart';
@@ -195,9 +194,11 @@ class HomeScreen extends ConsumerWidget {
                   ),
               ],
             ),
-          const FontScaleMenuButton(),
-          const ThemeMenuButton(),
-          const LanguageMenuButton(),
+          IconButton(
+            icon: const ToolIcon('icons8-settings.svg'),
+            tooltip: l10n.settingsTooltip,
+            onPressed: () => showSettingsDialog(context),
+          ),
           IconButton(
             icon: const ToolIcon('icons8-about.svg'),
             tooltip: l10n.aboutTooltip,

@@ -574,6 +574,48 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fontScaleLarge => 'Large';
 
   @override
+  String get settingsTooltip => 'Settings';
+
+  @override
+  String get settingsTitle => 'Settings';
+
+  @override
+  String get settingsSectionAppearance => 'Appearance';
+
+  @override
+  String get settingsSectionLanguage => 'Language';
+
+  @override
+  String get settingsBrightness => 'Theme';
+
+  @override
+  String get settingsPalette => 'Color theme';
+
+  @override
+  String get settingsPaletteSaturn => 'Saturn';
+
+  @override
+  String get settingsPaletteTeal => 'Teal';
+
+  @override
+  String get settingsPaletteAmber => 'Amber';
+
+  @override
+  String get settingsPaletteRose => 'Rose';
+
+  @override
+  String get settingsPaletteSlate => 'Slate';
+
+  @override
+  String get settingsPaletteHighContrast => 'High contrast';
+
+  @override
+  String get settingsFontSize => 'Font size';
+
+  @override
+  String get settingsLanguage => 'Language';
+
+  @override
   String get updateCheckMenuItem => 'Check for Updates';
 
   @override

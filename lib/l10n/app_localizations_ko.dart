@@ -559,6 +559,48 @@ class AppLocalizationsKo extends AppLocalizations {
   String get fontScaleLarge => '크게';
 
   @override
+  String get settingsTooltip => '설정';
+
+  @override
+  String get settingsTitle => '설정';
+
+  @override
+  String get settingsSectionAppearance => '화면';
+
+  @override
+  String get settingsSectionLanguage => '언어';
+
+  @override
+  String get settingsBrightness => '테마';
+
+  @override
+  String get settingsPalette => '색 구성';
+
+  @override
+  String get settingsPaletteSaturn => '새턴';
+
+  @override
+  String get settingsPaletteTeal => '청록';
+
+  @override
+  String get settingsPaletteAmber => '호박';
+
+  @override
+  String get settingsPaletteRose => '장미';
+
+  @override
+  String get settingsPaletteSlate => '슬레이트';
+
+  @override
+  String get settingsPaletteHighContrast => '고대비';
+
+  @override
+  String get settingsFontSize => '글자 크기';
+
+  @override
+  String get settingsLanguage => '언어';
+
+  @override
   String get updateCheckMenuItem => '업데이트 확인';
 
   @override
