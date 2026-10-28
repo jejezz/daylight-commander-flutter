@@ -36,7 +36,7 @@ class ThemeMenuButton extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     return PopupMenuButton<ThemeMode>(
       tooltip: l10n.themeMenuTooltip,
-      icon: _themeIcon(settings.themeMode),
+      icon: const ToolIcon('icons8-system-theme.svg'),
       initialValue: settings.themeMode,
       onSelected: settings.setThemeMode,
       itemBuilder: (_) => [
