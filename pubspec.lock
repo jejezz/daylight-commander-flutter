@@ -219,11 +219,11 @@ packages:
     dependency: "direct main"
     description:
       path: "."
-      ref: "v0.5.0"
-      resolved-ref: "1f210b6aaf2c121d18e3e7f53803c088230be522"
+      ref: "v0.5.1"
+      resolved-ref: f40ca4b590dcf41617929f77d7abb775b419bc8d
       url: "https://github.com/jejezz/flutter_drag_out.git"
     source: git
-    version: "0.5.0"
+    version: "0.5.1"
   flutter_lints:
     dependency: "direct dev"
     description:
