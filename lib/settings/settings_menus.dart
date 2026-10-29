@@ -9,6 +9,7 @@
 import 'package:flutter/material.dart';
 
 import '../l10n/app_localizations.dart';
+import '../presentation/theme/app_theme.dart';
 import '../presentation/widgets/tool_icon.dart';
 import 'app_settings.dart';
 
@@ -94,6 +95,65 @@ class ThemeSegmentedButton extends StatelessWidget {
       ],
       selected: {settings.themeMode},
       onSelectionChanged: (s) => settings.setThemeMode(s.single),
+    );
+  }
+}
+
+/// 설정 화면 "외형" 구역의 모드(시스템/라이트/다크) 단추 (settings-screen.md §3).
+class ModeSegmentedButton extends StatelessWidget {
+  const ModeSegmentedButton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final settings = AppSettingsScope.of(context);
+    final l10n = AppLocalizations.of(context);
+    return SegmentedButton<ThemeMode>(
+      showSelectedIcon: false,
+      segments: [
+        ButtonSegment(value: ThemeMode.system, icon: _themeIcon(ThemeMode.system), label: Text(l10n.settingsModeSystem)),
+        ButtonSegment(value: ThemeMode.light, icon: _themeIcon(ThemeMode.light), label: Text(l10n.themeLight)),
+        ButtonSegment(value: ThemeMode.dark, icon: _themeIcon(ThemeMode.dark), label: Text(l10n.themeDark)),
+      ],
+      selected: {settings.themeMode},
+      onSelectionChanged: (s) => settings.setThemeMode(s.first),
+    );
+  }
+}
+
+/// 설정 화면 "외형" 구역의 색 구성 선택 (settings-screen.md §4). 고대비는 색 원 대신
+/// 아이콘(contrast)으로 구분한다 — 주색 하나가 아니라 전체 대비를 바꾸는 항목이라서다.
+class AccentPaletteChips extends StatelessWidget {
+  const AccentPaletteChips({super.key});
+
+  static String _label(AppLocalizations l10n, AccentPalette p) => switch (p) {
+        AccentPalette.saturn => l10n.settingsPaletteSaturn,
+        AccentPalette.teal => l10n.settingsPaletteTeal,
+        AccentPalette.amber => l10n.settingsPaletteAmber,
+        AccentPalette.rose => l10n.settingsPaletteRose,
+        AccentPalette.slate => l10n.settingsPaletteSlate,
+        AccentPalette.highContrast => l10n.settingsPaletteHighContrast,
+      };
+
+  @override
+  Widget build(BuildContext context) {
+    final settings = AppSettingsScope.of(context);
+    final l10n = AppLocalizations.of(context);
+    final brightness = Theme.of(context).brightness;
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        for (final p in AccentPalette.values)
+          ChoiceChip(
+            selected: settings.accentPalette == p,
+            showCheckmark: false,
+            avatar: p == AccentPalette.highContrast
+                ? Icon(Icons.contrast_rounded, size: 14, color: Theme.of(context).colorScheme.onSurface)
+                : Icon(Icons.circle, size: 14, color: p.primaryFor(brightness)),
+            label: Text(_label(l10n, p)),
+            onSelected: (_) => settings.setAccentPalette(p),
+          ),
+      ],
     );
   }
 }
