@@ -6,7 +6,6 @@ import '../../about/daylight_about.dart';
 import '../../l10n/app_localizations.dart';
 import '../../window/window_dock.dart';
 import '../../settings/settings_dialog.dart';
-import '../widgets/font_scale_menu.dart';
 import '../theme/app_theme.dart';
 import '../widgets/operation_banner.dart';
 import '../widgets/tool_icon.dart';
@@ -106,7 +105,6 @@ class HomeScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final activeSide = ref.watch(activePaneProvider);
     final compareMode = ref.watch(compareModeProvider);
     final layout = ref.watch(paneLayoutProvider);
@@ -139,7 +137,7 @@ class HomeScreen extends ConsumerWidget {
             Icon(
               Icons.view_column_outlined,
               size: 18,
-              color: isDark ? AppColors.primary : AppColors.primaryDeep,
+              color: Theme.of(context).colorScheme.primary,
             ),
             const SizedBox(width: 8),
             const Flexible(child: Text('Daylight Commander', overflow: TextOverflow.ellipsis)),
@@ -195,9 +193,8 @@ class HomeScreen extends ConsumerWidget {
                   ),
               ],
             ),
-          const FontScaleMenuButton(),
           IconButton(
-            icon: const Icon(Icons.settings_outlined),
+            icon: const ToolIcon('icons8-settings.svg'),
             tooltip: l10n.settingsTooltip,
             onPressed: () => showSettingsDialog(context),
           ),
@@ -213,6 +210,8 @@ class HomeScreen extends ConsumerWidget {
         bindings: {
           const SingleActivator(LogicalKeyboardKey.f3): () =>
               viewSelected(context, ref, activeSide),
+          const SingleActivator(LogicalKeyboardKey.f4): () =>
+              editSelected(context, ref, activeSide),
           const SingleActivator(LogicalKeyboardKey.f5): () =>
               copySelectionToOtherPane(context, ref, activeSide),
           const SingleActivator(LogicalKeyboardKey.keyD, control: true): () =>
@@ -485,9 +484,7 @@ class _DockedRail extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final path = ref.watch(paneControllerProvider(side).select((s) => s.currentPath));
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final accent = isDark ? AppColors.primary : AppColors.primaryDeep;
+    final accent = Theme.of(context).colorScheme.primary;
     final l10n = AppLocalizations.of(context);
     final name = path.split(RegExp(r'[\\/]')).where((p) => p.isNotEmpty).lastOrNull ?? path;
 
@@ -510,7 +507,7 @@ class _DockedRail extends ConsumerWidget {
         child: Material(
           color: candidate.isNotEmpty
               ? accent.withValues(alpha: 0.18)
-              : (isDark ? AppColors.surface : AppColors.surfaceLight),
+              : (Theme.of(context).colorScheme.surface),
           borderRadius: BorderRadius.circular(AppRadius.tile),
           clipBehavior: Clip.antiAlias,
           child: InkWell(
@@ -522,7 +519,7 @@ class _DockedRail extends ConsumerWidget {
                 border: Border.all(
                   color: candidate.isNotEmpty
                       ? accent
-                      : (isDark ? AppColors.stroke : AppColors.strokeLight),
+                      : (Theme.of(context).dividerColor),
                 ),
               ),
               child: Column(
@@ -627,6 +624,11 @@ class _FunctionBar extends ConsumerWidget {
               label: l10n.fnView,
               icon: Icons.visibility_outlined,
               onPressed: canView ? () => viewSelected(context, ref, activeSide) : null,
+            ),
+            _FnButton(
+              label: l10n.fnEdit,
+              icon: Icons.edit_outlined,
+              onPressed: canView ? () => editSelected(context, ref, activeSide) : null,
             ),
             _FnButton(
               label: l10n.fnNewFolder,

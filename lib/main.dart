@@ -19,6 +19,7 @@ import 'presentation/home/pane_layout_provider.dart';
 import 'presentation/theme/app_theme.dart';
 import 'presentation/theme/font_scale_provider.dart';
 import 'settings/app_settings.dart';
+import 'presentation/viewer/video_host.dart';
 import 'update/update_scope.dart';
 import 'update/update_service.dart';
 import 'window/window_dock.dart';
@@ -186,8 +187,8 @@ class _DaylightCommanderAppState extends ConsumerState<DaylightCommanderApp> wit
           navigatorKey: _navigatorKey,
           title: AppIdentity.displayName,
           debugShowCheckedModeBanner: false,
-          theme: AppTheme.light(palette: widget.settings.accentPalette),
-          darkTheme: AppTheme.dark(palette: widget.settings.accentPalette),
+          theme: AppTheme.light(widget.settings.palette),
+          darkTheme: AppTheme.dark(widget.settings.palette),
           themeMode: widget.settings.themeMode,
           locale: widget.settings.locale,
           localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -198,7 +199,7 @@ class _DaylightCommanderAppState extends ConsumerState<DaylightCommanderApp> wit
             onCheckForUpdates: widget.updates == null ? null : _checkForUpdates,
             child: MediaQuery(
               data: MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(fontScale)),
-              child: child!,
+              child: VideoHostLayer(child: child!),
             ),
           ),
           home: const FolderAutoRefresh(child: HomeScreen()),

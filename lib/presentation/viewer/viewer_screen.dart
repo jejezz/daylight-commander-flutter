@@ -4,12 +4,12 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:media_kit/media_kit.dart';
-import 'package:media_kit_video/media_kit_video.dart';
 import 'package:pdfrx/pdfrx.dart';
 
 import '../../application/usecases/open_with_default_app.dart';
 import '../../l10n/app_localizations.dart';
 import '../theme/app_theme.dart';
+import 'video_host.dart';
 
 const _openWithDefaultApp = OpenWithDefaultApp();
 
@@ -124,26 +124,9 @@ class _VideoViewer extends StatefulWidget {
 }
 
 class _VideoViewerState extends State<_VideoViewer> {
-  late final Player _player;
-  late final VideoController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _player = Player();
-    _controller = VideoController(_player);
-    _player.open(Media(Uri.file(widget.path).toString()));
-  }
-
-  @override
-  void dispose() {
-    _player.dispose();
-    super.dispose();
-  }
-
   @override
   Widget build(BuildContext context) {
-    return Video(controller: _controller);
+    return VideoSlot(path: widget.path);
   }
 }
 

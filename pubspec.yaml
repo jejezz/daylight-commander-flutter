@@ -16,7 +16,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 1.10.2+36
+version: 2.1.0+44
 
 environment:
   sdk: ^3.13.1
@@ -77,6 +77,15 @@ dependencies:
     git:
       url: https://github.com/jejezz/flutter_drag_out.git
       ref: v0.5.1
+
+  # 내장 텍스트 에디터(F4). Daylight 앱들이 공유하는 포크.
+  re_editor:
+    git:
+      url: https://github.com/jejezz/daylight-editor-flutter
+      ref: v0.10.0+1
+  re_highlight: ^0.0.3
+  # 에디터의 마크다운 미리보기
+  flutter_markdown_plus: ^1.0.12
 
   # 즐겨찾기 경로 저장 (경로 문자열만 — 자격증명 아님)
   shared_preferences: ^2.3.3

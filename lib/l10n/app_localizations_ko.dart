@@ -547,19 +547,28 @@ class AppLocalizationsKo extends AppLocalizations {
   String get languageSystemShort => '시스템';
 
   @override
+  String get fontScaleSmall => '작게';
+
+  @override
+  String get fontScaleNormal => '보통';
+
+  @override
+  String get fontScaleLarge => '크게';
+
+  @override
   String get settingsTooltip => '설정';
 
   @override
   String get settingsTitle => '설정';
 
   @override
-  String get settingsSectionAppearance => '외형';
+  String get settingsSectionAppearance => '화면';
 
   @override
-  String get settingsMode => '모드';
+  String get settingsSectionLanguage => '언어';
 
   @override
-  String get settingsModeSystem => '시스템';
+  String get settingsBrightness => '테마';
 
   @override
   String get settingsPalette => '색 구성';
@@ -583,16 +592,10 @@ class AppLocalizationsKo extends AppLocalizations {
   String get settingsPaletteHighContrast => '고대비';
 
   @override
-  String get fontScaleMenuTooltip => '글자 크기';
+  String get settingsFontSize => '글자 크기';
 
   @override
-  String get fontScaleSmall => '작게';
-
-  @override
-  String get fontScaleNormal => '보통';
-
-  @override
-  String get fontScaleLarge => '크게';
+  String get settingsLanguage => '언어';
 
   @override
   String get updateCheckMenuItem => '업데이트 확인';
@@ -711,4 +714,205 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get updateBusyBody => '작업이 진행 중입니다. 끝난 뒤에 다시 시도해 주세요.';
+
+  @override
+  String get fnEdit => 'F4 편집';
+
+  @override
+  String get contextMenuEdit => '편집 (F4)';
+
+  @override
+  String get editorSave => '저장';
+
+  @override
+  String get editorDontSave => '저장 안 함';
+
+  @override
+  String get editorSavedMessage => '저장했습니다';
+
+  @override
+  String get editorUnsavedTitle => '저장하지 않은 변경';
+
+  @override
+  String editorUnsavedBody(String name) {
+    return '$name의 변경 내용을 저장할까요?';
+  }
+
+  @override
+  String get editorExternalChangedTitle => '파일이 바뀌었습니다';
+
+  @override
+  String get editorExternalChangedBody => '열어 둔 뒤에 디스크의 파일이 바뀌었습니다. 덮어쓸까요?';
+
+  @override
+  String get editorOverwrite => '덮어쓰기';
+
+  @override
+  String editorSaveFailed(String error) {
+    return '저장하지 못했습니다: $error';
+  }
+
+  @override
+  String editorLoadFailed(String error) {
+    return '파일을 열지 못했습니다: $error';
+  }
+
+  @override
+  String get editorCannotTooLarge => '5MB를 넘는 파일은 편집할 수 없습니다. F3 보기로 열어 주세요.';
+
+  @override
+  String get editorCannotRemote => '원격 파일은 아직 편집할 수 없습니다. F3 보기로 열어 주세요.';
+
+  @override
+  String get editorFind => '찾기';
+
+  @override
+  String get editorFindHint => '찾을 내용';
+
+  @override
+  String get editorReplaceHint => '바꿀 내용';
+
+  @override
+  String get editorReplace => '바꾸기';
+
+  @override
+  String get editorReplaceAll => '모두 바꾸기';
+
+  @override
+  String get editorMatchCase => '대소문자 구분';
+
+  @override
+  String get editorRegex => '정규식';
+
+  @override
+  String get editorPrevMatch => '이전';
+
+  @override
+  String get editorNextMatch => '다음';
+
+  @override
+  String get editorToggleReplace => '바꾸기 전환';
+
+  @override
+  String get editorNoMatches => '결과 없음';
+
+  @override
+  String editorMatchCount(int current, int total) {
+    return '$current/$total';
+  }
+
+  @override
+  String get editorWordWrap => '줄 바꿈';
+
+  @override
+  String get editorGoToLine => '줄 이동';
+
+  @override
+  String editorGoToLineHint(int max) {
+    return '줄 번호 (1–$max)';
+  }
+
+  @override
+  String editorStatusPosition(int line, int column) {
+    return '$line행 $column열';
+  }
+
+  @override
+  String get editorHighlightOff => '구문 강조 꺼짐 (파일이 큼)';
+
+  @override
+  String get editorLineBreakLf => 'LF';
+
+  @override
+  String get editorLineBreakCrlf => 'CRLF';
+
+  @override
+  String get editorSaveAs => '다른 이름으로 저장';
+
+  @override
+  String get editorSaveAsHint => '저장할 경로 (이름만 쓰면 같은 폴더)';
+
+  @override
+  String editorOverwriteExistingBody(String name) {
+    return '$name이(가) 이미 있습니다. 덮어쓸까요?';
+  }
+
+  @override
+  String get editorReadOnlyBinary =>
+      '바이너리이거나 UTF-8이 아닌 파일입니다. 바이트를 글자 하나씩 그대로 보여 주는 읽기 전용입니다.';
+
+  @override
+  String get editorUndo => '실행 취소';
+
+  @override
+  String get editorRedo => '다시 실행';
+
+  @override
+  String get editorPreview => '마크다운 미리보기';
+
+  @override
+  String get editorShortcuts => '단축키';
+
+  @override
+  String get editorGroupFile => '파일·기타';
+
+  @override
+  String get editorGroupEdit => '편집';
+
+  @override
+  String get editorGroupMove => '줄·이동·선택';
+
+  @override
+  String get editorGroupFind => '찾기·이동';
+
+  @override
+  String get editorScClose => '닫기 (찾기가 열려 있으면 찾기만 닫음)';
+
+  @override
+  String get editorScCutCopyPaste => '잘라내기 / 복사 / 붙여넣기';
+
+  @override
+  String get editorScSelectAll => '모두 선택';
+
+  @override
+  String get editorScSelectLine => '줄 선택';
+
+  @override
+  String get editorScDeleteLine => '줄 삭제';
+
+  @override
+  String get editorScMoveLine => '줄 위/아래로 옮기기';
+
+  @override
+  String get editorScIndent => '들여쓰기 / 내어쓰기';
+
+  @override
+  String get editorScComment => '한 줄 주석 토글';
+
+  @override
+  String get editorScBlockComment => '블록 주석 토글';
+
+  @override
+  String get editorScDeleteWord => '단어 단위 삭제';
+
+  @override
+  String get editorScLineStartEnd => '줄 처음 / 끝으로';
+
+  @override
+  String get editorScDocStartEnd => '문서 처음 / 끝으로';
+
+  @override
+  String get editorScWordMove => '단어 단위로 이동';
+
+  @override
+  String get editorScExtendSelection => '이동 키 + Shift: 선택 넓히기';
+
+  @override
+  String get editorScNextMatch => '다음 결과 (찾기 입력창에서)';
+
+  @override
+  String get editorScBlockSelect => '세로(블록) 선택';
+
+  @override
+  String get editorScFold => '코드 접기 / 펴기';
 }

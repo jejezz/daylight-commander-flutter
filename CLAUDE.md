@@ -15,7 +15,8 @@ https://github.com/jejezz/application-release-templates/tree/main/conventions
   Riverpod), 기능 범위는 [PLAN.md](PLAN.md), 화면은 [UI_UX.md](UI_UX.md), 릴리스 절차는
   [RELEASING.md](RELEASING.md).
 - 테마·언어는 `lib/settings/`(`AppSettings`, 저장 키 `theme_mode`·`app_locale`), 글자 크기만
-  Riverpod(`fontScaleProvider`, 키 `font_scale`)이다. 앱 바 오른쪽 끝은 `글자 크기 | 테마 | 언어 | 정보`.
+  Riverpod(`fontScaleProvider`, 키 `font_scale`)이다. 색 구성(color theme)은 `AppSettings.palette`(키 `theme_palette`).
+  테마·색 구성·글자 크기·언어는 설정 창(`lib/settings/settings_dialog.dart`)에 있고, 앱 바 오른쪽 끝은 `설정 | 정보`.
 - 앱 고유 정보 창 문구는 `lib/about/daylight_about.dart`에 두고, 공통 `about_dialog.dart` 는
   템플릿과 같게 둔다.
 - 번들 글꼴은 SeoulNamsan 400/700/800 (300 은 뺐다). 대체 글꼴은 `AppFonts.fallback`.

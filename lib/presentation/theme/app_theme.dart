@@ -1,33 +1,5 @@
 import 'package:flutter/material.dart';
 
-/// 고를 수 있는 색 구성 (settings-screen.md §4). 기본 [saturn]은 이 파일의 고정 팔레트
-/// 그대로이고, [highContrast] 전을 뺀 나머지는 주색(primary)만 바꾼다(다크·라이트 한 쌍).
-enum AccentPalette {
-  saturn(Color(0xFF4C9DFF), Color(0xFF2C6BE0)),
-  teal(Color(0xFF2DD4BF), Color(0xFF0F766E)),
-  amber(Color(0xFFFBBF24), Color(0xFFB45309)),
-  rose(Color(0xFFFB7185), Color(0xFFBE123C)),
-  slate(Color(0xFF94A3B8), Color(0xFF475569)),
-  highContrast(Color(0xFFFFD60A), Color(0xFF0000CC));
-
-  const AccentPalette(this.darkPrimary, this.lightPrimary);
-
-  final Color darkPrimary;
-  final Color lightPrimary;
-
-  Color primaryFor(Brightness b) => b == Brightness.dark ? darkPrimary : lightPrimary;
-
-  ColorScheme apply(ColorScheme scheme) {
-    if (this == saturn || this == highContrast) return scheme;
-    final dark = scheme.brightness == Brightness.dark;
-    return scheme.copyWith(
-      primary: dark ? darkPrimary : lightPrimary,
-      onPrimary: dark ? AppColors.bg : Colors.white,
-      inversePrimary: dark ? lightPrimary : darkPrimary,
-    );
-  }
-}
-
 /// Daylight Commander의 팔레트 + 테마.
 ///
 /// saturn-mobile-client-flutter의 테마 구조(AppColors/AppRadius/AppTheme)를 계승하되,
@@ -83,6 +55,25 @@ class AppColors {
   static const executableLight = Color(0xFFC2531F);
 }
 
+/// 고를 수 있는 색 구성 (daylight-workbench의 StudioPalette와 같다). [saturn]은 기본 팔레트 그대로이고,
+/// [highContrast]를 뺀 나머지는 주색만 바꾼다(다크용·라이트용 한 쌍). [highContrast]는 배경·글자·테두리
+/// 전부를 순흑/순백 최대 대비로 바꾼다.
+enum ColorPalette {
+  saturn(Color(0xFF4C9DFF), Color(0xFF2C6BE0)),
+  teal(Color(0xFF2DD4BF), Color(0xFF0F766E)),
+  amber(Color(0xFFFBBF24), Color(0xFFB45309)),
+  rose(Color(0xFFFB7185), Color(0xFFBE123C)),
+  slate(Color(0xFF94A3B8), Color(0xFF475569)),
+  highContrast(Color(0xFFFFD60A), Color(0xFF0000CC));
+
+  const ColorPalette(this.darkPrimary, this.lightPrimary);
+
+  final Color darkPrimary;
+  final Color lightPrimary;
+
+  Color primaryFor(Brightness b) => b == Brightness.dark ? darkPrimary : lightPrimary;
+}
+
 class AppRadius {
   const AppRadius._();
   static const card = 24.0;
@@ -105,84 +96,32 @@ abstract final class AppFonts {
   ]);
 }
 
-/// [AccentPalette.highContrast] 전용 ColorScheme: 주색만이 아니라 배경·글자·테두리를 순흑/순백 최대
-/// 대비로 바꾼다 (settings.md). 반투명 테두리는 꽉 찬 outline 색으로 대신한다.
-abstract final class _HighContrast {
-  static const dimDark = Color(0xFFBFBFBF);
-  static const surfaceHiDark = Color(0xFF262626);
-  static const errorDark = Color(0xFFFF6B6B);
-  static const dimLight = Color(0xFF404040);
-  static const surfaceHiLight = Color(0xFFE0E0E0);
-  static const errorLight = Color(0xFFCC0000);
-
-  static ColorScheme scheme(Brightness b) {
-    final dark = b == Brightness.dark;
-    final fg = dark ? Colors.white : Colors.black;
-    final bg = dark ? Colors.black : Colors.white;
-    final dim = dark ? dimDark : dimLight;
-    final hi = dark ? surfaceHiDark : surfaceHiLight;
-    final primary = AccentPalette.highContrast.primaryFor(b);
-    return ColorScheme(
-      brightness: b,
-      primary: primary,
-      onPrimary: bg,
-      secondary: primary,
-      onSecondary: bg,
-      error: dark ? errorDark : errorLight,
-      onError: bg,
-      surface: bg,
-      onSurface: fg,
-      onSurfaceVariant: dim,
-      surfaceContainerHighest: hi,
-      surfaceContainerHigh: hi,
-      surfaceContainer: bg,
-      surfaceContainerLow: bg,
-      surfaceContainerLowest: bg,
-      outline: fg,
-      outlineVariant: dim,
-      inverseSurface: fg,
-      onInverseSurface: bg,
-      inversePrimary: AccentPalette.highContrast.primaryFor(dark ? Brightness.light : Brightness.dark),
-      shadow: Colors.black,
-      scrim: Colors.black,
-    );
-  }
-}
-
 class AppTheme {
   const AppTheme._();
 
   static const _fontFamily = AppFonts.family;
   static const _fontFallback = AppFonts.fallback;
 
-  static ThemeData dark({AccentPalette palette = AccentPalette.saturn}) {
-    final hc = palette == AccentPalette.highContrast;
-    final scheme = hc
-        ? _HighContrast.scheme(Brightness.dark)
-        : palette.apply(const ColorScheme.dark(
-      primary: AppColors.primary,
-      onPrimary: Colors.white,
+  static ThemeData dark([ColorPalette palette = ColorPalette.saturn]) {
+    if (palette == ColorPalette.highContrast) return _highContrast(Brightness.dark);
+    final scheme = ColorScheme.dark(
+      primary: palette == ColorPalette.saturn ? AppColors.primary : palette.darkPrimary,
+      onPrimary: palette == ColorPalette.saturn ? Colors.white : AppColors.bg,
       secondary: AppColors.accent,
       onSecondary: Colors.white,
       surface: AppColors.surface,
       onSurface: AppColors.textHi,
       error: AppColors.danger,
       onError: Colors.white,
-    ));
-    return _base(
-      scheme,
-      hc ? Colors.black : AppColors.bg,
-      hc ? Colors.white : AppColors.textHi,
-      hc ? _HighContrast.dimDark : AppColors.textMid,
+      surfaceContainerHighest: AppColors.surfaceHi,
     );
+    return _base(scheme, AppColors.bg, AppColors.textHi, AppColors.textMid);
   }
 
-  static ThemeData light({AccentPalette palette = AccentPalette.saturn}) {
-    final hc = palette == AccentPalette.highContrast;
-    final scheme = hc
-        ? _HighContrast.scheme(Brightness.light)
-        : palette.apply(const ColorScheme.light(
-      primary: AppColors.primaryDeep,
+  static ThemeData light([ColorPalette palette = ColorPalette.saturn]) {
+    if (palette == ColorPalette.highContrast) return _highContrast(Brightness.light);
+    final scheme = ColorScheme.light(
+      primary: palette == ColorPalette.saturn ? AppColors.primaryDeep : palette.lightPrimary,
       onPrimary: Colors.white,
       secondary: AppColors.accent,
       onSecondary: Colors.white,
@@ -190,28 +129,65 @@ class AppTheme {
       onSurface: AppColors.textHiLight,
       error: AppColors.danger,
       onError: Colors.white,
-    ));
-    return _base(
-      scheme,
-      hc ? Colors.white : AppColors.bgLight,
-      hc ? Colors.black : AppColors.textHiLight,
-      hc ? _HighContrast.dimLight : AppColors.textMidLight,
+      surfaceContainerHighest: AppColors.surfaceHiLight,
     );
+    return _base(
+        scheme, AppColors.bgLight, AppColors.textHiLight, AppColors.textMidLight);
+  }
+
+  /// 고대비: 주색 하나만 바꾸는 게 아니라 배경·글자·테두리를 순흑/순백으로 바꾼다.
+  static ThemeData _highContrast(Brightness brightness) {
+    final dark = brightness == Brightness.dark;
+    final fg = dark ? Colors.white : Colors.black;
+    final bg = dark ? Colors.black : Colors.white;
+    final dim = dark ? const Color(0xFFBFBFBF) : const Color(0xFF404040);
+    final surfaceHi = dark ? const Color(0xFF262626) : const Color(0xFFE0E0E0);
+    final primary = ColorPalette.highContrast.primaryFor(brightness);
+    final scheme = ColorScheme(
+      brightness: brightness,
+      primary: primary,
+      onPrimary: bg,
+      secondary: primary,
+      onSecondary: bg,
+      error: dark ? const Color(0xFFFF6B6B) : const Color(0xFFCC0000),
+      onError: bg,
+      surface: bg,
+      onSurface: fg,
+      onSurfaceVariant: dim,
+      surfaceContainerHighest: surfaceHi,
+      surfaceContainerHigh: surfaceHi,
+      surfaceContainer: bg,
+      surfaceContainerLow: bg,
+      surfaceContainerLowest: bg,
+      outline: fg,
+      outlineVariant: dim,
+      inverseSurface: fg,
+      onInverseSurface: bg,
+      shadow: Colors.black,
+      scrim: Colors.black,
+    );
+    return _base(scheme, bg, fg, dim, highContrast: true);
   }
 
   static ThemeData _base(
     ColorScheme scheme,
     Color background,
     Color textHi,
-    Color textMid,
-  ) {
+    Color textMid, {
+    bool highContrast = false,
+  }) {
     final isDark = scheme.brightness == Brightness.dark;
+    // 고대비에서는 반투명 테두리 대신 꽉 찬 색을 쓴다.
+    final stroke = highContrast ? scheme.outline : (isDark ? AppColors.stroke : AppColors.strokeLight);
+    final strokeStrong = highContrast ? scheme.outline : (isDark ? AppColors.strokeStrong : AppColors.strokeStrongLight);
     return ThemeData(
       useMaterial3: true,
       colorScheme: scheme,
       fontFamily: _fontFamily,
       fontFamilyFallback: _fontFallback,
       scaffoldBackgroundColor: background,
+      // 분할선(디렉토리 트리 경계 등)이 Theme.of(context).dividerColor 를 읽는다. 기본값은 흰색에 가깝다.
+      dividerColor: stroke,
       canvasColor: background,
       splashFactory: InkSparkle.splashFactory,
       appBarTheme: AppBarTheme(
@@ -231,7 +207,7 @@ class AppTheme {
         ),
       ),
       dividerTheme: DividerThemeData(
-        color: isDark ? AppColors.stroke : AppColors.strokeLight,
+        color: stroke,
         thickness: 1,
         space: 1,
       ),
@@ -265,12 +241,12 @@ class AppTheme {
       // 띄우고 테두리를 명시적으로 그어 항상 구분되게 한다 — 드라이브
       // 선택기·즐겨찾기 팝업 등 모든 PopupMenuButton/showMenu에 공통 적용.
       popupMenuTheme: PopupMenuThemeData(
-        color: isDark ? AppColors.surfaceHi : AppColors.surfaceHiLight,
+        color: highContrast
+            ? scheme.surfaceContainerHighest
+            : (isDark ? AppColors.surfaceHi : AppColors.surfaceHiLight),
         shape: RoundedRectangleBorder(
           borderRadius: const BorderRadius.all(Radius.circular(10)),
-          side: BorderSide(
-            color: isDark ? AppColors.strokeStrong : AppColors.strokeStrongLight,
-          ),
+          side: BorderSide(color: strokeStrong),
         ),
       ),
     );

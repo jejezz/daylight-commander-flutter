@@ -19,14 +19,13 @@ class OperationBanner extends ConsumerWidget {
     if (operation == null) return const SizedBox.shrink();
 
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
     final percent = (operation.ratio * 100).clamp(0, 100).toStringAsFixed(0);
 
     return Container(
       margin: const EdgeInsets.only(top: 8),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceHi : AppColors.surfaceHiLight,
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(AppRadius.tile),
       ),
       child: Row(
@@ -50,7 +49,7 @@ class OperationBanner extends ConsumerWidget {
                     minHeight: 4,
                     color: operation.error != null
                         ? AppColors.danger
-                        : (isDark ? AppColors.primary : AppColors.primaryDeep),
+                        : Theme.of(context).colorScheme.primary,
                   ),
                 ),
               ],
