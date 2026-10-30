@@ -16,6 +16,14 @@ cmake_policy(SET CMP0063 NEW)
 # Load bundled libraries from the lib/ directory relative to the binary.
 set(CMAKE_INSTALL_RPATH "$ORIGIN/lib")
 
+# flutter_secure_storage_linux bundles an old nlohmann/json.hpp that declares
+# literal operators with a space before the suffix (e.g. `operator"" _json`).
+# Newer Clang treats that as an error (-Werror,-Wdeprecated-literal-operator)
+# even though we don't control that vendored header. Silence the warning here,
+# before the Flutter-managed and plugin subdirectories are added below, so it
+# applies to every target including that plugin's.
+add_compile_options(-Wno-deprecated-literal-operator)
+
 # Root filesystem for cross-building.
 if(FLUTTER_TARGET_PLATFORM_SYSROOT)
   set(CMAKE_SYSROOT ${FLUTTER_TARGET_PLATFORM_SYSROOT})
