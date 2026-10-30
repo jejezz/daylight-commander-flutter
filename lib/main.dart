@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -34,9 +35,12 @@ Future<void> main() async {
   // 업데이트 서비스가 "복사·이동 중인가"를 알아야 해서 컨테이너를 직접 만든다.
   final container = ProviderContainer();
 
+  // 창을 실제로 보일 준비(위치·크기 계산)가 끝나면 호출할 함수. 첫 프레임이 그려지기 전에 부르면
+  // 테마가 입혀지지 않은 빈 화면이 잠깐 보였다가 바뀌는 깜빡임이 생기므로, 첫 프레임 뒤로 미룬다.
+  Future<void> Function()? showWindow;
   if (Platform.isWindows || Platform.isMacOS || Platform.isLinux) {
     await windowManager.ensureInitialized();
-    await _prepareWindow(container);
+    showWindow = await _prepareWindow(container);
   }
 
   // 이전 실행에서 남은 Finder 드롭 임시 사본 정리 (기다리지 않는다).
@@ -55,11 +59,26 @@ Future<void> main() async {
       child: DaylightCommanderApp(settings: settings, updates: updates),
     ),
   ));
+
+  if (showWindow != null) {
+    final show = showWindow;
+    WidgetsBinding.instance.addPostFrameCallback((_) => unawaited(show()));
+  }
 }
 
-/// 지난 실행의 창 크기·위치·도킹 상태로 창을 연다. 1패널 모드로 끝냈다면 처음부터 최소 크기를
+/// 다음 프레임이 그려질 때까지 기다린다. 지금 막 레이아웃이 바뀌어 다시 그려야 할 프레임이
+/// 예약돼 있지 않을 수도 있어, 프레임을 하나 더 예약해 둔다.
+Future<void> _nextFrame() {
+  final completer = Completer<void>();
+  WidgetsBinding.instance.addPostFrameCallback((_) => completer.complete());
+  WidgetsBinding.instance.scheduleFrame();
+  return completer.future;
+}
+
+/// 지난 실행의 창 크기·위치·도킹 상태를 계산해 둔다. 창을 실제로 보이려면 돌려준 함수를 불러야 한다
+/// (첫 프레임이 그려진 뒤에 부르는 것은 호출하는 쪽의 몫). 1패널 모드로 끝냈다면 처음부터 최소 크기를
 /// 낮춰 두고(도킹을 한 번 거쳐야 줄어드는 문제 방지), 도킹 중이었다면 같은 가장자리에 다시 붙인다.
-Future<void> _prepareWindow(ProviderContainer container) async {
+Future<Future<void> Function()> _prepareWindow(ProviderContainer container) async {
   final saved = await WindowStateStore.load();
   final prefs = await SharedPreferences.getInstance();
   final singlePane = prefs.getBool(paneSingleModeKey) ?? false;
@@ -96,12 +115,22 @@ Future<void> _prepareWindow(ProviderContainer container) async {
     center: placement == null && position == null,
     title: AppIdentity.displayName,
   );
+  final placed = Completer<void>();
   windowManager.waitUntilReadyToShow(windowOptions, () async {
     if (placement != null) {
       await placement.placeInitially();
     } else if (position != null) {
       await setBoundsAcrossMonitors(Rect.fromLTWH(position.dx, position.dy, size.width, size.height));
     }
+    placed.complete();
+  });
+
+  return () async {
+    await placed.future;
+    // 배치(모니터 이동·배율 변경)가 끝난 직후에도 Flutter가 그 크기로 다시 그릴 프레임이
+    // 아직 안 나왔을 수 있어, 한 프레임 더 기다렸다가 보여준다 (창 안 내용이 잠깐 엉뚱한
+    // 크기로 보였다가 바뀌는 것을 막는다).
+    await _nextFrame();
     await windowManager.show();
     await windowManager.focus();
     final edge = saved.dockEdge;
@@ -114,7 +143,7 @@ Future<void> _prepareWindow(ProviderContainer container) async {
     } else {
       WindowStateSaver(isDocked: () => container.read(windowDockProvider) != null).start();
     }
-  });
+  };
 }
 
 class DaylightCommanderApp extends ConsumerStatefulWidget {
