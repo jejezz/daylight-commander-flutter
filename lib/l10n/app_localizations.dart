@@ -1562,6 +1562,12 @@ abstract class AppLocalizations {
   /// **'{line}행 {column}열'**
   String editorStatusPosition(int line, int column);
 
+  /// No description provided for @editorStatusSelected.
+  ///
+  /// In ko, this message translates to:
+  /// **'{count}자 선택됨'**
+  String editorStatusSelected(int count);
+
   /// No description provided for @editorHighlightOff.
   ///
   /// In ko, this message translates to:
