@@ -837,6 +837,11 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String editorStatusSelected(int count) {
+    return 'Selected: $count chars';
+  }
+
+  @override
   String get editorHighlightOff => 'Syntax highlighting off (large file)';
 
   @override

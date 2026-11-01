@@ -642,6 +642,8 @@ class _StatusBar extends StatelessWidget {
                 sel.extentIndex + 1,
                 sel.extentOffset + 1,
               ),
+              if (!sel.isCollapsed)
+                l10n.editorStatusSelected(controller.selectedText.runes.length),
               language,
               binary ? 'Latin-1' : (bom ? 'UTF-8 BOM' : 'UTF-8'),
               lineBreak,

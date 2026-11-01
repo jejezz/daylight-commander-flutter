@@ -444,6 +444,8 @@
   "@editorGoToLineHint": {"placeholders": {"max": {"type": "int"}}},
   "editorStatusPosition": "{line}행 {column}열",
   "@editorStatusPosition": {"placeholders": {"line": {"type": "int"}, "column": {"type": "int"}}},
+  "editorStatusSelected": "{count}자 선택됨",
+  "@editorStatusSelected": {"placeholders": {"count": {"type": "int"}}},
   "editorHighlightOff": "구문 강조 꺼짐 (파일이 큼)",
   "editorLineBreakLf": "LF",
   "editorLineBreakCrlf": "CRLF",

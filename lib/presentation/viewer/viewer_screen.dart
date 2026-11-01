@@ -126,7 +126,14 @@ class _VideoViewer extends StatefulWidget {
 class _VideoViewerState extends State<_VideoViewer> {
   @override
   Widget build(BuildContext context) {
-    return VideoSlot(path: widget.path);
+    // 동영상 층은 Navigator 위에 있어서, 뒤로 가는 전환 동안(Route 가 dispose 되기 전까지)
+    // 계속 탐색기를 가린다. 뒤로 가기가 시작되면 바로 멈추고 숨긴다.
+    return PopScope(
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) VideoHost.instance.close();
+      },
+      child: VideoSlot(path: widget.path),
+    );
   }
 }
 

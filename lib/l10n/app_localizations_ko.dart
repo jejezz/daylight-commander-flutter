@@ -818,6 +818,11 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
+  String editorStatusSelected(int count) {
+    return '$count자 선택됨';
+  }
+
+  @override
   String get editorHighlightOff => '구문 강조 꺼짐 (파일이 큼)';
 
   @override

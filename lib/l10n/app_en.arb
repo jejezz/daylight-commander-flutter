@@ -427,6 +427,8 @@
   "@editorGoToLineHint": {"placeholders": {"max": {"type": "int"}}},
   "editorStatusPosition": "Ln {line}, Col {column}",
   "@editorStatusPosition": {"placeholders": {"line": {"type": "int"}, "column": {"type": "int"}}},
+  "editorStatusSelected": "Selected: {count} chars",
+  "@editorStatusSelected": {"placeholders": {"count": {"type": "int"}}},
   "editorHighlightOff": "Syntax highlighting off (large file)",
   "editorLineBreakLf": "LF",
   "editorLineBreakCrlf": "CRLF",
