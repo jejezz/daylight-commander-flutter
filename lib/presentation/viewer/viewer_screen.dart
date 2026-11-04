@@ -17,7 +17,41 @@ const _textExtensions = {
   'txt', 'md', 'json', 'xml', 'html', 'htm', 'css', 'java', 'dart', 'py', 'js',
   'ts', 'yaml', 'yml', 'sql', 'sh', 'log', 'ini', 'csv', 'c', 'cpp', 'h', 'kt',
   'swift', 'gradle',
+  // 빌드·설정·스크립트·소스 등 순수 텍스트가 확실한 확장자.
+  'mk', 'mak', 'bp', 'cmake', 'bzl', 'bazel', 'ninja', 'toml', 'cfg', 'conf',
+  'properties', 'env', 'rc', 'cc', 'cxx', 'hpp', 'hh', 'hxx', 'm', 'mm', 'go',
+  'rs', 'rb', 'php', 'pl', 'pm', 'lua', 'r', 'scala', 'groovy', 'cs', 'vb',
+  'bat', 'cmd', 'ps1', 'psm1', 'bash', 'zsh', 'fish', 'jsx', 'tsx', 'mjs',
+  'cjs', 'vue', 'svelte', 'scss', 'sass', 'less', 'svg', 'xsd', 'xsl', 'xslt',
+  'plist', 'rst', 'adoc', 'tex', 'bib', 'tsv', 'diff', 'patch', 'aidl', 'hal',
+  'proto', 'thrift', 'graphql', 'gql', 'tf', 'tfvars', 'gitignore',
+  'gitattributes', 'editorconfig', 'dockerignore', 'lock', 'sln', 'csproj',
+  'vcxproj', 'pro', 'pri', 'qml', 'asm', 's', 'ld', 'dts', 'dtsi', 'rules',
+  'service', 'desktop', 'srt', 'vtt', 'ass', 'arb', 'pubspec',
 };
+
+/// 확장자가 없거나 흔한 이름의 순수 텍스트 파일 (소문자 비교).
+const _textFileNames = {
+  'makefile', 'gnumakefile', 'dockerfile', 'readme', 'license', 'licence',
+  'changelog', 'authors', 'contributing', 'notice', 'copying', 'todo',
+  'cmakelists.txt', 'gemfile', 'rakefile', 'procfile', 'vagrantfile',
+  'jenkinsfile', 'build', 'workspace', 'owners', 'codeowners',
+};
+
+/// 앞부분 [head]만 보고 텍스트인지 추정한다. NUL 바이트가 있거나 제어 문자가
+/// 많으면 바이너리, 아니면 텍스트(UTF-8이 아니어도 포함)로 본다.
+bool looksLikeText(List<int> head) {
+  if (head.isEmpty) return true;
+  var control = 0;
+  for (final b in head) {
+    if (b == 0) return false;
+    // 탭·개행·FF·ESC 는 텍스트에 흔하다.
+    if (b < 0x20 && b != 9 && b != 10 && b != 13 && b != 12 && b != 27) {
+      control++;
+    }
+  }
+  return control * 100 < head.length * 5;
+}
 const _imageExtensions = {'jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'};
 const _pdfExtensions = {'pdf'};
 const _videoExtensions = {'mp4', 'mov', 'mkv', 'avi', 'webm', 'm4v'};
@@ -52,7 +86,8 @@ class _ViewerScreenState extends State<ViewerScreen> {
       body = _HexViewer(path: widget.path);
     } else if (_imageExtensions.contains(ext)) {
       body = _ImageViewer(path: widget.path);
-    } else if (_textExtensions.contains(ext)) {
+    } else if (_textExtensions.contains(ext) ||
+        _textFileNames.contains(widget.name.toLowerCase())) {
       body = _TextViewer(path: widget.path);
     } else if (_pdfExtensions.contains(ext)) {
       body = _PdfViewer(path: widget.path);
@@ -61,7 +96,8 @@ class _ViewerScreenState extends State<ViewerScreen> {
     } else if (_audioExtensions.contains(ext)) {
       body = _AudioViewer(path: widget.path, name: widget.name);
     } else {
-      body = _UnsupportedViewer(path: widget.path);
+      // 모르는 형식은 내용을 살펴 텍스트면 텍스트 뷰어로 연다.
+      body = _SniffingViewer(path: widget.path);
     }
     return Scaffold(
       appBar: AppBar(
@@ -379,6 +415,49 @@ class _HexViewerState extends State<_HexViewer> {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// 확장자로 알 수 없는 파일의 앞 8KB를 읽어 텍스트면 [_TextViewer], 아니면
+/// [_UnsupportedViewer]를 보여준다.
+class _SniffingViewer extends StatefulWidget {
+  const _SniffingViewer({required this.path});
+
+  final String path;
+
+  @override
+  State<_SniffingViewer> createState() => _SniffingViewerState();
+}
+
+class _SniffingViewerState extends State<_SniffingViewer> {
+  late final Future<bool> _isText = _sniff();
+
+  Future<bool> _sniff() async {
+    try {
+      final raf = await File(widget.path).open();
+      try {
+        return looksLikeText(await raf.read(8192));
+      } finally {
+        await raf.close();
+      }
+    } catch (_) {
+      return false;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<bool>(
+      future: _isText,
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        return snapshot.data!
+            ? _TextViewer(path: widget.path)
+            : _UnsupportedViewer(path: widget.path);
+      },
     );
   }
 }
