@@ -37,20 +37,22 @@ Future<void> main() async {
 
   // 창을 실제로 보일 준비(위치·크기 계산)가 끝나면 호출할 함수. 첫 프레임이 그려지기 전에 부르면
   // 테마가 입혀지지 않은 빈 화면이 잠깐 보였다가 바뀌는 깜빡임이 생기므로, 첫 프레임 뒤로 미룬다.
-  Future<void> Function()? showWindow;
-  if (Platform.isWindows || Platform.isMacOS || Platform.isLinux) {
-    await windowManager.ensureInitialized();
-    showWindow = await _prepareWindow(container);
-  }
+  // 서로 의존하지 않는 시작 작업(창 준비 · 설정 읽기 · 업데이트 서비스 생성)은 순서대로 기다리지
+  // 않고 동시에 시작해 첫 프레임까지의 대기 시간을 줄인다.
+  final windowFuture = (Platform.isWindows || Platform.isMacOS || Platform.isLinux)
+      ? _initWindow(container)
+      : Future<Future<void> Function()?>.value(null);
 
   // 이전 실행에서 남은 Finder 드롭 임시 사본 정리 (기다리지 않는다).
   const DropPromiseCache().clear();
 
-  final settings = await AppSettings.load();
-
   // 데스크톱이 아니거나 UPDATE_SERVER 가 비어 있으면 null — 업데이트 확인 없음. 파일 작업 중에는
   // 알리지도 설치하지도 않는다 (설치는 앱을 종료시킨다).
-  final updates = await UpdateService.create(isBusy: () => isFileOperationRunning(container));
+  final settingsFuture = AppSettings.load();
+  final updatesFuture = UpdateService.create(isBusy: () => isFileOperationRunning(container));
+
+  final (showWindow, settings, updates) =
+      await (windowFuture, settingsFuture, updatesFuture).wait;
   // UpdateScope 는 MaterialApp 위 — 정보 창이 이것을 읽어 "업데이트 확인" 버튼을 붙인다.
   runApp(UpdateScope(
     service: updates,
@@ -64,6 +66,11 @@ Future<void> main() async {
     final show = showWindow;
     WidgetsBinding.instance.addPostFrameCallback((_) => unawaited(show()));
   }
+}
+
+Future<Future<void> Function()?> _initWindow(ProviderContainer container) async {
+  await windowManager.ensureInitialized();
+  return _prepareWindow(container);
 }
 
 /// 다음 프레임이 그려질 때까지 기다린다. 지금 막 레이아웃이 바뀌어 다시 그려야 할 프레임이
