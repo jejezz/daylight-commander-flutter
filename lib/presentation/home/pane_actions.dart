@@ -34,9 +34,11 @@ import '../../l10n/app_localizations.dart';
 import '../editor/editor_screen.dart';
 import '../viewer/archive_viewer_screen.dart';
 import '../viewer/viewer_screen.dart';
+import '../widgets/app_menu.dart';
 import '../widgets/dialogs.dart';
 import '../widgets/properties_dialog.dart';
 import 'bookmarks_provider.dart';
+import 'drag_payload.dart';
 import 'folder_comparison_provider.dart';
 import 'ftp_profiles_provider.dart';
 import 'network_profiles_provider.dart';
@@ -293,8 +295,19 @@ Future<void> deleteSelection(
   PaneSide side, {
   bool preferPermanent = false,
 }) async {
-  final pane = ref.read(paneControllerProvider(side));
-  final entries = pane.selectedEntries;
+  final entries = ref.read(paneControllerProvider(side)).selectedEntries;
+  await deleteEntries(context, ref, entries, preferPermanent: preferPermanent);
+}
+
+/// [entries]를 (확인 후) 삭제하고 두 패널을 새로 고친다. 패널이 보고 있던 폴더가
+/// 지워졌으면 남아 있는 가장 가까운 상위 폴더로 옮긴다. 패널 선택 대신 디렉토리
+/// 트리처럼 명시한 항목을 지울 때도 쓴다.
+Future<void> deleteEntries(
+  BuildContext context,
+  WidgetRef ref,
+  List<FileEntry> entries, {
+  bool preferPermanent = false,
+}) async {
   if (entries.isEmpty) return;
 
   final choice = await showDeleteConfirmDialog(
@@ -311,16 +324,41 @@ Future<void> deleteSelection(
         sftpSessions: ref.read(sftpSessionManagerProvider.notifier),
         webdavSessions: ref.read(webdavSessionManagerProvider.notifier),
       );
-  await ref.read(paneControllerProvider(side).notifier).refresh();
+  await refreshBothPanes(ref);
 }
 
-Future<void> createFolder(BuildContext context, WidgetRef ref, PaneSide side) async {
+/// 두 패널을 다시 읽는다. 현재 폴더가 사라졌으면(삭제·이동 등) 존재하는 가장
+/// 가까운 상위 폴더로 이동한다.
+Future<void> refreshBothPanes(WidgetRef ref) async {
+  for (final side in PaneSide.values) {
+    final controller = ref.read(paneControllerProvider(side).notifier);
+    final path = ref.read(paneControllerProvider(side)).currentPath;
+    if (!isRemotePath(path) && !Directory(path).existsSync()) {
+      var dir = path;
+      while (dir != p.dirname(dir) && !Directory(dir).existsSync()) {
+        dir = p.dirname(dir);
+      }
+      await controller.navigateTo(dir);
+      continue;
+    }
+    try {
+      await controller.refresh();
+    } catch (_) {}
+  }
+}
+
+Future<void> createFolder(
+  BuildContext context,
+  WidgetRef ref,
+  PaneSide side, {
+  String? parentDir,
+}) async {
   final l10n = AppLocalizations.of(context);
   final name = await promptForName(context, title: l10n.newFolderTitle, confirmLabel: l10n.createLabel);
   if (name == null || name.isEmpty) return;
   if (!context.mounted) return;
 
-  final parentDir = ref.read(paneControllerProvider(side)).currentPath;
+  parentDir ??= ref.read(paneControllerProvider(side)).currentPath;
   try {
     if (isFtpPath(parentDir)) {
       final ftpSessions = ref.read(ftpSessionManagerProvider.notifier);
@@ -342,7 +380,7 @@ Future<void> createFolder(BuildContext context, WidgetRef ref, PaneSide side) as
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
     return;
   }
-  await ref.read(paneControllerProvider(side).notifier).refresh();
+  await refreshBothPanes(ref);
 }
 
 Future<void> createFile(BuildContext context, WidgetRef ref, PaneSide side) async {
@@ -380,8 +418,11 @@ Future<void> renameSelected(BuildContext context, WidgetRef ref, PaneSide side) 
   final pane = ref.read(paneControllerProvider(side));
   final selected = pane.selectedEntries;
   if (selected.length != 1) return;
-  final entry = selected.first;
+  await renameEntry(context, ref, selected.first);
+}
 
+/// [entry] 하나의 이름을 바꾸고 두 패널을 새로 고친다 (디렉토리 트리에서도 쓴다).
+Future<void> renameEntry(BuildContext context, WidgetRef ref, FileEntry entry) async {
   final l10n = AppLocalizations.of(context);
   final newName = await promptForName(
     context,
@@ -413,7 +454,7 @@ Future<void> renameSelected(BuildContext context, WidgetRef ref, PaneSide side) 
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
     return;
   }
-  await ref.read(paneControllerProvider(side).notifier).refresh();
+  await refreshBothPanes(ref);
 }
 
 Future<void> toggleBookmark(WidgetRef ref, PaneSide side) async {
@@ -900,24 +941,24 @@ Future<void> showRowContextMenu(
     context: context,
     position: position,
     items: [
-      if (canOpen) PopupMenuItem(value: 'open', child: Text(l10n.contextMenuOpen)),
+      if (canOpen) AppMenuItem(value: 'open', child: Text(l10n.contextMenuOpen)),
       if (canView)
-        PopupMenuItem(value: 'open_with_default', child: Text(l10n.contextMenuOpenWithDefault)),
-      if (canView) PopupMenuItem(value: 'view', child: Text(l10n.contextMenuView)),
-      if (canView) PopupMenuItem(value: 'edit', child: Text(l10n.contextMenuEdit)),
+        AppMenuItem(value: 'open_with_default', child: Text(l10n.contextMenuOpenWithDefault)),
+      if (canView) AppMenuItem(value: 'view', child: Text(l10n.contextMenuView)),
+      if (canView) AppMenuItem(value: 'edit', child: Text(l10n.contextMenuEdit)),
       if (singleTarget != null)
-        PopupMenuItem(value: 'rename', child: Text(l10n.contextMenuRename)),
-      PopupMenuItem(value: 'copy', child: Text(l10n.contextMenuCopy)),
-      PopupMenuItem(value: 'duplicate', child: Text(l10n.contextMenuDuplicate)),
-      PopupMenuItem(value: 'move', child: Text(l10n.contextMenuMove)),
-      PopupMenuItem(value: 'delete', child: Text(l10n.contextMenuDelete)),
-      if (allLocal) PopupMenuItem(value: 'compress', child: Text(l10n.compressLabel)),
-      if (canExtract) PopupMenuItem(value: 'extract', child: Text(l10n.extractLabel)),
+        AppMenuItem(value: 'rename', child: Text(l10n.contextMenuRename)),
+      AppMenuItem(value: 'copy', child: Text(l10n.contextMenuCopy)),
+      AppMenuItem(value: 'duplicate', child: Text(l10n.contextMenuDuplicate)),
+      AppMenuItem(value: 'move', child: Text(l10n.contextMenuMove)),
+      AppMenuItem(value: 'delete', child: Text(l10n.contextMenuDelete)),
+      if (allLocal) AppMenuItem(value: 'compress', child: Text(l10n.compressLabel)),
+      if (canExtract) AppMenuItem(value: 'extract', child: Text(l10n.extractLabel)),
       if (singleTarget != null && allLocal)
-        PopupMenuItem(value: 'properties', child: Text(l10n.propertiesTitle)),
-      if (canBookmark) PopupMenuItem(value: 'bookmark', child: Text(l10n.addBookmarkTooltip)),
+        AppMenuItem(value: 'properties', child: Text(l10n.propertiesTitle)),
+      if (canBookmark) AppMenuItem(value: 'bookmark', child: Text(l10n.addBookmarkTooltip)),
       if (allLocal)
-        PopupMenuItem(
+        AppMenuItem(
           value: 'reveal_in_file_manager',
           child: Text(l10n.contextMenuRevealInFileManager),
         ),
@@ -1042,4 +1083,121 @@ Future<void> dropExternalFiles(
     // 같은 이름을 드롭할 때 "이름 2"로 받게 되므로 복사/취소 후 바로 지운다.
     await _dropPromiseCache.discard(paths);
   }
+}
+
+/// 디렉토리 트리 행의 우클릭 메뉴. 로컬 폴더 [path]를 대상으로 복사·이동(반대
+/// 패널로)·삭제·이름 바꾸기·새 폴더 등을 한다. 드라이브 루트([isRoot])에는
+/// 이름 바꾸기·이동·삭제를 내놓지 않는다. 작업이 끝나면 [onChanged]로 트리를
+/// 다시 읽게 한다.
+Future<void> showTreeContextMenu(
+  BuildContext context,
+  WidgetRef ref, {
+  required PaneSide side,
+  required String path,
+  required bool isRoot,
+  required Offset globalPosition,
+  required VoidCallback onChanged,
+}) async {
+  final l10n = AppLocalizations.of(context);
+  final overlay = Overlay.of(context).context.findRenderObject()! as RenderBox;
+  final action = await showMenu<String>(
+    context: context,
+    position: RelativeRect.fromRect(
+      globalPosition & const Size(1, 1),
+      Offset.zero & overlay.size,
+    ),
+    items: [
+      AppMenuItem(value: 'open', child: Text(l10n.contextMenuOpen)),
+      AppMenuItem(value: 'new_folder', child: Text(l10n.newFolderTitle)),
+      if (!isRoot) AppMenuItem(value: 'rename', child: Text(l10n.contextMenuRename)),
+      if (!isRoot) AppMenuItem(value: 'cut', child: Text(l10n.treeMenuCut)),
+      AppMenuItem(value: 'copy', child: Text(l10n.treeMenuCopy)),
+      AppMenuItem(
+        value: 'paste',
+        enabled: ref.read(treeClipboardProvider) != null,
+        child: Text(l10n.treeMenuPaste),
+      ),
+      if (!isRoot) AppMenuItem(value: 'delete', child: Text(l10n.contextMenuDelete)),
+      AppMenuItem(value: 'properties', child: Text(l10n.propertiesTitle)),
+      AppMenuItem(value: 'bookmark', child: Text(l10n.addBookmarkTooltip)),
+      AppMenuItem(value: 'reveal', child: Text(l10n.contextMenuRevealInFileManager)),
+      AppMenuItem(value: 'refresh', child: Text(l10n.refreshTooltip)),
+    ],
+  );
+  if (action == null || !context.mounted) return;
+
+  ref.read(activePaneProvider.notifier).state = side;
+  switch (action) {
+    case 'open':
+      await ref.read(paneControllerProvider(side).notifier).navigateTo(path);
+    case 'new_folder':
+      await createFolder(context, ref, side, parentDir: path);
+    case 'rename':
+      final entry = await localFileEntryFor(path);
+      if (!context.mounted) return;
+      await renameEntry(context, ref, entry);
+    case 'copy':
+    case 'cut':
+      ref.read(treeClipboardProvider.notifier).state =
+          TreeClipboard(path: path, cut: action == 'cut');
+    case 'paste':
+      final clip = ref.read(treeClipboardProvider);
+      if (clip == null) break;
+      final entry = await localFileEntryFor(clip.path);
+      if (!context.mounted) return;
+      await transferEntries(
+        context,
+        ref,
+        fromSide: side,
+        entries: [entry],
+        destinationDir: path,
+        isMove: clip.cut,
+      );
+      if (clip.cut) ref.read(treeClipboardProvider.notifier).state = null;
+    case 'delete':
+      final entry = await localFileEntryFor(path);
+      if (!context.mounted) return;
+      await deleteEntries(context, ref, [entry]);
+    case 'properties':
+      final entry = await localFileEntryFor(path);
+      if (!context.mounted) return;
+      await showPropertiesDialog(context, entry);
+    case 'bookmark':
+      await ref.read(bookmarksProvider.notifier).toggle(path);
+    case 'reveal':
+      await _revealInFileManager(path);
+    case 'refresh':
+      break;
+  }
+  onChanged();
+}
+
+/// 디렉토리 트리 안에서 복사/잘라내기한 폴더. 붙여넣기 대상 폴더의 메뉴에서 쓴다.
+class TreeClipboard {
+  const TreeClipboard({required this.path, required this.cut});
+
+  final String path;
+  final bool cut;
+}
+
+final treeClipboardProvider = StateProvider<TreeClipboard?>((ref) => null);
+
+/// 디렉토리 트리에서 폴더를 [target] 폴더로 끌어다 놓았을 때.
+/// 기본은 이동, Ctrl/⌘를 누르고 놓으면 복사.
+Future<void> dropOnTreeFolder(
+  BuildContext context,
+  WidgetRef ref, {
+  required DragPayload payload,
+  required String target,
+}) async {
+  final copy = HardwareKeyboard.instance.isControlPressed ||
+      HardwareKeyboard.instance.isMetaPressed;
+  await transferEntries(
+    context,
+    ref,
+    fromSide: payload.fromSide,
+    entries: payload.entries,
+    destinationDir: target,
+    isMove: !copy,
+  );
 }

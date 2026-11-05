@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -5,10 +6,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 
 import '../../domain/entities/drive_entry.dart';
+import '../../domain/entities/file_entry.dart';
+import '../../l10n/app_localizations.dart';
 import '../theme/app_theme.dart';
+import 'drag_payload.dart';
 import 'drive_icon.dart';
 import 'pane_controller.dart';
 import 'drives_provider.dart';
+import 'pane_actions.dart';
 
 /// 탐색기/Finder 스타일의 디렉토리 트리. 루트는 드라이브/볼륨 목록이고
 /// 하위 폴더는 펼칠 때 지연 로딩한다. 폴더를 클릭하면 [side] 패널이 그
@@ -26,10 +31,14 @@ class _DirectoryTreeState extends ConsumerState<DirectoryTree> {
   final Set<String> _expanded = {};
   final Map<String, List<String>> _children = {};
   final Set<String> _loading = {};
+  Timer? _timer;
+  bool _reloading = false;
 
   @override
   void initState() {
     super.initState();
+    // 트리 밖(다른 패널, OS)에서 폴더가 바뀌어도 따라가도록 주기적으로 다시 읽는다.
+    _timer = Timer.periodic(const Duration(seconds: 5), (_) => refresh());
     // 시작 시점의 활성 패널 경로까지 트리를 펼친다 (이후 변경은 build의 ref.listen이 처리).
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
@@ -37,9 +46,63 @@ class _DirectoryTreeState extends ConsumerState<DirectoryTree> {
     });
   }
 
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  /// 펼쳐진(= 보이는) 폴더의 자식 목록을 다시 읽는다. 달라진 곳만 갱신하고,
+  /// 사라진 폴더는 펼침 상태에서도 뺀다.
+  Future<void> refresh() async {
+    if (_reloading || !mounted) return;
+    _reloading = true;
+    try {
+      var changed = false;
+      for (final path in _children.keys.toList()) {
+        if (!mounted) return;
+        if (!_expanded.contains(path) && !_isDrive(path)) continue;
+        final names = await _listChildren(path);
+        final old = _children[path];
+        if (old == null || !_sameList(old, names)) {
+          _children[path] = names;
+          changed = true;
+        }
+      }
+      final gone = _expanded.where((e) => !Directory(e).existsSync()).toList();
+      if (gone.isNotEmpty) {
+        _expanded.removeAll(gone);
+        _children.removeWhere((k, _) => gone.contains(k));
+        changed = true;
+      }
+      if (changed && mounted) setState(() {});
+    } finally {
+      _reloading = false;
+    }
+  }
+
+  bool _isDrive(String path) =>
+      (ref.read(drivesProvider).valueOrNull ?? const <DriveEntry>[])
+          .any((d) => d.path == path);
+
+  bool _sameList(List<String> a, List<String> b) {
+    if (a.length != b.length) return false;
+    for (var i = 0; i < a.length; i++) {
+      if (a[i] != b[i]) return false;
+    }
+    return true;
+  }
+
   Future<void> _loadChildren(String path) async {
     if (_children.containsKey(path) || _loading.contains(path)) return;
     _loading.add(path);
+    final names = await _listChildren(path);
+    _loading.remove(path);
+    if (!mounted) return;
+    setState(() => _children[path] = names);
+  }
+
+  Future<List<String>> _listChildren(String path) async {
     final names = <String>[];
     try {
       await for (final e in Directory(path).list(followLinks: false)) {
@@ -55,9 +118,7 @@ class _DirectoryTreeState extends ConsumerState<DirectoryTree> {
     } catch (_) {
       // 접근 권한 없음 등: 자식이 없는 것으로 취급한다.
     }
-    _loading.remove(path);
-    if (!mounted) return;
-    setState(() => _children[path] = names);
+    return names;
   }
 
   void _toggle(String path) {
@@ -103,6 +164,13 @@ class _DirectoryTreeState extends ConsumerState<DirectoryTree> {
       paneControllerProvider(side).select((s) => s.currentPath),
       (_, next) => _revealPath(next),
     );
+    // 파일 작업(복사·이동·삭제·새 폴더 등)으로 어느 패널의 목록이 바뀌면 트리도 새로 읽는다.
+    for (final s in PaneSide.values) {
+      ref.listen(
+        paneControllerProvider(s).select((st) => st.entries),
+        (_, _) => refresh(),
+      );
+    }
     final drives =
         ref.watch(drivesProvider).valueOrNull ?? const <DriveEntry>[];
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -123,6 +191,23 @@ class _DirectoryTreeState extends ConsumerState<DirectoryTree> {
           driveKind: driveKind,
           onToggle: () => _toggle(path),
           onTap: () => _select(path),
+          path: path,
+          draggable: depth > 0,
+          onDrop: (payload) => dropOnTreeFolder(
+            context,
+            ref,
+            payload: payload,
+            target: path,
+          ),
+          onSecondaryTap: (pos) => showTreeContextMenu(
+            context,
+            ref,
+            side: side,
+            path: path,
+            isRoot: depth == 0,
+            globalPosition: pos,
+            onChanged: refresh,
+          ),
         ),
       );
       if (expanded && children != null) {
@@ -144,9 +229,27 @@ class _DirectoryTreeState extends ConsumerState<DirectoryTree> {
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(AppRadius.tile),
-        child: ListView(
-          padding: const EdgeInsets.symmetric(vertical: 4),
-          children: rows,
+        child: Stack(
+          children: [
+            ListView(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              children: rows,
+            ),
+            Positioned(
+              top: 0,
+              right: 0,
+              child: IconButton(
+                tooltip: AppLocalizations.of(context).refreshTooltip,
+                iconSize: 16,
+                visualDensity: VisualDensity.compact,
+                icon: const Icon(Icons.refresh),
+                onPressed: () {
+                  ref.invalidate(drivesProvider);
+                  refresh();
+                },
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -165,6 +268,10 @@ class _TreeRow extends StatelessWidget {
     required this.isDark,
     required this.onToggle,
     required this.onTap,
+    required this.onSecondaryTap,
+    required this.path,
+    required this.draggable,
+    required this.onDrop,
     this.driveKind,
   });
 
@@ -176,6 +283,10 @@ class _TreeRow extends StatelessWidget {
   final bool isDark;
   final VoidCallback onToggle;
   final VoidCallback onTap;
+  final void Function(Offset globalPosition) onSecondaryTap;
+  final String path;
+  final bool draggable;
+  final void Function(DragPayload payload) onDrop;
 
   /// 드라이브 루트 행에서만 넘어온다(하위 폴더는 null) — 네트워크/이동식
   /// 드라이브면 전용 아이콘을, 아니면 평소 폴더 아이콘을 쓴다.
@@ -186,8 +297,47 @@ class _TreeRow extends StatelessWidget {
     final accent = Theme.of(context).colorScheme.primary;
     final icon = (driveKind == null ? null : driveKindIcon(driveKind!, color: accent)) ??
         Icon(expanded ? Icons.folder_open : Icons.folder, size: 16, color: accent);
+    final row = _buildRow(context, accent, icon);
+    final uri = Uri.file(path);
+    final payload = DragPayload(
+      fromSide: PaneSide.left,
+      entries: [FileEntry(location: uri, name: p.basename(path), isDirectory: true)],
+    );
+    return DragTarget<DragPayload>(
+      onWillAcceptWithDetails: (d) => !d.data.entries.any(
+        (e) => e.location == uri || p.isWithin(e.location.toFilePath(), path),
+      ),
+      onAcceptWithDetails: (d) => onDrop(d.data),
+      builder: (context, candidates, _) {
+        final target = candidates.isNotEmpty
+            ? ColoredBox(color: accent.withValues(alpha: 0.25), child: row)
+            : row;
+        if (!draggable) return target;
+        return Draggable<DragPayload>(
+          data: payload,
+          feedback: Material(
+            color: Colors.transparent,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(color: accent),
+              ),
+              child: Text(label, style: const TextStyle(fontSize: 13)),
+            ),
+          ),
+          childWhenDragging: Opacity(opacity: 0.4, child: row),
+          child: target,
+        );
+      },
+    );
+  }
+
+  Widget _buildRow(BuildContext context, Color accent, Widget icon) {
     return InkWell(
       onTap: onTap,
+      onSecondaryTapUp: (d) => onSecondaryTap(d.globalPosition),
       splashFactory: NoSplash.splashFactory,
       child: Container(
         height: 26,

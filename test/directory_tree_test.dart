@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:daylight_commander/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -28,8 +29,10 @@ void main() {
 
     await tester.pumpWidget(UncontrolledProviderScope(
       container: container,
-      child: const MaterialApp(
-        home: Scaffold(body: DirectoryTree(side: PaneSide.right)),
+      child: MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: const Scaffold(body: DirectoryTree(side: PaneSide.right)),
       ),
     ));
 

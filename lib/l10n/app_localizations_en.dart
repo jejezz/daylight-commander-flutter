@@ -941,4 +941,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get editorScFold => 'Fold / unfold code';
+
+  @override
+  String get treeMenuCopy => 'Copy';
+
+  @override
+  String get treeMenuCut => 'Cut';
+
+  @override
+  String get treeMenuPaste => 'Paste Here';
 }

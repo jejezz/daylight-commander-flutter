@@ -461,5 +461,8 @@
   "editorScExtendSelection": "Movement keys + Shift: extend selection",
   "editorScNextMatch": "Next result (in the Find field)",
   "editorScBlockSelect": "Column (block) selection",
-  "editorScFold": "Fold / unfold code"
+  "editorScFold": "Fold / unfold code",
+  "treeMenuCopy": "Copy",
+  "treeMenuCut": "Cut",
+  "treeMenuPaste": "Paste Here"
 }

@@ -8,6 +8,7 @@ import '../../window/window_dock.dart';
 import '../../settings/settings_dialog.dart';
 import '../theme/app_theme.dart';
 import '../widgets/operation_banner.dart';
+import '../widgets/app_menu.dart';
 import '../widgets/tool_icon.dart';
 import '../../domain/entities/drive_entry.dart';
 import 'directory_tree.dart';
@@ -177,17 +178,19 @@ class HomeScreen extends ConsumerWidget {
               onSelected: (edge) => ref.read(windowDockProvider.notifier).dock(edge),
               itemBuilder: (_) => [
                 CheckedPopupMenuItem(
+                  height: appMenuItemHeight,
                   value: DockEdge.left,
                   checked: dockEdge == DockEdge.left,
                   child: Text(l10n.windowDockLeft),
                 ),
                 CheckedPopupMenuItem(
+                  height: appMenuItemHeight,
                   value: DockEdge.right,
                   checked: dockEdge == DockEdge.right,
                   child: Text(l10n.windowDockRight),
                 ),
                 if (dockEdge != null)
-                  PopupMenuItem<DockEdge>(
+                  AppMenuItem<DockEdge>(
                     onTap: () => ref.read(windowDockProvider.notifier).undock(),
                     child: Text(l10n.windowUndock),
                   ),
