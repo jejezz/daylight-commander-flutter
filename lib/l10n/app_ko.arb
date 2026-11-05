@@ -478,5 +478,8 @@
   "editorScExtendSelection": "이동 키 + Shift: 선택 넓히기",
   "editorScNextMatch": "다음 결과 (찾기 입력창에서)",
   "editorScBlockSelect": "세로(블록) 선택",
-  "editorScFold": "코드 접기 / 펴기"
+  "editorScFold": "코드 접기 / 펴기",
+  "treeMenuCopy": "복사",
+  "treeMenuCut": "잘라내기",
+  "treeMenuPaste": "여기에 붙여넣기"
 }

@@ -1759,6 +1759,24 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'코드 접기 / 펴기'**
   String get editorScFold;
+
+  /// No description provided for @treeMenuCopy.
+  ///
+  /// In ko, this message translates to:
+  /// **'복사'**
+  String get treeMenuCopy;
+
+  /// No description provided for @treeMenuCut.
+  ///
+  /// In ko, this message translates to:
+  /// **'잘라내기'**
+  String get treeMenuCut;
+
+  /// No description provided for @treeMenuPaste.
+  ///
+  /// In ko, this message translates to:
+  /// **'여기에 붙여넣기'**
+  String get treeMenuPaste;
 }
 
 class _AppLocalizationsDelegate

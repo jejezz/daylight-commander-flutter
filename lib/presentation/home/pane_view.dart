@@ -15,6 +15,7 @@ import '../../domain/entities/drive_entry.dart';
 import '../../domain/entities/file_entry.dart';
 import '../../l10n/app_localizations.dart';
 import '../theme/app_theme.dart';
+import '../widgets/app_menu.dart';
 import '../widgets/dialogs.dart';
 import '../widgets/file_icon.dart';
 import '../widgets/thumbnail_image.dart';
@@ -392,7 +393,7 @@ class _PathBarState extends State<_PathBar> {
               final accent = Theme.of(context).colorScheme.primary;
               return [
                 for (final drive in widget.drives)
-                  PopupMenuItem(
+                  AppMenuItem(
                     value: drive.path,
                     child: Row(
                       children: [
@@ -428,13 +429,13 @@ class _PathBarState extends State<_PathBar> {
             },
             itemBuilder: (context) => [
               if (widget.isRemote) ...[
-                PopupMenuItem(value: 'disconnect', child: Text(l10n.disconnectMenuItem)),
+                AppMenuItem(value: 'disconnect', child: Text(l10n.disconnectMenuItem)),
                 const PopupMenuDivider(),
               ],
-              PopupMenuItem(value: 'smb', child: Text(l10n.smbConnectMenuItem)),
-              PopupMenuItem(value: 'ftp', child: Text(l10n.ftpConnectTitle)),
-              PopupMenuItem(value: 'sftp', child: Text(l10n.sftpConnectTitle)),
-              PopupMenuItem(value: 'webdav', child: Text(l10n.webdavConnectTitle)),
+              AppMenuItem(value: 'smb', child: Text(l10n.smbConnectMenuItem)),
+              AppMenuItem(value: 'ftp', child: Text(l10n.ftpConnectTitle)),
+              AppMenuItem(value: 'sftp', child: Text(l10n.sftpConnectTitle)),
+              AppMenuItem(value: 'webdav', child: Text(l10n.webdavConnectTitle)),
             ],
           ),
           IconButton(
@@ -1153,7 +1154,7 @@ Future<void> showThumbnailMenu(
           child: Text(_thumbnailSizeLabel(l10n, size)),
         ),
       const PopupMenuDivider(),
-      PopupMenuItem<Object>(
+      AppMenuItem<Object>(
         value: 'clear',
         child: Text(l10n.clearThumbnailCache(formatBytes(cacheBytes))),
       ),

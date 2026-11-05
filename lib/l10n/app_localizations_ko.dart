@@ -920,4 +920,13 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get editorScFold => '코드 접기 / 펴기';
+
+  @override
+  String get treeMenuCopy => '복사';
+
+  @override
+  String get treeMenuCut => '잘라내기';
+
+  @override
+  String get treeMenuPaste => '여기에 붙여넣기';
 }
