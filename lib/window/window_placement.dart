@@ -173,12 +173,38 @@ class WindowPlacement with WindowListener {
       );
       _last = SavedPlacement(bounds: target, scale: dpr, maximized: false);
       if (restored != null && saved!.maximized) {
+        final before = PlatformDispatcher.instance.views.first.physicalSize;
         await windowManager.maximize();
+        // 최대화로 창이 커진 뒤 Flutter 뷰가 그 크기를 받을 때까지 기다린다. 기다리지 않으면 곧바로 이어지는 show()가
+        // 옛 크기로 그린 프레임과 함께 창을 보여서, 새로 늘어난 영역이 비어 보인다(최대화 복원 때만 보이는 깜빡임).
+        await _waitForViewResize(before);
         _last = SavedPlacement(bounds: target, scale: dpr, maximized: true);
       }
     } catch (e) {
       // 배치에 실패해도 창은 떠야 한다.
       debugPrint('window placement failed: $e');
+    }
+  }
+
+  /// 뷰 크기가 [before]에서 바뀌고 안정될 때까지(연속 3번 같은 값) 기다린다. 크기가 바뀌지 않는 경우(저장한 크기가 이미
+  /// 최대화 크기)를 위해 변화가 없으면 250ms, 어떤 경우든 800ms를 넘기지 않는다.
+  Future<void> _waitForViewResize(Size before) async {
+    final view = PlatformDispatcher.instance.views.first;
+    final start = DateTime.now();
+    var changed = false;
+    var stable = 0;
+    Size? last;
+    while (true) {
+      await Future<void>.delayed(const Duration(milliseconds: 16));
+      final now = view.physicalSize;
+      if (now != before) {
+        changed = true;
+        stable = now == last ? stable + 1 : 0;
+        if (stable >= 3) return;
+      }
+      last = now;
+      final elapsed = DateTime.now().difference(start).inMilliseconds;
+      if (elapsed >= 800 || (!changed && elapsed >= 250)) return;
     }
   }
 
